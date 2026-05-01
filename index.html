@@ -424,6 +424,71 @@
       margin-top: 26px; position: relative; z-index: 1;
     }
 
+    /* ══ TOOLS ══ */
+    #narzedzia { background: var(--forest); }
+    #narzedzia .s-eye { color: rgba(212,180,100,.7); }
+    #narzedzia .s-eye::before { background: var(--gold); }
+    #narzedzia .s-h { color: var(--cream); }
+    #narzedzia .s-lead { color: rgba(244,239,229,.6); }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 640px) { .tools-grid { grid-template-columns: 1fr; } }
+
+    .tool-card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      padding: 40px 36px;
+      display: flex; flex-direction: column; gap: 18px;
+      transition: background .25s, transform .25s, box-shadow .25s;
+    }
+    .tool-card:hover {
+      background: rgba(255,255,255,.1);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,.2);
+    }
+    .tool-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tool-icon svg { width: 24px; height: 24px; stroke: var(--gold-light); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .tool-name {
+      font-family: var(--ff-display);
+      font-size: 1.5rem; font-weight: 600;
+      color: var(--cream); line-height: 1.2;
+    }
+    .tool-desc {
+      font-size: .9rem;
+      color: rgba(244,239,229,.6);
+      line-height: 1.75; flex: 1;
+    }
+    .tool-link {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 24px;
+      background: transparent;
+      border: 1px solid rgba(181,144,59,.5);
+      border-radius: 100px;
+      font-size: .82rem; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--gold-light);
+      align-self: flex-start;
+      transition: all .22s;
+    }
+    .tool-link svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tool-link:hover {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--ink);
+      transform: translateX(3px);
+    }
+
     /* ══ CONTACT ══ */
     #kontakt { background: var(--cream); }
     .contact-layout {
@@ -541,6 +606,68 @@
       font-family: var(--ff-body);
     }
 
+
+    /* ══ COOKIE BANNER ══ */
+    #cookie-banner {
+      position: fixed;
+      bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 9000;
+      width: calc(100% - 48px);
+      max-width: 780px;
+      background: var(--ink);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: flex; align-items: center;
+      gap: 20px; flex-wrap: wrap;
+      box-shadow: 0 8px 48px rgba(0,0,0,.35);
+      animation: slideUp .4s ease both;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    #cookie-banner.hidden {
+      animation: slideDown .3s ease forwards;
+    }
+    @keyframes slideDown {
+      to { opacity: 0; transform: translateX(-50%) translateY(24px); pointer-events: none; }
+    }
+    .cookie-text {
+      flex: 1; min-width: 220px;
+      font-size: .82rem; color: rgba(244,239,229,.65);
+      line-height: 1.6;
+    }
+    .cookie-text strong { color: var(--cream); font-weight: 500; }
+    .cookie-text a { color: var(--gold-light); text-decoration: underline; text-underline-offset: 3px; }
+    .cookie-text a:hover { color: var(--gold); }
+    .cookie-actions { display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
+    .cookie-btn {
+      padding: 9px 20px;
+      border-radius: 100px;
+      font-family: var(--ff-body);
+      font-size: .78rem; font-weight: 500;
+      letter-spacing: .05em; cursor: pointer;
+      border: none; transition: all .2s;
+      white-space: nowrap;
+    }
+    .cookie-btn-accept {
+      background: var(--gold);
+      color: var(--ink);
+    }
+    .cookie-btn-accept:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .cookie-btn-reject {
+      background: transparent;
+      color: rgba(244,239,229,.5);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .cookie-btn-reject:hover { color: var(--cream); border-color: rgba(255,255,255,.3); }
+    @media (max-width: 560px) {
+      #cookie-banner { bottom: 12px; padding: 16px 18px; }
+      .cookie-actions { width: 100%; }
+      .cookie-btn { flex: 1; text-align: center; }
+    }
+
     /* ══ ANIMATIONS ══ */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(26px); }
@@ -564,6 +691,7 @@
       <li><a href="#uslugi">Terapie</a></li>
       <li><a href="#dla-kogo">Dla kogo</a></li>
       <li><a href="#omnie">O mnie</a></li>
+      <li><a href="#narzedzia">Narzędzia</a></li>
       <li><a href="#kontakt">Kontakt</a></li>
       <li><a href="#rezerwacja" class="nav-cta">Umów wizytę</a></li>
     </ul>
@@ -744,6 +872,45 @@
   </div>
 </section>
 
+<!-- TOOLS -->
+<section id="narzedzia">
+  <div class="wrap">
+    <div class="section-top">
+      <p class="s-eye reveal">Narzędzia</p>
+      <h2 class="s-h reveal">Aplikacje do pracy nad sobą</h2>
+      <p class="s-lead reveal">Narzędzia, które stworzyłem — możesz z nich korzystać samodzielnie między sesjami lub jako codzienne wsparcie samorozwoju.</p>
+    </div>
+
+    <div class="tools-grid">
+
+      <a href="https://dziennik.terapianawigator.pl" class="tool-card reveal" target="_blank" rel="noopener" aria-label="Moja Przestrzeń">
+        <div class="tool-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        </div>
+        <p class="tool-name">Moja Przestrzeń</p>
+        <p class="tool-desc">Miejsce do refleksji i zatrzymania się. Pomaga rozumieć własne emocje krok po kroku, bez pośpiechu. Idealne wsparcie między sesjami.</p>
+        <span class="tool-link">
+          Otwórz aplikację
+          <svg viewBox="0 0 24 24" fill="none"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a href="https://swit.terapianawigator.pl/" class="tool-card reveal d1" target="_blank" rel="noopener" aria-label="Dziennik Świt">
+        <div class="tool-icon">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </div>
+        <p class="tool-name">Dziennik Świt</p>
+        <p class="tool-desc">Dziennik poranny wspierający zdrowe nawyki myślowe i codzienne monitorowanie nastroju. Zacznij dzień z intencją i klarownością.</p>
+        <span class="tool-link">
+          Otwórz aplikację
+          <svg viewBox="0 0 24 24" fill="none"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
 <!-- CONTACT -->
 <section id="kontakt">
   <div class="wrap">
@@ -867,7 +1034,8 @@
   <ul class="f-links">
     <li><a href="#uslugi">Terapie</a></li>
     <li><a href="#omnie">O mnie</a></li>
-    <li><a href="#kontakt">Kontakt</a></li>
+    <li><a href="#narzedzia">Narzędzia</a></li>
+      <li><a href="#kontakt">Kontakt</a></li>
     <li><a href="polityka-prywatnosci.html">Prywatność</a></li>
   </ul>
   <p class="f-copy">© 2024–2026 Prywatny Gabinet Terapeutyczny „Nawigator"</p>
@@ -891,6 +1059,69 @@
   );
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 </script>
+<!-- COOKIE BANNER -->
+<div id="cookie-banner" role="dialog" aria-label="Informacja o plikach cookies" aria-live="polite">
+  <p class="cookie-text">
+    <strong>Ta strona używa plików cookies.</strong>
+    Stosujemy je w celach analitycznych (Google Analytics) i marketingowych (Meta Pixel).
+    Możesz zaakceptować wszystkie lub odrzucić opcjonalne.
+    <a href="polityka-prywatnosci.html">Polityka prywatności</a>
+  </p>
+  <div class="cookie-actions">
+    <button class="cookie-btn cookie-btn-reject" id="cookie-reject">Tylko niezbędne</button>
+    <button class="cookie-btn cookie-btn-accept" id="cookie-accept">Akceptuję</button>
+  </div>
+</div>
+
+<script>
+  // Cookie consent
+  (function() {
+    const COOKIE_KEY = 'nawigator_cookie_consent';
+    const banner = document.getElementById('cookie-banner');
+
+    function setCookie(val) {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() + 1);
+      document.cookie = COOKIE_KEY + '=' + val + '; expires=' + d.toUTCString() + '; path=/; SameSite=Lax';
+    }
+    function getCookie() {
+      return document.cookie.split('; ').find(r => r.startsWith(COOKIE_KEY + '='))?.split('=')[1];
+    }
+    function hideBanner() {
+      banner.classList.add('hidden');
+      setTimeout(() => banner.remove(), 350);
+    }
+    function loadAnalytics() {
+      // Google Analytics
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID';
+      s.async = true;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date()); gtag('config', 'GA_MEASUREMENT_ID');
+    }
+
+    // Already decided?
+    const saved = getCookie();
+    if (saved) {
+      banner.remove();
+      if (saved === 'accepted') loadAnalytics();
+      return;
+    }
+
+    document.getElementById('cookie-accept').addEventListener('click', function() {
+      setCookie('accepted');
+      loadAnalytics();
+      hideBanner();
+    });
+    document.getElementById('cookie-reject').addEventListener('click', function() {
+      setCookie('rejected');
+      hideBanner();
+    });
+  })();
+</script>
+
 <script src="https://twojpsycholog.pl/static/widget/static/js/twoj-psycholog-widget.js"></script>
 </body>
 </html>
