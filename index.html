@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ── SEO ── -->
+  <title>Gabinet Terapeutyczny Nawigator | Łukasz Dyłka – Psycholog & Pedagog | Świętochłowice</title>
+  <meta name="description" content="Gabinet psychologiczno-pedagogiczny Nawigator – Łukasz Dyłka. Pomoc psychologiczna, terapia pedagogiczna, TUS, socjoterapia dla dzieci, młodzieży i dorosłych. Świętochłowice i online." />
+  <meta name="keywords" content="psycholog Świętochłowice, terapia pedagogiczna, TUS trening umiejętności społecznych, socjoterapia, pomoc psychologiczna dzieci, psycholog online Śląsk, Łukasz Dyłka, gabinet Nawigator" />
+  <meta name="author" content="Łukasz Dyłka" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://terapianawigator.pl/" />
+
+  <!-- ── Open Graph ── -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://terapianawigator.pl/" />
+  <meta property="og:title" content="Gabinet Terapeutyczny Nawigator | Łukasz Dyłka" />
+  <meta property="og:description" content="Wsparcie psychologiczne i pedagogiczne dla dzieci, młodzieży i dorosłych. Świętochłowice i gabinet online." />
+  <meta property="og:locale" content="pl_PL" />
+
+  <!-- ── Twitter Card ── -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Gabinet Terapeutyczny Nawigator | Łukasz Dyłka" />
+  <meta name="twitter:description" content="Wsparcie psychologiczne i pedagogiczne dla dzieci, młodzieży i dorosłych. Świętochłowice i online." />
+
+  <!-- ── Schema.org structured data ── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MedicalBusiness",
+    "name": "Gabinet Terapeutyczny Nawigator",
+    "alternateName": "Nawigator Łukasz Dyłka",
+    "url": "https://terapianawigator.pl",
+    "description": "Gabinet psychologiczno-pedagogiczny oferujący pomoc psychologiczną, terapię pedagogiczną, socjoterapię i TUS dla dzieci, młodzieży i dorosłych.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "ul. Cmentarna 5",
+      "addressLocality": "Świętochłowice",
+      "postalCode": "41-600",
+      "addressCountry": "PL"
+    },
+    "email": "gabinet@terapianawigator.pl",
+    "sameAs": [
+      "https://www.linkedin.com/in/lukaszdylka/",
+      "https://www.instagram.com/terapia.nawigator/",
+      "https://dylka.pl"
+    ],
+    "employee": {
+      "@type": "Person",
+      "name": "Łukasz Dyłka",
+      "jobTitle": "Psycholog, Pedagog",
+      "url": "https://dylka.pl"
+    }
+  }
+  </script>
+
+  <!-- ── Fonts ── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Design tokens ─── */
+    :root {
+      --ink:        #1e2d1f;
+      --forest:     #2a4a30;
+      --sage:       #4d7358;
+      --moss:       #7aab82;
+      --gold:       #b8943f;
+      --gold-light: #d4b464;
+      --cream:      #f5f0e8;
+      --parchment:  #ede6d6;
+      --white:      #faf8f4;
+      --muted:      #6e7d6f;
+
+      --ff-display: 'Cormorant Garamond', Georgia, serif;
+      --ff-body:    'DM Sans', system-ui, sans-serif;
+
+      --radius: 3px;
+      --shadow: 0 8px 40px rgba(30,45,31,.12);
+    }
+
+    /* ─── Reset ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--ff-body);
+      background: var(--cream);
+      color: var(--ink);
+      line-height: 1.65;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ─── Grain overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: .5;
+    }
+
+    /* ─── Layout ─── */
+    .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+    /* ─── HEADER / HERO ─── */
+    header {
+      background: var(--forest);
+      color: var(--cream);
+      position: relative;
+      overflow: hidden;
+      padding: 64px 24px 56px;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 48px;
+      background: var(--cream);
+      clip-path: ellipse(56% 100% at 50% 100%);
+    }
+
+    /* compass rose decoration */
+    .compass-bg {
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 340px; height: 340px;
+      opacity: .04;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--ff-body);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      border: 1px solid rgba(212,180,100,.35);
+      padding: 5px 14px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+      animation: fadeUp .6s ease both;
+    }
+
+    .hero-name {
+      font-family: var(--ff-display);
+      font-size: clamp(2.2rem, 6vw, 3.4rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -.01em;
+      animation: fadeUp .7s .1s ease both;
+    }
+    .hero-name span { color: var(--gold-light); }
+
+    .hero-tagline {
+      font-family: var(--ff-display);
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-style: italic;
+      color: rgba(245,240,232,.65);
+      margin-top: 10px;
+      animation: fadeUp .7s .2s ease both;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 32px;
+      padding: 14px 28px;
+      background: var(--gold);
+      color: var(--ink);
+      font-family: var(--ff-body);
+      font-size: .875rem;
+      font-weight: 500;
+      letter-spacing: .04em;
+      border-radius: 100px;
+      transition: background .2s, transform .2s;
+      animation: fadeUp .7s .35s ease both;
+    }
+    .hero-cta:hover { background: var(--gold-light); transform: translateY(-2px); }
+    .hero-cta svg { width: 16px; height: 16px; }
+
+    /* ─── SECTION BASE ─── */
+    section { padding: 56px 0; }
+    section + section { border-top: 1px solid rgba(30,45,31,.09); }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: var(--ff-display);
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 600;
+      line-height: 1.2;
+      color: var(--forest);
+      margin-bottom: 20px;
+    }
+    .section-body {
+      font-size: .95rem;
+      color: #3d4e3e;
+      max-width: 620px;
+    }
+    .section-body p + p { margin-top: 12px; }
+
+    /* ─── SERVICES GRID ─── */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .service-card {
+      background: var(--white);
+      border: 1px solid rgba(30,45,31,.08);
+      border-radius: 8px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .22s, box-shadow .22s;
+    }
+    .service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--gold);
+    }
+    .service-icon { font-size: 1.5rem; margin-bottom: 12px; }
+    .service-name {
+      font-family: var(--ff-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--forest);
+      line-height: 1.3;
+    }
+
+    /* ─── ABOUT ─── */
+    .about-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 600px) { .about-wrap { grid-template-columns: 1fr; gap: 32px; } }
+
+    .about-quote {
+      background: var(--forest);
+      color: var(--cream);
+      padding: 36px 32px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .about-quote::before {
+      content: '\201C';
+      font-family: var(--ff-display);
+      font-size: 5rem;
+      line-height: 1;
+      color: var(--gold);
+      position: absolute;
+      top: 8px; left: 24px;
+      opacity: .5;
+    }
+    .about-quote blockquote {
+      font-family: var(--ff-display);
+      font-size: 1.05rem;
+      font-style: italic;
+      line-height: 1.6;
+      margin-top: 24px;
+    }
+    .about-quote cite {
+      display: block;
+      font-style: normal;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      margin-top: 16px;
+    }
+
+    /* ─── CREDENTIALS ─── */
+    .cred-list { list-style: none; margin-top: 0; }
+    .cred-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(30,45,31,.07);
+      font-size: .88rem;
+      color: #3d4e3e;
+    }
+    .cred-list li:last-child { border-bottom: none; }
+    .cred-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    /* ─── FOR WHOM ─── */
+    .whom-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 28px;
+    }
+    @media (max-width: 560px) { .whom-grid { grid-template-columns: 1fr; } }
+
+    .whom-card {
+      background: var(--parchment);
+      border-radius: 8px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .whom-emoji { font-size: 2rem; margin-bottom: 12px; }
+    .whom-label {
+      font-family: var(--ff-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--forest);
+    }
+    .whom-desc { font-size: .82rem; color: var(--muted); margin-top: 6px; }
+
+    /* ─── ONLINE BADGE ─── */
+    .online-strip {
+      background: linear-gradient(135deg, var(--forest) 0%, var(--sage) 100%);
+      color: var(--cream);
+      border-radius: 8px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 40px 0 0;
+    }
+    .online-strip .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #5ddb7a;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(93,219,122,.25);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 3px rgba(93,219,122,.25); }
+      50%      { box-shadow: 0 0 0 7px rgba(93,219,122,.1); }
+    }
+    .online-text { flex: 1; }
+    .online-text strong { display: block; font-size: .95rem; font-weight: 500; }
+    .online-text span { font-size: .82rem; opacity: .75; }
+
+    /* ─── CONTACT ─── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 28px;
+    }
+    @media (max-width: 560px) { .contact-grid { grid-template-columns: 1fr; } }
+
+    .contact-item {
+      background: var(--white);
+      border: 1px solid rgba(30,45,31,.08);
+      border-radius: 8px;
+      padding: 20px 22px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .contact-item:hover { border-color: var(--sage); box-shadow: var(--shadow); }
+    .contact-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--parchment);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .contact-label { font-size: .73rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+    .contact-value { font-size: .9rem; font-weight: 400; color: var(--forest); margin-top: 1px; }
+
+    /* ─── CTA BLOCK ─── */
+    .cta-block {
+      background: var(--forest);
+      color: var(--cream);
+      text-align: center;
+      padding: 56px 24px;
+    }
+    .cta-block .section-title { color: var(--cream); margin-bottom: 10px; }
+    .cta-block p { color: rgba(245,240,232,.7); font-size: .9rem; margin-bottom: 28px; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .btn-primary {
+      display: inline-block;
+      padding: 14px 36px;
+      background: var(--gold);
+      color: var(--ink);
+      border-radius: 100px;
+      font-weight: 500;
+      font-size: .9rem;
+      letter-spacing: .04em;
+      transition: background .2s, transform .2s;
+    }
+    .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--ink);
+      color: rgba(245,240,232,.5);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: .78rem;
+    }
+    .footer-social {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+    .footer-social a {
+      color: rgba(245,240,232,.45);
+      font-size: .8rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      transition: color .2s;
+    }
+    .footer-social a:hover { color: var(--gold-light); }
+    .footer-copy a { color: rgba(212,180,100,.6); }
+
+    /* ─── Animations ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ─── Utility ─── */
+    .mt-4 { margin-top: 16px; }
+    .mt-6 { margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header>
+  <svg class="compass-bg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="100" cy="100" r="95" stroke="white" stroke-width="1.5"/>
+    <circle cx="100" cy="100" r="70" stroke="white" stroke-width="1"/>
+    <circle cx="100" cy="100" r="40" stroke="white" stroke-width="1"/>
+    <line x1="100" y1="5" x2="100" y2="195" stroke="white" stroke-width="1"/>
+    <line x1="5" y1="100" x2="195" y2="100" stroke="white" stroke-width="1"/>
+    <line x1="33" y1="33" x2="167" y2="167" stroke="white" stroke-width=".5"/>
+    <line x1="167" y1="33" x2="33" y2="167" stroke="white" stroke-width=".5"/>
+    <polygon points="100,20 95,95 100,90 105,95" fill="white"/>
+    <polygon points="100,180 95,105 100,110 105,105" fill="white" opacity=".5"/>
+    <text x="97" y="16" fill="white" font-size="10" font-family="serif">N</text>
+    <text x="97" y="192" fill="white" font-size="10" font-family="serif">S</text>
+    <text x="3"  y="104" fill="white" font-size="10" font-family="serif">W</text>
+    <text x="187" y="104" fill="white" font-size="10" font-family="serif">E</text>
+  </svg>
+
+  <div class="container">
+    <div class="badge">Gabinet Psychologiczno-Pedagogiczny</div>
+    <h1 class="hero-name">
+      Nawigator<br/>
+      <span>Łukasz Dyłka</span>
+    </h1>
+    <p class="hero-tagline">Wspieramy rozwój — wyznaczamy kierunek</p>
+    <a href="https://nawigator.carrd.co/#kalendarz" class="hero-cta" rel="noopener" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Umów bezpłatną konsultację
+    </a>
+  </div>
+</header>
+
+<!-- ══════════════ SERVICES ══════════════ -->
+<section id="uslugi">
+  <div class="container">
+    <p class="section-label reveal">Oferta</p>
+    <h2 class="section-title reveal">Rodzaje prowadzonych terapii</h2>
+    <p class="section-body reveal">
+      Oferuję kompleksowe wsparcie psychologiczne i pedagogiczne dla dzieci, młodzieży oraz dorosłych. Każdy otrzymuje indywidualne podejście dopasowane do swoich potrzeb.
+    </p>
+
+    <div class="services-grid">
+      <article class="service-card reveal">
+        <div class="service-icon" role="img" aria-label="Pomoc psychologiczna">🧠</div>
+        <p class="service-name">Pomoc<br/>psychologiczna</p>
+      </article>
+      <article class="service-card reveal">
+        <div class="service-icon" role="img" aria-label="Wsparcie rodzica">👨‍👩‍👧</div>
+        <p class="service-name">Wsparcie psychologiczno-pedagogiczne rodziców</p>
+      </article>
+      <article class="service-card reveal">
+        <div class="service-icon" role="img" aria-label="Socjoterapia">🤝</div>
+        <p class="service-name">Socjoterapia</p>
+      </article>
+      <article class="service-card reveal">
+        <div class="service-icon" role="img" aria-label="TUS">💬</div>
+        <p class="service-name">Trening Umiejętności Społecznych (TUS)</p>
+      </article>
+      <article class="service-card reveal">
+        <div class="service-icon" role="img" aria-label="Terapia pedagogiczna">📚</div>
+        <p class="service-name">Terapia pedagogiczna, wsparcie w nauce</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FOR WHOM ══════════════ -->
+<section id="dla-kogo">
+  <div class="container">
+    <p class="section-label reveal">Dla kogo?</p>
+    <h2 class="section-title reveal">Wsparcie na każdym etapie życia</h2>
+    <div class="whom-grid">
+      <div class="whom-card reveal">
+        <div class="whom-emoji" role="img" aria-label="Dzieci">🧒</div>
+        <p class="whom-label">Dzieci</p>
+        <p class="whom-desc">Trudności szkolne, emocjonalne, społeczne</p>
+      </div>
+      <div class="whom-card reveal">
+        <div class="whom-emoji" role="img" aria-label="Młodzież">🧑</div>
+        <p class="whom-label">Młodzież</p>
+        <p class="whom-desc">Kryzysy, relacje, poczucie własnej wartości</p>
+      </div>
+      <div class="whom-card reveal">
+        <div class="whom-emoji" role="img" aria-label="Dorośli">🧑‍💼</div>
+        <p class="whom-label">Dorośli</p>
+        <p class="whom-desc">Stres, relacje, obniżony nastrój, zmiany życiowe</p>
+      </div>
+    </div>
+
+    <div class="online-strip mt-6 reveal">
+      <div class="dot"></div>
+      <div class="online-text">
+        <strong>Gabinet online — dostępny z całej Polski</strong>
+        <span>Konsultacje i terapia prowadzone zdalnie, w komfortowych warunkach</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ ABOUT ══════════════ -->
+<section id="omnie">
+  <div class="container">
+    <p class="section-label reveal">O mnie</p>
+    <h2 class="section-title reveal">Łukasz Dyłka</h2>
+
+    <div class="about-wrap">
+      <div>
+        <div class="section-body reveal">
+          <p>Jestem magistrem psychologii oraz pedagogiem z <strong>15-letnim doświadczeniem</strong> w pracy pomocowej. Na co dzień wspieram dzieci, młodzież i osoby dorosłe w radzeniu sobie z trudnościami emocjonalnymi, relacyjnymi i rozwojowymi.</p>
+          <p class="mt-4">W pracy łączę wiedzę psychologiczną z wieloletnią praktyką pedagogiczną. Bliskie jest mi podejście oparte na uważności, szacunku i budowaniu realnych zasobów klienta.</p>
+          <p class="mt-4">Pracowałem jako wychowawca w placówce socjalizacyjnej, nauczyciel współorganizujący i terapeuta w szkole, a obecnie pełnię funkcję pedagoga szkolnego w technikum oraz prowadzę prywatny gabinet.</p>
+        </div>
+
+        <ul class="cred-list mt-6 reveal" aria-label="Wykształcenie i kwalifikacje">
+          <li><span class="cred-dot"></span><span><strong>Magister psychologii</strong> — psychoterapia oraz kliniczna diagnoza psychologiczna</span></li>
+          <li><span class="cred-dot"></span><span><strong>Magister pedagogiki</strong> — pedagogika opiekuńczo-wychowawcza i resocjalizacyjna</span></li>
+          <li><span class="cred-dot"></span><span>Studia podyplomowe: edukacja i terapia osób ze spektrum autyzmu</span></li>
+          <li><span class="cred-dot"></span><span>Studia podyplomowe: tyflopedagogika, oligofrenopedagogika</span></li>
+          <li><span class="cred-dot"></span><span>Kurs: Terapia Umiejętności Społecznych</span></li>
+          <li><span class="cred-dot"></span><span>Kurs: Terapia Ręki I i II stopnia</span></li>
+        </ul>
+      </div>
+
+      <div class="about-quote reveal">
+        <blockquote>
+          „Nie możemy zmienić kierunku wiatru, ale możemy dostosować żagle, aby dotrzeć do celu."
+        </blockquote>
+        <cite>— Jimmy Dean</cite>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CONTACT ══════════════ -->
+<section id="kontakt">
+  <div class="container">
+    <p class="section-label reveal">Kontakt</p>
+    <h2 class="section-title reveal">Skontaktuj się</h2>
+    <p class="section-body reveal">
+      Masz pytania lub chcesz umówić pierwszą wizytę? Napisz lub odwiedź stronę — odpiszę najszybciej jak to możliwe.
+    </p>
+
+    <div class="contact-grid">
+      <a href="mailto:gabinet@terapianawigator.pl" class="contact-item reveal" aria-label="Wyślij e-mail">
+        <div class="contact-icon" aria-hidden="true">✉️</div>
+        <div>
+          <p class="contact-label">E-mail</p>
+          <p class="contact-value">gabinet@terapianawigator.pl</p>
+        </div>
+      </a>
+      <a href="https://dylka.pl" class="contact-item reveal" target="_blank" rel="noopener" aria-label="Strona internetowa">
+        <div class="contact-icon" aria-hidden="true">🌐</div>
+        <div>
+          <p class="contact-label">Strona</p>
+          <p class="contact-value">dylka.pl</p>
+        </div>
+      </a>
+      <div class="contact-item reveal" aria-label="Adres gabinetu">
+        <div class="contact-icon" aria-hidden="true">📍</div>
+        <div>
+          <p class="contact-label">Adres</p>
+          <p class="contact-value">ul. Cmentarna 5, Świętochłowice</p>
+        </div>
+      </div>
+      <a href="https://www.instagram.com/terapia.nawigator/" class="contact-item reveal" target="_blank" rel="noopener" aria-label="Instagram">
+        <div class="contact-icon" aria-hidden="true">📸</div>
+        <div>
+          <p class="contact-label">Instagram</p>
+          <p class="contact-value">@terapia.nawigator</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CTA ══════════════ -->
+<div class="cta-block" id="umow">
+  <h2 class="section-title reveal">Zrób pierwszy krok</h2>
+  <p class="reveal">Niezależnie od tego, z czym przychodzisz — znajdziemy właściwy kierunek. Pierwsza konsultacja jest bezpłatna.</p>
+  <a href="https://nawigator.carrd.co/#kalendarz" class="btn-primary reveal" rel="noopener" target="_blank">Umów bezpłatną konsultację</a>
+</div>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer>
+  <div class="footer-social">
+    <a href="https://www.instagram.com/terapia.nawigator/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.linkedin.com/in/lukaszdylka/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://dylka.pl" target="_blank" rel="noopener">dylka.pl</a>
+  </div>
+  <p class="footer-copy">
+    © 2024–2026 Prywatny Gabinet Terapeutyczny „Nawigator" Łukasz Dyłka ·
+    <a href="https://nawigator.carrd.co/#politykaprywatnosci" target="_blank" rel="noopener">Polityka prywatności</a>
+  </p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } }),
+    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
