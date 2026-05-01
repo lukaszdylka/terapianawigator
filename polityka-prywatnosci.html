@@ -63,7 +63,7 @@
 
     /* ── NAV ── */
     nav {
-      position: sticky; top: 0; z-index: 100;
+      position: static;
       background: rgba(36,61,41,.97);
       backdrop-filter: blur(14px);
       border-bottom: 1px solid rgba(255,255,255,.05);
@@ -288,6 +288,7 @@
     .f-links a { font-size: .72rem; color: rgba(244,239,229,.3); letter-spacing: .08em; text-transform: uppercase; transition: color .2s; text-decoration: none; }
     .f-links a:hover { color: var(--gold-light); }
     .f-copy { font-size: .72rem; color: rgba(244,239,229,.28); }
+      code { font-family: monospace; background: var(--parchment); padding: 2px 6px; border-radius: 4px; font-size: .85em; }
   </style>
 </head>
 <body>
@@ -529,6 +530,10 @@
 
     <div class="pp-note">
       W razie pytań dotyczących polityki prywatności prosimy o kontakt: <strong>kontakt@terapianawigator.pl</strong>
+
+    <div class="pp-note" style="margin-top:20px">
+      <strong>Baner cookies:</strong> Podczas pierwszej wizyty na stronie wyświetlany jest baner z możliwością akceptacji lub odrzucenia opcjonalnych plików cookies (analitycznych i marketingowych). Wybór jest zapamiętywany przez 12 miesięcy w postaci pliku cookie o nazwie <code>nawigator_cookie_consent</code>. Pliki analityczne i marketingowe są ładowane wyłącznie po wyrażeniu zgody.
+    </div>
     </div>
   </section>
 
