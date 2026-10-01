@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dysortografia | Ćwiczenia Nawigator</title>
+<meta name="description" content="Interaktywne ćwiczenia ortograficzne dla starszych uczniów. Dysortografia: wybór formy, korekta tekstu, pamięć ortograficzna i dyktanda.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b2b1c;--forest:#243d29;--forest2:#2f5235;--sage:#4a6e52;--moss:#6e9c77;--gold:#b5903b;--gold-light:#cfa84e;--cream:#f4efe5;--parchment:#ebe3d0;--white:#f9f6f0;--muted:#6a7a6b;--border:rgba(27,43,28,.12);--red:#9b4740;--green:#397149;--ff-display:'Cormorant Garamond',Georgia,serif;--ff-body:'DM Sans',system-ui,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--ff-body);font-weight:300;line-height:1.6}button,input,textarea{font:inherit}button{cursor:pointer}
+.topbar{background:var(--forest);color:var(--cream);position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(255,255,255,.06)}.topinner{max-width:1120px;margin:auto;height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-family:var(--ff-display);font-weight:600;font-size:1.2rem;text-decoration:none;color:var(--cream)}.brand span{color:var(--gold-light)}.back{color:rgba(244,239,229,.7);text-decoration:none;font-size:.8rem}.back:hover{color:var(--gold-light)}
+main{max-width:1120px;margin:auto;padding:52px 24px 80px}.eyebrow{font-size:.7rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--sage);margin:0 0 8px}.hero h1{font-family:var(--ff-display);font-size:clamp(2.5rem,6vw,4.4rem);line-height:1;margin:0;color:var(--forest)}.hero p{max-width:720px;color:var(--muted);margin:18px 0 0}.privacy{display:inline-flex;margin-top:18px;padding:7px 12px;border-radius:999px;background:var(--parchment);font-size:.75rem;color:var(--sage)}
+.dashboard{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:32px 0}.metric{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px}.metric strong{display:block;font-family:var(--ff-display);font-size:1.8rem;color:var(--forest);line-height:1.1}.metric span{font-size:.75rem;color:var(--muted)}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0}.mode{border:1px solid var(--border);background:var(--white);border-radius:14px;padding:18px;text-align:left;color:var(--forest);transition:.2s}.mode:hover,.mode.active{border-color:var(--gold);box-shadow:0 5px 20px rgba(27,43,28,.08);transform:translateY(-2px)}.mode b{display:block;font-weight:500}.mode small{color:var(--muted)}
+.session{background:var(--white);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 8px 36px rgba(27,43,28,.08)}.session-head{padding:18px 24px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}.progress-track{height:7px;background:var(--parchment);border-radius:99px;overflow:hidden}.progress-fill{height:100%;width:0;background:var(--gold);transition:width .3s}.counter{font-size:.78rem;color:var(--muted);white-space:nowrap}.score{font-size:.78rem;color:var(--sage);white-space:nowrap}
+.task{padding:34px 30px 30px;min-height:390px}.task-type{font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);font-weight:500}.task h2{font-family:var(--ff-display);font-size:clamp(1.6rem,4vw,2.2rem);color:var(--forest);line-height:1.25;margin:8px 0 22px}.prompt{font-size:1.05rem;background:var(--cream);border-radius:12px;padding:18px 20px;margin-bottom:18px;white-space:pre-wrap}.options{display:grid;gap:10px}.option{width:100%;padding:14px 18px;border:1px solid var(--border);border-radius:10px;background:#fff;text-align:left;color:var(--ink)}.option:hover:not(:disabled){border-color:var(--sage);background:var(--cream)}.option.correct{border-color:var(--green);background:#eef6ef}.option.wrong{border-color:var(--red);background:#faefed}.answer{width:100%;border:1px solid var(--border);border-radius:10px;background:#fff;padding:14px 16px;outline:none}.answer:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(74,110,82,.1)}textarea.answer{min-height:140px;resize:vertical}.actions{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}.primary,.secondary{border:0;border-radius:999px;padding:11px 20px;font-weight:500}.primary{background:var(--gold);color:var(--ink)}.primary:hover{background:var(--gold-light)}.secondary{background:transparent;border:1px solid var(--border);color:var(--sage)}.feedback{margin-top:18px;padding:15px 18px;border-radius:10px;font-size:.9rem;display:none}.feedback.show{display:block}.feedback.good{background:#eef6ef;color:#285d36}.feedback.bad{background:#faefed;color:#7d3934}.feedback b{font-weight:500}.memory-word{font-family:var(--ff-display);font-size:clamp(2.3rem,8vw,4.6rem);color:var(--forest);text-align:center;padding:45px 10px}.memory-note{text-align:center;color:var(--muted);font-size:.85rem}.hidden{display:none!important}
+.summary{padding:40px 30px;text-align:center}.summary h2{font-family:var(--ff-display);font-size:2.5rem;color:var(--forest);margin:0}.summary-score{font-family:var(--ff-display);font-size:4rem;color:var(--gold);line-height:1;margin:18px}.summary p{color:var(--muted)}.errors{max-width:600px;margin:25px auto;text-align:left;background:var(--cream);padding:18px;border-radius:12px}.errors div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.85rem}.errors div:last-child{border:0}
+.note{font-size:.78rem;color:var(--muted);margin-top:22px}
+@media(max-width:760px){main{padding-top:36px}.dashboard{grid-template-columns:1fr 1fr}.dashboard .metric:last-child{grid-column:1/-1}.modes{grid-template-columns:1fr 1fr}.session-head{grid-template-columns:auto 1fr}.score{grid-column:1/-1}.task{padding:26px 20px}.topinner{padding:0 18px}}
+@media(max-width:480px){.modes{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}.dashboard .metric:last-child{grid-column:auto}.task{min-height:430px}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topinner"><a class="brand" href="/">Nawigator <span>·</span> Ćwiczenia</a><a class="back" href="/#narzedzia">Wróć do strony</a></div></div>
+<main>
+<section class="hero">
+<p class="eyebrow">Terapia pedagogiczna</p>
+<h1>Dysortografia</h1>
+<p>Ćwiczenia dla starszych uczniów, bez infantylnych grafik i szkolnego „odpytywania”. Wybierz rodzaj treningu albo uruchom sesję mieszaną.</p>
+<span class="privacy">Wyniki zapisują się tylko w tej przeglądarce</span>
+</section>
+<div class="dashboard">
+<div class="metric"><strong id="best">0%</strong><span>najlepszy wynik</span></div>
+<div class="metric"><strong id="sessions">0</strong><span>ukończone sesje</span></div>
+<div class="metric"><strong id="weak">brak</strong><span>najczęstsza trudność</span></div>
+</div>
+<div class="modes" id="modes"></div>
+<section class="session">
+<div class="session-head"><span class="counter" id="counter">Wybierz tryb</span><div class="progress-track"><div class="progress-fill" id="progress"></div></div><span class="score" id="score">0 poprawnych</span></div>
+<div id="task" class="task"><div class="summary"><h2>Gotowy?</h2><p>Wybierz rodzaj ćwiczeń. Sesja mieszana zawiera 12 losowych zadań, a tryb tematyczny wykorzystuje wszystkie zadania danego typu.</p><button class="primary" onclick="startSession('mix')">Rozpocznij sesję mieszaną</button></div></div>
+</section>
+<p class="note">Ćwiczenia mają charakter edukacyjny i wspierający. Nie zastępują diagnozy ani indywidualnie dobranej terapii pedagogicznej.</p>
+</main>
+<script>
+const tasks=[
+{id:1,type:'choice',cat:'ó/u',q:'Wybierz poprawny zapis.',options:['królik','krulik','królik'],a:'królik',rule:'W wyrazie „królik” zapisujemy ó. W wielu wyrazach pisownię trzeba utrwalić wzrokowo.'},
+{id:2,type:'choice',cat:'rz/ż',q:'Wybierz poprawny zapis.',options:['wrażenie','wrarzenie','wrazenie'],a:'wrażenie',rule:'„Wrażenie” zapisujemy przez ż. Warto zapamiętać cały obraz wyrazu.'},
+{id:3,type:'choice',cat:'ch/h',q:'Która forma jest poprawna?',options:['bohater','bochater','bohaterz'],a:'bohater',rule:'„Bohater” zapisujemy przez h.'},
+{id:4,type:'choice',cat:'nie',q:'Wybierz poprawne zdanie.',options:['Nie lubię się spóźniać.','Nielubię się spóźniać.','Nie lubie się spóźniać.'],a:'Nie lubię się spóźniać.',rule:'„Nie” z czasownikami zapisujemy oddzielnie: nie lubię.'},
+{id:5,type:'choice',cat:'częste błędy',q:'Wybierz poprawną formę.',options:['napewno','na pewno','na-pewno'],a:'na pewno',rule:'Wyrażenie „na pewno” zawsze zapisujemy rozdzielnie.'},
+{id:6,type:'choice',cat:'częste błędy',q:'Wybierz poprawną formę.',options:['wogóle','w ogóle','wogule'],a:'w ogóle',rule:'Poprawny zapis to „w ogóle”: osobno i przez ó.'},
+{id:7,type:'choice',cat:'częste błędy',q:'Wybierz poprawną formę.',options:['wziąć','wziąść','wziasć'],a:'wziąć',rule:'Poprawna forma to „wziąć”. Forma „wziąść” jest błędna.'},
+{id:8,type:'choice',cat:'rz/ż',q:'Które zdanie zapisano poprawnie?',options:['Morze jutro przyjdę.','Może jutro przyjdę.','Może jutro pszyjdę.'],a:'Może jutro przyjdę.',rule:'„Może” w znaczeniu „być może” piszemy przez ż, a „przyjdę” przez rz.'},
+{id:9,type:'choice',cat:'ó/u',q:'Uzupełnij: „Nie mam dziś dobrego ___.”',options:['humoru','homoru','humóru'],a:'humoru',rule:'„Humor” i „humoru” zapisujemy przez h i u.'},
+{id:10,type:'choice',cat:'ch/h',q:'Wybierz poprawny zapis.',options:['schody','shody','shody'],a:'schody',rule:'„Schody” zapisujemy przez ch.'},
+{id:11,type:'choice',cat:'nie',q:'Wybierz poprawny zapis.',options:['niezrobione zadanie','nie zrobione zadanie','niezrobionezadanie'],a:'niezrobione zadanie',rule:'„Nie” z przymiotnikami w stopniu równym zazwyczaj piszemy łącznie.'},
+{id:12,type:'choice',cat:'częste błędy',q:'Wybierz poprawny zapis.',options:['po prostu','poprostu','po-prostu'],a:'po prostu',rule:'Wyrażenie „po prostu” zapisujemy rozdzielnie.'},
+{id:13,type:'find',cat:'częste błędy',q:'Znajdź i popraw błędy w wiadomości.',text:'Hej, napewno będę puźniej. Wogóle nie zdążyłem na autobus.',a:'Hej, na pewno będę później. W ogóle nie zdążyłem na autobus.',rule:'„Na pewno” i „w ogóle” piszemy rozdzielnie, a „później” przez ó i ź.'},
+{id:14,type:'find',cat:'rz/ż',q:'Popraw krótką notatkę.',text:'Jutro pszynoszę książkę. Możesz ją pożyczyć, jeżeli chcesz.',a:'Jutro przynoszę książkę. Możesz ją pożyczyć, jeżeli chcesz.',rule:'„Przynoszę” zapisujemy przez rz po p.'},
+{id:15,type:'find',cat:'ch/h',q:'Popraw wiadomość.',text:'Chyba zachorowałem. Mam chrypkę i boli mnie gardło, więc cherbatę już zrobiłem.',a:'Chyba zachorowałem. Mam chrypkę i boli mnie gardło, więc herbatę już zrobiłem.',rule:'„Herbata” to wyraz z h.'},
+{id:16,type:'find',cat:'nie',q:'Popraw fragment maila.',text:'Nie wiem czy dam radę. Niezrobiłem jeszcze prezentacji i nie mam notatek.',a:'Nie wiem czy dam radę. Nie zrobiłem jeszcze prezentacji i nie mam notatek.',rule:'„Nie” z czasownikiem „zrobiłem” zapisujemy oddzielnie.'},
+{id:17,type:'find',cat:'częste błędy',q:'Popraw notatkę.',text:'Narazie zostaję w domu. Z kąd mam wiedzieć, o której skończymy?',a:'Na razie zostaję w domu. Skąd mam wiedzieć, o której skończymy?',rule:'Poprawnie: „na razie” oraz „skąd”.'},
+{id:18,type:'correct',cat:'ó/u',q:'Przepisz zdanie poprawnie.',text:'W gurach zrobiło się puźno i wruciliśmy do domu.',a:'W górach zrobiło się późno i wróciliśmy do domu.',rule:'„Górach”, „późno” i „wróciliśmy” zapisujemy przez ó.'},
+{id:19,type:'correct',cat:'rz/ż',q:'Przepisz zdanie poprawnie.',text:'Pszyjaciel powiedział, rze przyjdzie po trzeciej.',a:'Przyjaciel powiedział, że przyjdzie po trzeciej.',rule:'Poprawnie: „przyjaciel”, „że”, „przyjdzie”.'},
+{id:20,type:'correct',cat:'ch/h',q:'Przepisz zdanie poprawnie.',text:'Na chodniku leżały suhe liście, a z komina unosił się dym.',a:'Na chodniku leżały suche liście, a z komina unosił się dym.',rule:'„Suche” zapisujemy przez ch.'},
+{id:21,type:'correct',cat:'nie',q:'Przepisz zdanie poprawnie.',text:'Niewiem, dlaczego on nieprzyszedł.',a:'Nie wiem, dlaczego on nie przyszedł.',rule:'„Nie” z czasownikami „wiem” i „przyszedł” zapisujemy oddzielnie.'},
+{id:22,type:'correct',cat:'częste błędy',q:'Przepisz zdanie poprawnie.',text:'Wogóle niewiem, czy napewno możemy to wziąść.',a:'W ogóle nie wiem, czy na pewno możemy to wziąć.',rule:'Zapamiętaj cztery częste formy: „w ogóle”, „nie wiem”, „na pewno”, „wziąć”.'},
+{id:23,type:'memory',cat:'pamięć wzrokowa',q:'Zapamiętaj wyraz.',word:'współczesny',a:'współczesny',rule:'„Współczesny” zawiera ó. Pomaga zapamiętywanie całego obrazu wyrazu.'},
+{id:24,type:'memory',cat:'pamięć wzrokowa',q:'Zapamiętaj wyraz.',word:'rzeczywiście',a:'rzeczywiście',rule:'„Rzeczywiście” zaczyna się od „rzecz”, dlatego zachowuje rz.'},
+{id:25,type:'memory',cat:'pamięć wzrokowa',q:'Zapamiętaj wyraz.',word:'szczególnie',a:'szczególnie',rule:'W „szczególnie” zapisujemy ó. Warto utrwalać wyraz jako całość.'},
+{id:26,type:'memory',cat:'pamięć wzrokowa',q:'Zapamiętaj wyraz.',word:'wahadło',a:'wahadło',rule:'„Wahadło” zapisujemy przez h.'},
+{id:27,type:'fill',cat:'rz/ż',q:'Uzupełnij brakujący fragment.',text:'Na dworcu czekał pasa___er, który spóźnił się na pociąg.',a:'pasażer',rule:'„Pasażer” zapisujemy przez ż.'},
+{id:28,type:'fill',cat:'ó/u',q:'Uzupełnij brakujący fragment.',text:'Po powrocie od razu odłożyłem plecak na p___łkę.',a:'półkę',rule:'„Półka” i „półkę” zapisujemy przez ó.'},
+{id:29,type:'fill',cat:'ch/h',q:'Uzupełnij brakujący fragment.',text:'Po treningu byłem tak zmęczony, że tylko odet___nąłem.',a:'odetchnąłem',rule:'W formie „odetchnąłem” występuje ch.'},
+{id:30,type:'corrector',cat:'korektor',q:'Tryb korektora: popraw cały tekst.',text:'Wczoraj wogóle nie miałem czasu. Musiałem wziąść książki z biblioteki, ale zapomniałem, rze jest już zamknięta. Narazie oddam je jutro i napewno napiszę do nauczyciela.',a:'Wczoraj w ogóle nie miałem czasu. Musiałem wziąć książki z biblioteki, ale zapomniałem, że jest już zamknięta. Na razie oddam je jutro i na pewno napiszę do nauczyciela.',rule:'Najczęstsze poprawki: „w ogóle”, „wziąć”, „że”, „na razie”, „na pewno”.'},
+{id:31,type:'corrector',cat:'korektor',q:'Tryb korektora: popraw cały tekst.',text:'Niechciałem się spuźnić, więc wyszedłem wcześniej. Po drodze zauwarzyłem, że zapomniałem słuchawek. Wruciłem po nie, chociaż wiedziałem, że morze zabraknąć mi czasu.',a:'Nie chciałem się spóźnić, więc wyszedłem wcześniej. Po drodze zauważyłem, że zapomniałem słuchawek. Wróciłem po nie, chociaż wiedziałem, że może zabraknąć mi czasu.',rule:'„Nie chciałem” osobno; „spóźnić”, „zauważyłem”, „wróciłem”; „może” w znaczeniu „być może”.'}
+];
+const labels={mix:['Sesja mieszana','12 różnych zadań'],choice:['Wybór formy','ó/u, rz/ż, ch/h, nie'],find:['Znajdź błędy','wiadomości i notatki'],correct:['Popraw zdanie','samodzielny zapis'],memory:['Pamięć wyrazu','krótka ekspozycja'],fill:['Uzupełnianie','brakujące fragmenty'],corrector:['Korektor','cały krótki tekst']};
+let state={list:[],i:0,ok:0,answered:false,mode:'mix',errors:{}};
+const norm=s=>s.toLocaleLowerCase('pl-PL').trim().replace(/\s+/g,' ').replace(/[„”"]/g,'"');
+const escapeHtml=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function store(){return JSON.parse(localStorage.getItem('nawigator_dysortografia')||'{"sessions":0,"best":0,"errors":{}}')}
+function saveStore(data){localStorage.setItem('nawigator_dysortografia',JSON.stringify(data))}
+function stats(){const d=store();document.getElementById('sessions').textContent=d.sessions||0;document.getElementById('best').textContent=(d.best||0)+'%';const e=Object.entries(d.errors||{}).sort((a,b)=>b[1]-a[1]);document.getElementById('weak').textContent=e.length?e[0][0]:'brak'}
+function initModes(){document.getElementById('modes').innerHTML=Object.entries(labels).map(([k,v])=>'<button class="mode" data-mode="'+k+'" onclick="startSession(\''+k+'\')"><b>'+v[0]+'</b><small>'+v[1]+'</small></button>').join('')}
+function shuffled(a){return [...a].sort(()=>Math.random()-.5)}
+function startSession(mode){state={list:mode==='mix'?shuffled(tasks).slice(0,12):shuffled(tasks.filter(t=>t.type===mode)),i:0,ok:0,answered:false,mode,errors:{}};document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('active',x.dataset.mode===mode));render()}
+function typeName(t){return ({choice:'Wybór poprawnej formy',find:'Znajdź błędy',correct:'Popraw zdanie',memory:'Pamięć ortograficzna',fill:'Uzupełnij fragment',corrector:'Korektor tekstu'})[t]}
+function render(){const t=state.list[state.i];if(!t)return finish();state.answered=false;document.getElementById('counter').textContent='Zadanie '+(state.i+1)+' z '+state.list.length;document.getElementById('score').textContent=state.ok+' poprawnych';document.getElementById('progress').style.width=(state.i/state.list.length*100)+'%';let body='<div class="task-type">'+typeName(t.type)+'</div><h2>'+escapeHtml(t.q)+'</h2>';
+if(t.type==='choice'){body+='<div class="options">'+t.options.map(o=>'<button class="option" onclick="choose(this,\''+o.replace(/'/g,"\\'")+'\')">'+escapeHtml(o)+'</button>').join('')+'</div>'}
+else if(t.type==='memory'){body+='<div id="memory"><div class="memory-word">'+escapeHtml(t.word)+'</div><div class="memory-note">Masz 3 sekundy na zapamiętanie zapisu.</div></div><div id="memoryInput" class="hidden"><input class="answer" id="answer" autocomplete="off" placeholder="Wpisz wyraz z pamięci"><div class="actions"><button class="primary" onclick="checkInput()">Sprawdź</button></div></div>';setTimeout(()=>{const m=document.getElementById('memory'),i=document.getElementById('memoryInput');if(m&&i){m.classList.add('hidden');i.classList.remove('hidden');document.getElementById('answer').focus()}},3000)}
+else{body+='<div class="prompt">'+escapeHtml(t.text)+'</div>'+(t.type==='corrector'||t.type==='find'||t.type==='correct'?'<textarea class="answer" id="answer" placeholder="Wpisz poprawioną wersję"></textarea>':'<input class="answer" id="answer" autocomplete="off" placeholder="Wpisz brakujący wyraz">')+'<div class="actions"><button class="primary" onclick="checkInput()">Sprawdź</button></div>'}
+body+='<div class="feedback" id="feedback"></div>';document.getElementById('task').innerHTML=body}
+function record(ok,t){if(state.answered)return;state.answered=true;if(ok)state.ok++;else{state.errors[t.cat]=(state.errors[t.cat]||0)+1}document.getElementById('score').textContent=state.ok+' poprawnych'}
+function feedback(ok,t){const f=document.getElementById('feedback');f.className='feedback show '+(ok?'good':'bad');f.innerHTML='<b>'+(ok?'Dobrze.':'Jeszcze nie.')+'</b> '+escapeHtml(t.rule)+(ok?'':'<br>Poprawna odpowiedź: '+escapeHtml(t.a));const a=document.createElement('button');a.className='primary';a.style.marginTop='12px';a.textContent=state.i+1===state.list.length?'Zobacz podsumowanie':'Następne zadanie';a.onclick=next;f.appendChild(document.createElement('br'));f.appendChild(a)}
+function choose(el,val){if(state.answered)return;const t=state.list[state.i],ok=norm(val)===norm(t.a);record(ok,t);document.querySelectorAll('.option').forEach(b=>{b.disabled=true;if(norm(b.textContent)===norm(t.a))b.classList.add('correct')});if(!ok)el.classList.add('wrong');feedback(ok,t)}
+function checkInput(){if(state.answered)return;const t=state.list[state.i],input=document.getElementById('answer');const ok=norm(input.value)===norm(t.a);record(ok,t);input.disabled=true;feedback(ok,t)}
+function next(){state.i++;render()}
+function finish(){document.getElementById('progress').style.width='100%';const pct=Math.round(state.ok/state.list.length*100);const d=store();d.sessions=(d.sessions||0)+1;d.best=Math.max(d.best||0,pct);d.errors=d.errors||{};Object.entries(state.errors).forEach(([k,v])=>d.errors[k]=(d.errors[k]||0)+v);d.last={date:new Date().toISOString(),score:pct,mode:state.mode};saveStore(d);stats();const errs=Object.entries(state.errors).sort((a,b)=>b[1]-a[1]);document.getElementById('counter').textContent='Sesja zakończona';document.getElementById('task').innerHTML='<div class="summary"><h2>Podsumowanie</h2><div class="summary-score">'+pct+'%</div><p>'+state.ok+' z '+state.list.length+' odpowiedzi poprawnych.</p>'+(errs.length?'<div class="errors"><b>Obszary do powtórki</b>'+errs.map(e=>'<div><span>'+escapeHtml(e[0])+'</span><span>'+e[1]+' bł.</span></div>').join('')+'</div>':'<p>Bez błędów w tej sesji.</p>')+'<button class="primary" onclick="startSession(\''+state.mode+'\')">Powtórz sesję</button></div>'}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&document.getElementById('answer')&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();checkInput()}});
+initModes();stats();
+</script>
+</body>
+</html>
