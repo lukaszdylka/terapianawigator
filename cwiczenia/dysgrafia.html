@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dysgrafia | Ćwiczenia Nawigator</title>
+<meta name="description" content="Interaktywne ćwiczenia grafomotoryczne dla starszych uczniów: płynność ruchu, precyzja, rytm, litery i krótkie zadania pisma odręcznego.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b2b1c;--forest:#243d29;--sage:#4a6e52;--gold:#b5903b;--gold-light:#cfa84e;--cream:#f4efe5;--parchment:#ebe3d0;--white:#f9f6f0;--muted:#6a7a6b;--border:rgba(27,43,28,.12);--red:#9b4740;--green:#397149;--ff-display:'Cormorant Garamond',Georgia,serif;--ff-body:'DM Sans',system-ui,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--ff-body);font-weight:300;line-height:1.6}button{font:inherit;cursor:pointer}.topbar{background:var(--forest);color:var(--cream);position:sticky;top:0;z-index:10}.topinner{max-width:1120px;margin:auto;height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between}.brand{font-family:var(--ff-display);font-size:1.2rem;font-weight:600;color:var(--cream);text-decoration:none}.brand span{color:var(--gold-light)}.back{font-size:.8rem;color:rgba(244,239,229,.7);text-decoration:none}.back:hover{color:var(--gold-light)}
+main{max-width:1120px;margin:auto;padding:52px 24px 80px}.eyebrow{font-size:.7rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--sage);margin:0 0 8px}.hero h1{font-family:var(--ff-display);font-size:clamp(2.5rem,6vw,4.4rem);line-height:1;margin:0;color:var(--forest)}.hero p{max-width:760px;color:var(--muted);margin:18px 0 0}.privacy{display:inline-flex;margin-top:18px;padding:7px 12px;border-radius:999px;background:var(--parchment);font-size:.75rem;color:var(--sage)}
+.dashboard{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:32px 0}.metric{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px}.metric strong{display:block;font-family:var(--ff-display);font-size:1.8rem;color:var(--forest);line-height:1.1}.metric span{font-size:.75rem;color:var(--muted)}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0}.mode{border:1px solid var(--border);background:var(--white);border-radius:14px;padding:18px;text-align:left;color:var(--forest);transition:.2s}.mode:hover,.mode.active{border-color:var(--gold);box-shadow:0 5px 20px rgba(27,43,28,.08);transform:translateY(-2px)}.mode b{display:block;font-weight:500}.mode small{color:var(--muted)}
+.session{background:var(--white);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 8px 36px rgba(27,43,28,.08)}.session-head{padding:18px 24px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}.progress-track{height:7px;background:var(--parchment);border-radius:99px;overflow:hidden}.progress-fill{height:100%;width:0;background:var(--gold);transition:width .3s}.counter,.score{font-size:.78rem;color:var(--muted);white-space:nowrap}.score{color:var(--sage)}
+.task{padding:34px 30px 30px;min-height:460px}.task-type{font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);font-weight:500}.task h2{font-family:var(--ff-display);font-size:clamp(1.6rem,4vw,2.2rem);color:var(--forest);line-height:1.25;margin:8px 0 8px}.instruction{font-size:.88rem;color:var(--muted);margin:0 0 20px}.canvas-wrap{background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:12px;touch-action:none}.canvas-wrap canvas{display:block;width:100%;height:300px;background:#fff;border-radius:9px;touch-action:none}.canvas-help{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:.75rem;color:var(--muted);margin-top:8px}.actions{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}.primary,.secondary{border:0;border-radius:999px;padding:11px 20px;font-weight:500}.primary{background:var(--gold);color:var(--ink)}.primary:hover{background:var(--gold-light)}.secondary{background:transparent;border:1px solid var(--border);color:var(--sage)}.feedback{margin-top:18px;padding:15px 18px;border-radius:10px;font-size:.9rem}.feedback.good{background:#eef6ef;color:#285d36}.feedback.mid{background:#f8f2e4;color:#715c23}.feedback.bad{background:#faefed;color:#7d3934}.options{display:grid;gap:10px}.option{width:100%;padding:14px 18px;border:1px solid var(--border);border-radius:10px;background:#fff;text-align:left;color:var(--ink)}.option:hover:not(:disabled){border-color:var(--sage);background:var(--cream)}.option.correct{border-color:var(--green);background:#eef6ef}.option.wrong{border-color:var(--red);background:#faefed}.paper-card{background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:22px}.paper-text{font-family:var(--ff-display);font-size:1.55rem;color:var(--forest);line-height:1.45}.timer{font-family:var(--ff-display);font-size:3rem;color:var(--gold);margin-top:10px}.tip{font-size:.84rem;color:var(--muted);margin-top:8px}.summary{text-align:center;padding:40px 10px}.summary h2{font-family:var(--ff-display);font-size:2.5rem;color:var(--forest);margin:0}.summary-score{font-family:var(--ff-display);font-size:4rem;color:var(--gold);line-height:1;margin:18px}.summary p{color:var(--muted)}.note{font-size:.78rem;color:var(--muted);margin-top:22px}
+@media(max-width:760px){main{padding-top:36px}.dashboard{grid-template-columns:1fr 1fr}.dashboard .metric:last-child{grid-column:1/-1}.modes{grid-template-columns:1fr 1fr}.session-head{grid-template-columns:auto 1fr}.score{grid-column:1/-1}.task{padding:26px 20px}.canvas-wrap canvas{height:260px}}
+@media(max-width:480px){.modes,.dashboard{grid-template-columns:1fr}.dashboard .metric:last-child{grid-column:auto}.canvas-wrap canvas{height:230px}.task{min-height:500px}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topinner"><a class="brand" href="/">Nawigator <span>·</span> Ćwiczenia</a><a class="back" href="/#narzedzia">Wróć do strony</a></div></div>
+<main>
+<section class="hero">
+<p class="eyebrow">Terapia pedagogiczna</p>
+<h1>Dysgrafia</h1>
+<p>Trening sprawności grafomotorycznej dla starszych uczniów. Ćwiczenia rozwijają płynność, precyzję, kontrolę ruchu, rytm oraz organizację pisma. Najlepiej wykonywać je rysikiem lub palcem na ekranie dotykowym, ale działają także myszką i touchpadem.</p>
+<span class="privacy">Postęp zapisuje się tylko w tej przeglądarce</span>
+</section>
+<div class="dashboard">
+<div class="metric"><strong id="best">0%</strong><span>najlepsza średnia precyzja</span></div>
+<div class="metric"><strong id="sessions">0</strong><span>ukończone sesje</span></div>
+<div class="metric"><strong id="avg">0%</strong><span>ostatni wynik</span></div>
+</div>
+<div class="modes" id="modes"></div>
+<section class="session">
+<div class="session-head"><span class="counter" id="counter">Wybierz tryb</span><div class="progress-track"><div class="progress-fill" id="progress"></div></div><span class="score" id="score">0%</span></div>
+<div id="task" class="task"><div class="summary"><h2>Gotowy?</h2><p>W sesji mieszanej znajdziesz prowadzenie po śladzie, płynne wzory, ćwiczenia percepcyjne i krótkie zadania z pisaniem na kartce.</p><button class="primary" onclick="startSession('mix')">Rozpocznij sesję mieszaną</button></div></div>
+</section>
+<p class="note">Ćwiczenia wspierają sprawność grafomotoryczną, ale nie zastępują diagnozy ani indywidualnie dobranej terapii ręki lub terapii pedagogicznej. Przy bólu dłoni należy przerwać ćwiczenie.</p>
+</main>
+<script>
+const tasks=[
+{id:1,type:'trace',cat:'precyzja',shape:'line',q:'Poprowadź linię możliwie dokładnie po śladzie.',tip:'Nie śpiesz się. Staraj się prowadzić ruch jednym, równym tempem.'},
+{id:2,type:'trace',cat:'precyzja',shape:'wave',q:'Przejdź po fali bez odrywania ręki.',tip:'Ruch powinien być płynny, nie punktowy.'},
+{id:3,type:'trace',cat:'precyzja',shape:'zigzag',q:'Odwzoruj zygzak jednym ciągłym ruchem.',tip:'Zwróć uwagę na zmianę kierunku w wierzchołkach.'},
+{id:4,type:'trace',cat:'płynność',shape:'loops',q:'Prowadź po pętlach możliwie płynnie.',tip:'Nie zatrzymuj się pomiędzy kolejnymi pętlami.'},
+{id:5,type:'trace',cat:'płynność',shape:'infinity',q:'Obrysuj znak nieskończoności.',tip:'Spróbuj utrzymać podobny rozmiar obu części.'},
+{id:6,type:'trace',cat:'precyzja',shape:'spiral',q:'Poprowadź linię po spirali do środka.',tip:'Zmniejszaj ruch stopniowo, bez gwałtownych skrętów.'},
+{id:7,type:'trace',cat:'płynność',shape:'arches',q:'Odwzoruj serię łuków.',tip:'Utrzymuj podobną wysokość kolejnych łuków.'},
+{id:8,type:'trace',cat:'precyzja',shape:'circle',q:'Obrysuj okrąg.',tip:'Staraj się wrócić dokładnie do punktu startu.'},
+{id:9,type:'trace',cat:'kontrola kierunku',shape:'slant',q:'Przeprowadź równoległe linie ukośne.',tip:'Pilnuj stałego kierunku i podobnych odstępów.'},
+{id:10,type:'trace',cat:'płynność',shape:'s',q:'Poprowadź po dużej linii w kształcie litery S.',tip:'Ruch wykonaj spokojnie i bez zatrzymywania.'},
+{id:11,type:'trace',cat:'litery',shape:'m',q:'Odwzoruj ruch potrzebny do zapisu litery m.',tip:'Zwróć uwagę na równe łuki i rytm.'},
+{id:12,type:'trace',cat:'litery',shape:'n',q:'Odwzoruj ruch potrzebny do zapisu litery n.',tip:'Staraj się utrzymać jednakową wysokość elementów.'},
+{id:13,type:'trace',cat:'litery',shape:'u',q:'Odwzoruj ruch potrzebny do zapisu litery u.',tip:'Dolne łuki powinny mieć podobną szerokość.'},
+{id:14,type:'trace',cat:'litery',shape:'l',q:'Przećwicz serię wysokich pętli.',tip:'Kontroluj wysokość i odstępy.'},
+{id:15,type:'trace',cat:'litery',shape:'e',q:'Przećwicz serię małych pętli.',tip:'Nie zaciskaj dłoni. Ruch powinien być lekki.'},
+{id:16,type:'trace',cat:'rytm',shape:'smallwaves',q:'Odwzoruj rytmiczny szereg małych fal.',tip:'Spróbuj utrzymać stałą wielkość i tempo.'},
+{id:17,type:'trace',cat:'rytm',shape:'teeth',q:'Odwzoruj równy rytm krótkich elementów.',tip:'Liczy się powtarzalność, nie szybkość.'},
+{id:18,type:'trace',cat:'precyzja',shape:'narrowwave',q:'Przejdź po węższej fali.',tip:'To trudniejszy wariant. Zwolnij przed zmianą kierunku.'},
+{id:19,type:'trace',cat:'kontrola kierunku',shape:'stairs',q:'Odwzoruj schodkowy tor.',tip:'Staraj się tworzyć wyraźne kąty i równe odcinki.'},
+{id:20,type:'trace',cat:'precyzja',shape:'doubleloop',q:'Odwzoruj podwójną pętlę.',tip:'Kontroluj punkt przecięcia obu części.'},
+{id:21,type:'choice',cat:'organizacja pisma',q:'Który zapis będzie najbardziej czytelny?',options:['Litery podobnej wysokości i regularne odstępy','Każda litera innej wielkości','Wyrazy nachodzące na siebie'],a:0,rule:'Czytelność poprawiają względnie stała wielkość liter i regularne odstępy.'},
+{id:22,type:'choice',cat:'ergonomia',q:'Co zwykle pomaga zmniejszyć napięcie dłoni podczas pisania?',options:['Bardzo mocny chwyt długopisu','Luźniejszy chwyt i krótkie przerwy','Pisanie wyłącznie palcami bez ruchu nadgarstka'],a:1,rule:'Zbyt silny chwyt szybko męczy dłoń. Pomaga lżejszy nacisk i przerwy.'},
+{id:23,type:'choice',cat:'tempo',q:'Co jest ważniejsze podczas ćwiczenia grafomotorycznego?',options:['Jak największa szybkość','Płynny i kontrolowany ruch','Jak najmniejszy zapis'],a:1,rule:'Najpierw budujemy kontrolę i płynność. Tempo można zwiększać później.'},
+{id:24,type:'choice',cat:'ergonomia',q:'Jak najlepiej ustawić kartkę przy pisaniu?',options:['Tak, aby pozycja była wygodna i nie wymuszała skręcenia nadgarstka','Zawsze idealnie pionowo niezależnie od ręki','Jak najdalej od ciała'],a:0,rule:'Ułożenie kartki powinno wspierać swobodny ruch ręki i naturalną pozycję nadgarstka.'},
+{id:25,type:'choice',cat:'organizacja pisma',q:'Co pomaga utrzymać zapis w linii?',options:['Patrzenie wyłącznie na końcówkę długopisu','Korzystanie z linii bazowej i kontrola położenia liter','Coraz mocniejszy nacisk'],a:1,rule:'Linia bazowa daje stały punkt odniesienia dla położenia liter.'},
+{id:26,type:'paper',cat:'pismo na kartce',q:'Napisz na kartce trzy razy zdanie:',text:'Dzisiaj piszę spokojnie i czytelnie.',seconds:40,tip:'Zwróć uwagę na odstępy między wyrazami oraz podobną wysokość liter.'},
+{id:27,type:'paper',cat:'pismo na kartce',q:'Przepisz na kartkę, nie zwiększając tempa:',text:'Precyzja jest ważniejsza niż szybkość.',seconds:35,tip:'Po zakończeniu porównaj początek i koniec zdania. Czy wielkość liter się zmieniła?'},
+{id:28,type:'paper',cat:'pismo na kartce',q:'Napisz w jednej linii pięć razy:',text:'minimum',seconds:35,tip:'Zwróć uwagę na rytm elementów m, n, i, u.'},
+{id:29,type:'paper',cat:'pismo na kartce',q:'Napisz w jednej linii pięć razy:',text:'kolejność',seconds:35,tip:'Pilnuj połączeń liter i regularnych odstępów.'},
+{id:30,type:'paper',cat:'pismo na kartce',q:'Przepisz zdanie swoim zwykłym pismem:',text:'Spokojny ruch pomaga utrzymać czytelny zapis.',seconds:45,tip:'Na końcu zaznacz jedno miejsce, które napisałbyś jeszcze raz dokładniej.'}
+];
+const modes={mix:['Sesja mieszana','10 różnych zadań'],trace:['Po śladzie','precyzja i płynność'],choice:['Nawyki pisania','ergonomia i czytelność'],paper:['Na kartce','krótki trening pisma']};
+let state={list:[],i:0,scores:[],mode:'mix',done:false};
+let ctx,canvas,drawing=false,userPts=[],targetPts=[];
+function store(){return JSON.parse(localStorage.getItem('nawigator_dysgrafia')||'{"sessions":0,"best":0,"last":0}')}
+function saveStore(d){localStorage.setItem('nawigator_dysgrafia',JSON.stringify(d))}
+function stats(){const d=store();document.getElementById('sessions').textContent=d.sessions||0;document.getElementById('best').textContent=(d.best||0)+'%';document.getElementById('avg').textContent=(d.last||0)+'%'}
+function initModes(){document.getElementById('modes').innerHTML=Object.entries(modes).map(([k,v])=>'<button class="mode" data-mode="'+k+'" onclick="startSession(\''+k+'\')"><b>'+v[0]+'</b><small>'+v[1]+'</small></button>').join('')}
+function shuffled(a){return [...a].sort(()=>Math.random()-.5)}
+function startSession(mode){state={list:mode==='mix'?shuffled(tasks).slice(0,10):shuffled(tasks.filter(t=>t.type===mode)),i:0,scores:[],mode,done:false};document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('active',x.dataset.mode===mode));render()}
+function render(){const t=state.list[state.i];if(!t)return finish();state.done=false;document.getElementById('counter').textContent='Zadanie '+(state.i+1)+' z '+state.list.length;document.getElementById('progress').style.width=(state.i/state.list.length*100)+'%';document.getElementById('score').textContent=state.scores.length?Math.round(state.scores.reduce((a,b)=>a+b,0)/state.scores.length)+'%':'0%';let body='<div class="task-type">'+({trace:'Ćwiczenie grafomotoryczne',choice:'Nawyki pisania',paper:'Ćwiczenie na kartce'})[t.type]+'</div><h2>'+t.q+'</h2>';
+if(t.type==='trace'){body+='<p class="instruction">'+t.tip+'</p><div class="canvas-wrap"><canvas id="draw"></canvas><div class="canvas-help"><span>Prowadź po jasnym śladzie</span><span>Możesz zacząć od nowa</span></div></div><div class="actions"><button class="secondary" onclick="resetCanvas()">Wyczyść</button><button class="primary" onclick="scoreCanvas()">Sprawdź precyzję</button></div>'}
+if(t.type==='choice'){body+='<p class="instruction">Wybierz odpowiedź, która najlepiej wspiera czytelne i mniej męczące pismo.</p><div class="options">'+t.options.map((o,i)=>'<button class="option" onclick="choose(this,'+i+')">'+o+'</button>').join('')+'</div>'}
+if(t.type==='paper'){body+='<p class="instruction">'+t.tip+'</p><div class="paper-card"><div class="paper-text">'+t.text+'</div><div class="timer" id="timer">'+t.seconds+' s</div><div class="tip">Przygotuj kartkę i długopis. Timer wystartuje po kliknięciu.</div></div><div class="actions"><button class="secondary" onclick="startTimer('+t.seconds+')">Uruchom timer</button><button class="primary" onclick="completePaper()">Wykonane</button></div>'}
+document.getElementById('task').innerHTML=body;if(t.type==='trace')setTimeout(()=>setupCanvas(t.shape),0)}
+function shapePoints(shape,w,h){const P=[];const add=(x,y)=>P.push({x,y});const n=240;for(let i=0;i<=n;i++){const t=i/n;let x,y;
+if(shape==='line'){x=.08+.84*t;y=.5}
+else if(shape==='wave'){x=.06+.88*t;y=.5+.23*Math.sin(t*Math.PI*4)}
+else if(shape==='narrowwave'){x=.06+.88*t;y=.5+.13*Math.sin(t*Math.PI*6)}
+else if(shape==='zigzag'){x=.06+.88*t;const k=(t*8)%2;y=k<1?.28+.44*k:.72-.44*(k-1)}
+else if(shape==='loops'){x=.07+.86*t;y=.5+.22*Math.sin(t*Math.PI*8)}
+else if(shape==='infinity'){const a=t*Math.PI*2;x=.5+.34*Math.sin(a);y=.5+.2*Math.sin(a)*Math.cos(a)}
+else if(shape==='spiral'){const a=t*Math.PI*5,r=.36*(1-t)+.02;x=.5+r*Math.cos(a);y=.5+r*Math.sin(a)}
+else if(shape==='arches'){x=.06+.88*t;y=.7-.35*Math.abs(Math.sin(t*Math.PI*5))}
+else if(shape==='circle'){const a=-Math.PI/2+t*Math.PI*2;x=.5+.3*Math.cos(a);y=.5+.34*Math.sin(a)}
+else if(shape==='slant'){const group=Math.floor(t*6);const local=(t*6)%1;x=.12+group*.14+local*.08;y=.78-local*.56}
+else if(shape==='s'){const a=-Math.PI/2+t*Math.PI*2;x=.5+.22*Math.sin(a);y=.15+.7*t}
+else if(shape==='m'){x=.06+.88*t;y=.68-.34*Math.abs(Math.sin(t*Math.PI*6))}
+else if(shape==='n'){x=.06+.88*t;y=.68-.32*Math.abs(Math.sin(t*Math.PI*4))}
+else if(shape==='u'){x=.06+.88*t;y=.32+.34*Math.abs(Math.sin(t*Math.PI*4))}
+else if(shape==='l'){x=.06+.88*t;y=.66-.38*Math.abs(Math.sin(t*Math.PI*5))}
+else if(shape==='e'){x=.06+.88*t;y=.55+.18*Math.sin(t*Math.PI*8)}
+else if(shape==='smallwaves'){x=.05+.9*t;y=.5+.11*Math.sin(t*Math.PI*12)}
+else if(shape==='teeth'){x=.05+.9*t;const k=(t*12)%2;y=k<1?.38+.24*k:.62-.24*(k-1)}
+else if(shape==='stairs'){const step=Math.floor(t*8),local=(t*8)%1;x=.07+step*.105+(step%2===0?local*.105:0);y=.2+step*.075+(step%2===1?local*.075:0)}
+else if(shape==='doubleloop'){const a=t*Math.PI*4;x=.5+.3*Math.sin(a);y=.5+.22*Math.sin(a)*Math.cos(a)}
+else{x=.08+.84*t;y=.5}
+add(x*w,y*h)}return P}
+function setupCanvas(shape){canvas=document.getElementById('draw');if(!canvas)return;const rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);canvas._w=rect.width;canvas._h=rect.height;targetPts=shapePoints(shape,rect.width,rect.height);userPts=[];drawTarget();canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up)}
+function drawTarget(){if(!ctx)return;ctx.clearRect(0,0,canvas._w,canvas._h);ctx.lineWidth=9;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(181,144,59,.28)';ctx.beginPath();targetPts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke()}
+function pos(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+function down(e){drawing=true;canvas.setPointerCapture(e.pointerId);const p=pos(e);userPts.push(p);ctx.strokeStyle='#243d29';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x,p.y)}
+function move(e){if(!drawing)return;const p=pos(e);userPts.push(p);ctx.lineTo(p.x,p.y);ctx.stroke()}
+function up(){drawing=false}
+function resetCanvas(){userPts=[];drawTarget()}
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function scoreCanvas(){if(state.done)return;if(userPts.length<12){showFeedback('bad','Narysuj cały ślad, a potem sprawdź precyzję.');return}let sum=0;const sample=targetPts.filter((_,i)=>i%4===0);for(const t of sample){let best=Infinity;for(let i=0;i<userPts.length;i+=3)best=Math.min(best,distance(t,userPts[i]));sum+=best}const avg=sum/sample.length;const score=Math.max(0,Math.min(100,Math.round(100-avg*2.25)));state.scores.push(score);state.done=true;const msg=score>=85?'Bardzo dobra precyzja. Ruch był blisko wzoru.':score>=65?'Dobrze. Spróbuj jeszcze raz wolniej i zwróć uwagę na miejsca zmiany kierunku.':'Warto powtórzyć ten wzór wolniej. Skup się na płynności i prowadzeniu po środku śladu.';showFeedback(score>=85?'good':score>=65?'mid':'bad','Precyzja: <b>'+score+'%</b>. '+msg,true)}
+function choose(el,i){if(state.done)return;const t=state.list[state.i],ok=i===t.a;state.scores.push(ok?100:0);state.done=true;document.querySelectorAll('.option').forEach((b,j)=>{b.disabled=true;if(j===t.a)b.classList.add('correct')});if(!ok)el.classList.add('wrong');showFeedback(ok?'good':'bad',(ok?'<b>Dobrze.</b> ':'<b>Nie tym razem.</b> ')+t.rule,true)}
+let timerId;
+function startTimer(sec){clearInterval(timerId);let left=sec;const el=document.getElementById('timer');if(!el)return;el.textContent=left+' s';timerId=setInterval(()=>{left--;if(el)el.textContent=Math.max(0,left)+' s';if(left<=0){clearInterval(timerId);if(el)el.textContent='Koniec czasu'}},1000)}
+function completePaper(){if(state.done)return;clearInterval(timerId);state.scores.push(100);state.done=true;showFeedback('good','Ćwiczenie zapisane jako wykonane. W zadaniach na kartce ważniejsza jest obserwacja własnego pisma niż automatyczna ocena.',true)}
+function showFeedback(kind,msg,next){let old=document.getElementById('feedback');if(old)old.remove();const f=document.createElement('div');f.id='feedback';f.className='feedback '+kind;f.innerHTML=msg;if(next){f.innerHTML+='<div class="actions"><button class="primary" onclick="next()">Następne zadanie</button></div>'}document.getElementById('task').appendChild(f);document.getElementById('score').textContent=Math.round(state.scores.reduce((a,b)=>a+b,0)/state.scores.length)+'%'}
+function next(){state.i++;render()}
+function finish(){document.getElementById('progress').style.width='100%';const avg=state.scores.length?Math.round(state.scores.reduce((a,b)=>a+b,0)/state.scores.length):0;const d=store();d.sessions=(d.sessions||0)+1;d.best=Math.max(d.best||0,avg);d.last=avg;d.date=new Date().toISOString();saveStore(d);stats();document.getElementById('counter').textContent='Sesja zakończona';document.getElementById('score').textContent=avg+'%';document.getElementById('task').innerHTML='<div class="summary"><h2>Podsumowanie</h2><div class="summary-score">'+avg+'%</div><p>To orientacyjny wynik z ćwiczeń cyfrowych. Przy dysgrafii ważniejsza od samej liczby jest regularność, mniejsze napięcie dłoni i stopniowa poprawa czytelności pisma.</p><button class="primary" onclick="startSession(\''+state.mode+'\')">Powtórz sesję</button></div>'}
+initModes();stats();
+</script>
+</body>
+</html>
