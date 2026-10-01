@@ -46,7 +46,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
     :root {
@@ -63,8 +63,8 @@
       --muted:      #6a7a6b;
       --border:     rgba(27,43,28,.1);
 
-      --ff-display: 'Cormorant Garamond', Georgia, serif;
-      --ff-body:    'DM Sans', system-ui, sans-serif;
+      --ff-display: 'Lora', Georgia, serif;
+      --ff-body:    'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
       --w: 1280px;
       --px: clamp(24px, 5vw, 88px);
@@ -80,8 +80,9 @@
       background: var(--cream);
       color: var(--ink);
       line-height: 1.7;
-      font-weight: 300;
+      font-weight: 400;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
     body::after {
@@ -584,19 +585,23 @@
     .booking-feat { display: flex; align-items: center; gap: 12px; font-size: .875rem; color: #374938; }
     .booking-feat svg { width: 16px; height: 16px; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
     .widget-wrap {
+      width: 100%;
+      min-width: 0;
+      min-height: 560px;
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
       box-shadow: var(--shadow-md);
+      background: #fff;
     }
-    /* twojpsycholog.pl widget color overrides */
     #twoj-psycholog-widget {
-      --tp-header-bg:     #243d29;
-      --tp-header-color:  #f4efe5;
-      --tp-btn-bg:        #b5903b;
-      --tp-btn-color:     #1b2b1c;
-      --tp-accent:        #b5903b;
+      width: 100%;
+      min-height: 560px;
       font-family: var(--ff-body);
+    }
+    @media (max-width: 900px) {
+      .widget-wrap,
+      #twoj-psycholog-widget { min-height: 640px; }
     }
 
 
@@ -1012,15 +1017,15 @@
         </div>
       </div>
 
-      <div class="widget-wrap reveal d1">
+      <div class="widget-wrap">
         <div id="twoj-psycholog-widget"
           data-twoj-psycholog-therapist-id="8917"
           data-twoj-psycholog-variant="full"
+          data-twoj-psycholog-return-url="https://terapianawigator.pl/"
           data-twoj-psycholog-top-background="#243d29"
           data-twoj-psycholog-top-text-color="#f4efe5"
           data-twoj-psycholog-button-background="#b5903b"
           data-twoj-psycholog-button-text-color="#1b2b1c"
-          data-twoj-psycholog-return-url="https://terapianawigator.pl"
         ></div>
       </div>
 
