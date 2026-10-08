@@ -1,0 +1,2622 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kalendarz Specjalisty</title>
+<style>
+/* Układ: terminarz w kratkę. Arkusz kalendarza leży na chłodnym papierze, oś dnia wyznaczają dzwonki (pasy lekcji 1–8),
+   dni bez zajęć są kreskowane, święta czerwone jak w ściennym kalendarzu, kolor „atramentu” prowadzi akcje. */
+:root{
+  --bg:#F1F4F7;
+  --kratka:rgba(36,67,176,.05);
+  --surface:#FFFFFF;
+  --sunken:#EEF2F6;
+  --band:rgba(36,67,176,.055);
+  --line:#E0E6ED;
+  --line-strong:#C5CFDA;
+  --ink:#17202B;
+  --ink-2:#475569;
+  --ink-3:#717F93;
+  --accent:#2443B0;
+  --accent-hover:#1B358F;
+  --on-accent:#FFFFFF;
+  --accent-soft:#E7ECFA;
+  --pen:#C8372E;
+  --pen-soft:#FBEAE8;
+  --on-pen:#FFFFFF;
+  --warn:#955400;
+  --warn-soft:#FDF2DE;
+  --ok:#25704A;
+  --ok-soft:#E1F2E7;
+  --hatch:rgba(23,32,43,.075);
+  --shadow:0 1px 2px rgba(23,32,43,.06),0 12px 32px rgba(23,32,43,.12);
+  --tint:12%;
+  --tint-line:34%;
+  --tint-ink:74%;
+  --t-kons:#3D5BD9;
+  --t-kryz:#D0362C;
+  --t-diag:#8246C8;
+  --t-rodz:#0F8C80;
+  --t-naucz:#B5730F;
+  --t-grupa:#3F8F3A;
+  --t-zesp:#5E6E80;
+  --t-inne:#8A5A35;
+  --f-display:Georgia,"Times New Roman",serif;
+  --f-ui:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --f-mono:Consolas,"Courier New",ui-monospace,monospace;
+  --r:6px;
+  --r-lg:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111817;--kratka:rgba(147,169,255,.04);--surface:#172120;--sunken:#1E2927;--band:rgba(147,169,255,.065);
+    --line:#283432;--line-strong:#3B4947;--ink:#E3EAE7;--ink-2:#AFBCB8;--ink-3:#84928E;
+    --accent:#93A9FF;--accent-hover:#ADBDFF;--on-accent:#0D1430;--accent-soft:#222D4C;
+    --pen:#FF7D6E;--pen-soft:#3A2321;--on-pen:#2A0D0A;--warn:#F2B04E;--warn-soft:#3A2D16;--ok:#7FD39B;--ok-soft:#1C3527;
+    --hatch:rgba(227,234,231,.065);--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.45);
+    --tint:20%;--tint-line:44%;--tint-ink:82%;
+    --t-kons:#8EA2FF;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-rodz:#4FD1C2;--t-naucz:#F0B357;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111817;--kratka:rgba(147,169,255,.04);--surface:#172120;--sunken:#1E2927;--band:rgba(147,169,255,.065);
+  --line:#283432;--line-strong:#3B4947;--ink:#E3EAE7;--ink-2:#AFBCB8;--ink-3:#84928E;
+  --accent:#93A9FF;--accent-hover:#ADBDFF;--on-accent:#0D1430;--accent-soft:#222D4C;
+  --pen:#FF7D6E;--pen-soft:#3A2321;--on-pen:#2A0D0A;--warn:#F2B04E;--warn-soft:#3A2D16;--ok:#7FD39B;--ok-soft:#1C3527;
+  --hatch:rgba(227,234,231,.065);--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.45);
+  --tint:20%;--tint-line:44%;--tint-ink:82%;
+  --t-kons:#8EA2FF;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-rodz:#4FD1C2;--t-naucz:#F0B357;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
+  color-scheme:dark;
+}
+
+/* ---------- podstawy ---------- */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.45 var(--f-ui);
+  background-image:linear-gradient(var(--kratka) 1px,transparent 1px),linear-gradient(90deg,var(--kratka) 1px,transparent 1px);
+  background-size:24px 24px;-webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:default;opacity:.5}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.ic{width:18px;height:18px;flex:none}
+span[data-i]{display:inline-grid;place-items:center}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;margin:-1px}
+.grow{flex:1 1 auto}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.app{max-width:1640px;margin:0 auto;padding-inline:clamp(16px,2.4vw,32px);padding-block:0 40px}
+
+/* ---------- nagłówek ---------- */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:12px;border-bottom:1px solid var(--line);background:var(--bg)}
+@media (min-width:761px){.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30}}
+.brand{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.brand-name{font-weight:700;font-size:14px;letter-spacing:.005em;white-space:nowrap}
+.brand-year{font:600 11px/1.3 var(--f-mono);color:var(--ink-3);letter-spacing:.04em;white-space:nowrap}
+.nav{display:flex;align-items:center;gap:4px;min-width:0;flex:1 1 320px}
+.period{margin:0 0 0 10px;font:600 clamp(20px,2.3vw,28px)/1.15 var(--f-display);letter-spacing:-.012em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.period .yr{color:var(--ink-3);font-weight:500}
+.pt-short{display:none}
+.views{display:flex}
+.tools{display:flex;align-items:center;gap:6px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 12px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:13.5px;white-space:nowrap;transition:background-color .15s,border-color .15s,color .15s}
+.btn:hover:not(:disabled){background:var(--sunken)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover:not(:disabled){background:var(--surface);border-color:var(--line)}
+.btn.danger{color:var(--pen)}
+.btn.danger.solid{background:var(--pen);border-color:var(--pen);color:var(--on-pen)}
+.btn.sm{height:32px;padding:0 10px;font-size:13px}
+.icon-btn{display:inline-grid;place-items:center;width:36px;height:36px;padding:0;border-radius:var(--r);border:1px solid transparent;background:transparent;color:var(--ink-2);transition:background-color .15s,color .15s}
+.icon-btn:hover{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.icon-btn[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+
+.seg{display:inline-flex;padding:3px;gap:2px;background:var(--sunken);border:1px solid var(--line);border-radius:8px}
+.seg button{height:30px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--ink-2);font-weight:600;font-size:13px;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(0,0,0,.08)}
+.seg-fill{display:flex;width:100%;flex-wrap:wrap}
+.seg-fill label{flex:1 1 0;position:relative;min-width:0}
+.seg-fill input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.seg-fill span{display:grid;place-items:center;min-height:32px;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12.5px;line-height:1.2;color:var(--ink-2);text-align:center}
+.seg-fill input:checked + span{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(0,0,0,.08)}
+.seg-fill input:focus-visible + span{outline:2px solid var(--accent);outline-offset:1px}
+
+.fab{display:none}
+@media (max-width:760px){
+  .top{gap:8px 8px}
+  .brand{order:1;flex:1 1 auto}
+  .tools{order:2}
+  .nav{order:3;flex:1 1 100%}
+  .views{order:4;flex:1 1 100%}
+  .views .seg{width:100%}
+  .views .seg button{flex:1;padding:0 6px}
+  .period{margin-left:6px;font-size:20px}
+  .pt-long{display:none}
+  .pt-short{display:inline}
+  .hide-sm{display:none}
+  .app{padding-block:0 104px}
+  .tools .new-btn{display:none}
+  .fab{display:grid;place-items:center;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:16px;border:0;background:var(--accent);color:var(--on-accent);box-shadow:var(--shadow);z-index:40}
+  .fab .ic{width:24px;height:24px}
+}
+
+.notice{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:10px 14px;border-radius:var(--r);background:var(--warn-soft);border:1px solid var(--line);font-size:13.5px;line-height:1.5}
+.notice .ic{color:var(--warn);margin-top:1px}
+
+/* ---------- układ główny ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;padding-block:16px 0}
+@media (max-width:1080px){.layout{grid-template-columns:minmax(0,1fr)}}
+.sheet,.side{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);min-width:0}
+.sheet{overflow:hidden}
+.sheet-foot{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+.sheet-foot .ic{width:16px;height:16px}
+
+/* ---------- etykiety dni ---------- */
+.tag{display:block;font-size:11px;line-height:1.3;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tag.hol{color:var(--pen);font-weight:600}
+.tag.off,.tag.brk{color:var(--ink-2);font-weight:600}
+.tag.exam{font-family:var(--f-mono);color:var(--accent);font-weight:600}
+.tag.obs{color:var(--ink-3);font-style:italic}
+.hatched{background-image:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 8px)}
+
+/* ---------- widok miesiąca ---------- */
+.mv{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));margin:0 -1px -1px 0}
+.mv-h{padding:9px 10px 8px;font:700 11px/1 var(--f-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.mv-h.red{color:var(--pen)}
+.mc{position:relative;display:flex;flex-direction:column;gap:2px;min-width:0;min-height:120px;padding:6px 6px 8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer}
+.mc:hover{background-color:color-mix(in oklab,var(--accent) 3%,var(--surface))}
+.mc.out{background-color:var(--sunken)}
+.mc.out .mc-num{color:var(--ink-3)}
+.mc.off{background-image:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 8px)}
+.mc.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.mc-top{display:flex;align-items:flex-start;gap:6px;min-width:0}
+.mc-num{flex:none;display:grid;place-items:center;min-width:28px;height:28px;padding:0 5px;border:0;border-radius:14px;background:transparent;font:600 13.5px/1 var(--f-mono);color:var(--ink)}
+.mc-num:hover{background:var(--sunken)}
+.mc-num.red{color:var(--pen)}
+.mc-num.today{background:var(--accent);color:var(--on-accent)}
+.mc-tags{display:flex;flex-direction:column;gap:1px;min-width:0;padding-top:6px}
+.mc-list{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mc-ev{display:flex;align-items:center;gap:5px;width:100%;min-width:0;padding:3px 4px;border:0;border-radius:4px;background:transparent;text-align:left;font-size:12.5px;line-height:1.25;color:var(--ink)}
+.mc-ev:hover{background:color-mix(in oklab,var(--tc) var(--tint),var(--surface))}
+.mc-ev .dot{flex:none;width:8px;height:8px;border-radius:2px;background:var(--tc)}
+.mc-ev .t{flex:none;font:500 11.5px/1 var(--f-mono);color:var(--ink-2)}
+.mc-ev .l{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-ev .ic{width:13px;height:13px;color:var(--ok)}
+.mc-ev .nb{flex:none;font:600 10.5px/1 var(--f-mono);color:var(--warn)}
+.mc-ev.s-cancel .l{text-decoration:line-through;color:var(--ink-3)}
+.mc-ev.s-cancel .dot{opacity:.45}
+.mc-more{align-self:flex-start;padding:2px 4px;border:0;border-radius:4px;background:transparent;font-size:12px;font-weight:700;color:var(--accent)}
+.mc-dots{display:none}
+@media (max-width:640px){
+  .mc{min-height:62px;padding:3px 2px 5px;align-items:center}
+  .mc-top{justify-content:center}
+  .mc-num{min-width:26px;height:26px;font-size:12.5px}
+  .mc-list,.mc-tags{display:none}
+  .mc-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;max-width:100%}
+  .mc-dots i{width:6px;height:6px;border-radius:2px;background:var(--tc)}
+  .mv-h{padding:8px 0;text-align:center;letter-spacing:.04em}
+}
+
+/* ---------- widok tygodnia i dnia ---------- */
+.wk-scroll{overflow-x:auto}
+.wk{--gut:62px;--colmin:96px;min-width:calc(var(--gut) + var(--days) * var(--colmin))}
+@media (max-width:640px){.wk{--gut:56px;--colmin:56px}}
+.wk-row{display:grid;grid-template-columns:var(--gut) repeat(var(--days),minmax(0,1fr))}
+.wk-head{border-bottom:1px solid var(--line)}
+.wk-corner{display:flex;align-items:flex-end;justify-content:flex-end;padding:4px 8px;font-size:10.5px;color:var(--ink-3)}
+.wk-day{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;padding:9px 4px 8px;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink)}
+.wk-day .wd{font:700 11px/1 var(--f-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.wk-day .dn{display:inline-grid;place-items:center;min-width:30px;height:30px;padding:0 4px;border-radius:15px;font:600 15px/1 var(--f-mono)}
+.wk-day .mn{font-size:13px;color:var(--ink-2)}
+.wk-day.red .dn,.wk-day.red .wd{color:var(--pen)}
+.wk-day.today .dn{background:var(--accent);color:var(--on-accent)}
+.wk-day.sel{box-shadow:inset 0 -2px 0 var(--accent)}
+.wk-all{border-bottom:1px solid var(--line);min-height:28px}
+.wk-allcell{display:flex;flex-direction:column;gap:1px;min-width:0;padding:5px 7px;border-left:1px solid var(--line)}
+.wk-body{position:relative}
+.wk-gutter{grid-column:1;grid-row:1;position:relative}
+.wk-hl{position:absolute;left:6px;transform:translateY(-50%);font:500 11px/1 var(--f-mono);color:var(--ink-3);white-space:nowrap}
+.wk-ln{position:absolute;right:6px;transform:translateY(-50%);min-width:20px;text-align:center;font:600 17px/1 var(--f-display);color:var(--accent);opacity:.8}
+.wk-grid{grid-column:2 / -1;grid-row:1;position:relative;pointer-events:none}
+.wk-band{position:absolute;left:0;right:0;background:var(--band)}
+.wk-hour{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
+.wk-col{grid-row:1;position:relative;min-width:0;border-left:1px solid var(--line);cursor:copy}
+.wk-col.off{background-image:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 8px)}
+.wk-col.sel{background-color:color-mix(in oklab,var(--accent) 3.5%,transparent)}
+@media (max-width:640px){
+  .wk-hl{left:3px;font-size:10px}
+  .wk-ln{right:3px;font-size:15px;min-width:14px}
+  .wk-day{flex-direction:column;gap:2px;padding:6px 2px}
+  .wk-day .wd{font-size:10px;letter-spacing:.04em}
+  .wk-day .dn{min-width:26px;height:26px;font-size:13.5px}
+  .wk-corner span{display:none}
+  .wk-allcell{padding:3px 4px}
+}
+.wk1 .wk-day{justify-content:flex-start;padding-left:14px;flex-direction:row}
+
+.ev{position:absolute;display:flex;flex-direction:column;gap:1px;min-width:0;padding:3px 6px;overflow:hidden;
+  border-radius:4px;border:1px solid var(--line-strong);background:var(--sunken);color:var(--ink);
+  border-color:color-mix(in oklab,var(--tc) var(--tint-line),var(--surface));
+  background:color-mix(in oklab,var(--tc) var(--tint),var(--surface));
+  color:color-mix(in oklab,var(--tc) var(--tint-ink),var(--ink));
+  text-align:left;font-size:12.5px;line-height:1.25;z-index:2}
+.ev:hover{z-index:3;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.ev-t{display:flex;align-items:center;gap:5px;font:500 11px/1.25 var(--f-mono);white-space:nowrap}
+.ev-t b{font-weight:600;opacity:.8}
+.ev-l{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.ev-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9}
+.ev-n{font-size:12px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.ev.compact{flex-direction:row;align-items:center;gap:6px;padding-block:1px}
+.ev.compact .ev-l{min-width:0}
+.ev .st{margin-left:auto;display:inline-grid;place-items:center;min-width:18px;height:16px;padding:0 3px;border-radius:3px;background:var(--surface);font:600 10px/1 var(--f-mono);color:var(--ink-2)}
+.ev .st .ic{width:12px;height:12px;color:var(--ok)}
+.ev .st.todo{color:var(--warn)}
+.ev.s-cancel{opacity:.6;background-image:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 6px)}
+.ev.s-cancel .ev-l{text-decoration:line-through}
+.ev.s-absent{border-style:dashed}
+.nowline{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--accent);z-index:4;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+
+/* ---------- widok listy ---------- */
+.lv-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.lv-search{flex:1 1 220px;display:flex;align-items:center;gap:8px;height:38px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);min-width:0;color:var(--ink-3)}
+.lv-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 22%,transparent)}
+.lv-search input[type=search]{flex:1;min-width:0;height:36px;padding:0;border:0;background:transparent;color:var(--ink);outline:none;box-shadow:none}
+.lv-bar select{flex:0 1 190px;width:auto}
+.lv-sum{display:flex;flex-wrap:wrap;gap:4px 16px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.lv-sum b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.lv-day{padding:0 14px}
+.lv-dh{display:flex;align-items:baseline;gap:10px;padding:16px 0 6px}
+.lv-dh h3{margin:0;font:600 16px/1.2 var(--f-display)}
+.lv-dh span{font-size:12px;color:var(--ink-3)}
+.lv-list{list-style:none;margin:0;padding:0}
+.lr{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.lr-main{flex:1;min-width:0;display:grid;grid-template-columns:112px 160px minmax(0,1fr);gap:3px 14px;align-items:baseline;padding:0;border:0;background:transparent;text-align:left;color:var(--ink)}
+.lr-time{font:600 13px/1.35 var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lr-time small{margin-left:5px;font-weight:500;color:var(--ink-3)}
+.lr-type{display:flex;align-items:center;gap:7px;min-width:0;font-size:12.5px;color:var(--ink-2)}
+.lr-body{min-width:0}
+.lr-who{font-weight:700}
+.lr-who em{margin-left:6px;font:500 11.5px var(--f-mono);font-style:normal;color:var(--ink-3)}
+.lr-what{color:var(--ink-2)}
+.lr-note{grid-column:3;font-size:12.5px;color:var(--ink-3);white-space:pre-line;overflow-wrap:anywhere}
+.sq{flex:none;display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--tc)}
+.lv-empty{padding:40px 16px;text-align:center;color:var(--ink-3)}
+@media (max-width:640px){
+  .lr{align-items:flex-start}
+  .lr-main{grid-template-columns:70px minmax(0,1fr)}
+  .lr-time{grid-row:1 / span 3}
+  .lr-type,.lr-body,.lr-note{grid-column:2}
+  .lv-bar select{flex:1 1 40%}
+}
+
+/* ---------- panel boczny ---------- */
+.sp{padding:16px 18px;border-bottom:1px solid var(--line)}
+.sp:last-of-type{border-bottom:0}
+.sp-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sp-title{margin:0;font:600 20px/1.2 var(--f-display);letter-spacing:-.006em}
+.sp-title.sm{display:flex;align-items:center;gap:8px;font:700 12px/1.2 var(--f-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2)}
+.today-badge{font:700 11px/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font:700 11.5px/1 var(--f-mono);letter-spacing:0}
+.sp-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:3px 9px;border-radius:999px;background:var(--sunken);color:var(--ink-2);font-size:12px;font-weight:600;line-height:1.25}
+.pill .ic{width:14px;height:14px}
+.pill.hol{background:var(--pen-soft);color:var(--pen)}
+.pill.brk,.pill.off{background-color:var(--sunken);background-image:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 6px)}
+.pill.school{background:var(--accent-soft);color:var(--accent)}
+.pill.exam{background:transparent;box-shadow:inset 0 0 0 1px var(--line-strong);font-family:var(--f-mono);color:var(--accent)}
+.pill.obs{background:transparent;box-shadow:inset 0 0 0 1px var(--line);font-weight:500;font-style:italic}
+.sp-note{margin:6px 0 0;font-size:12.5px;color:var(--ink-3)}
+.empty{margin:14px 0 0;color:var(--ink-3)}
+.free{margin:12px 0 0;font-size:13px;color:var(--ink-2)}
+.free b{font-family:var(--f-mono);color:var(--ink)}
+.sp-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+
+.agenda{list-style:none;margin:12px 0 0;padding:0}
+.ag{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.ag:first-child{border-top:0;padding-top:2px}
+.ag-main{flex:1;min-width:0;display:grid;grid-template-columns:46px minmax(0,1fr);gap:10px;align-items:start;padding:0;border:0;background:transparent;text-align:left;color:var(--ink)}
+.ag-main:hover .nm{text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
+.ag-time{display:flex;flex-direction:column;font:600 13px/1.25 var(--f-mono);font-variant-numeric:tabular-nums}
+.ag-time small{font:500 11px/1.4 var(--f-mono);color:var(--ink-3)}
+.ag-body{display:flex;flex-direction:column;min-width:0}
+.ag-who{display:flex;align-items:baseline;gap:6px;min-width:0;font-weight:700}
+.ag-who .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ag-who .cls{flex:none;font:500 11px/1 var(--f-mono);color:var(--ink-3)}
+.ag-what{display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px;color:var(--ink-2)}
+.ag-what span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ag.s-cancel .nm{text-decoration:line-through;color:var(--ink-3)}
+.qs{display:inline-flex;gap:3px;flex:none}
+.qs button{display:grid;place-items:center;width:30px;height:28px;padding:0;border-radius:5px;border:1px solid var(--line);background:var(--surface);color:var(--ink-3);font:700 11px/1 var(--f-mono)}
+.qs button:hover:not(:disabled){border-color:var(--line-strong);color:var(--ink)}
+.qs .ic{width:15px;height:15px}
+.qs button[aria-pressed="true"].s-done{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.qs button[aria-pressed="true"].s-absent{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.qs button[aria-pressed="true"].s-cancel{background:var(--sunken);border-color:var(--line-strong);color:var(--ink)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 0}
+.kpis div{display:flex;flex-direction:column;gap:3px;min-width:0;padding:8px 9px;border-radius:var(--r);background:var(--sunken)}
+.kpis span{font-size:11px;font-weight:600;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpis b{font:600 19px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.bars{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:7px}
+.bars li{display:grid;grid-template-columns:104px minmax(0,1fr) 26px;align-items:center;gap:8px;font-size:12.5px}
+.bars .bl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
+.bars .bt{height:8px;border-radius:2px;background:var(--sunken);overflow:hidden}
+.bars .bt i{display:block;height:100%;border-radius:2px;background:var(--tc)}
+.bars .bn{text-align:right;font:600 12px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.sp-foot{display:flex;gap:8px;align-items:flex-start;padding:12px 18px 14px;border-top:1px solid var(--line);font-size:12px;line-height:1.45;color:var(--ink-3)}
+.sp-foot .ic{width:15px;height:15px;margin-top:1px}
+.keys{display:block;margin-top:4px}
+@media (max-width:760px){.keys{display:none}}
+
+/* ---------- okna dialogowe ---------- */
+dialog{width:min(620px,calc(100vw - 32px));max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);overflow:hidden}
+dialog::backdrop{background:rgba(8,12,20,.45)}
+.dlg{display:flex;flex-direction:column;max-height:inherit;margin:0}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 20px 12px;border-bottom:1px solid var(--line)}
+.dlg-h h2{flex:1;margin:0;font:600 21px/1.2 var(--f-display);letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dlg-b{flex:1 1 auto;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:16px 20px 20px}
+.dlg-f{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.confirm-q{font-weight:700}
+@media (max-width:640px){
+  dialog{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:14px 14px 0 0;max-height:94vh;max-height:94dvh}
+  .dlg-h,.dlg-b,.dlg-f{padding-inline:16px}
+}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0;margin:0;padding:0;border:0}
+.fld > span,.fld > legend,.fld .lab{padding:0;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.fld small{font-weight:500;color:var(--ink-3)}
+input[type=text],input[type=date],input[type=time],input[type=number],input[type=search],select,textarea{width:100%;min-width:0;height:38px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);color:var(--ink)}
+textarea{height:auto;padding:8px 10px;line-height:1.45;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 22%,transparent)}
+.lv-search input[type=search]:focus{border:0;box-shadow:none}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.f-when{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:520px){.f-when{grid-template-columns:repeat(2,minmax(0,1fr))}.f-when .f-date{grid-column:1 / -1}.row3{grid-template-columns:repeat(2,minmax(0,1fr))}.row2.stack-sm{grid-template-columns:1fr}}
+.lessons{display:flex;flex-wrap:wrap;gap:5px}
+.lessons button{width:36px;height:34px;padding:0;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);font:600 14px/1 var(--f-mono);color:var(--ink)}
+.lessons button:hover{border-color:var(--accent)}
+.lessons button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.f-warn{display:flex;flex-direction:column;gap:4px;padding:9px 12px;border-radius:var(--r);background:var(--warn-soft);font-size:13px}
+.f-warn p{display:flex;gap:8px;margin:0;align-items:flex-start}
+.f-warn .ic{width:16px;height:16px;margin-top:1px;color:var(--warn)}
+.types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.types label{position:relative;display:flex;align-items:center;gap:8px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);font-size:13px;line-height:1.25;cursor:pointer}
+.types label:hover{border-color:var(--line-strong)}
+.types input{position:absolute;opacity:0;pointer-events:none}
+.types label:has(input:checked){border-color:color-mix(in oklab,var(--tc) 65%,var(--surface));background:color-mix(in oklab,var(--tc) var(--tint),var(--surface));font-weight:700}
+.types label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.types .sq{width:10px;height:10px}
+.combo{position:relative}
+.combo-box{position:relative}
+.combo-box input{padding-right:64px}
+.combo-cls{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:600 12px/1 var(--f-mono);color:var(--ink-3);pointer-events:none}
+.combo-list{position:absolute;left:0;right:0;top:100%;z-index:5;margin:4px 0 0;padding:4px;list-style:none;max-height:260px;overflow:auto;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
+.combo-list li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;cursor:pointer}
+.combo-list li em{margin-left:auto;font:500 12px var(--f-mono);font-style:normal;color:var(--ink-3)}
+.combo-list li.act,.combo-list li:hover{background:var(--accent-soft)}
+.combo-list li.new{color:var(--accent)}
+.combo-list li.none{color:var(--ink-3)}
+.combo-list .ic{width:15px;height:15px}
+.rep-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.rep-row select{width:auto;flex:0 1 200px}
+.rep-n{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
+.rep-n input{width:76px}
+.check{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;cursor:pointer;line-height:1.4}
+.check input{width:17px;height:17px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.hint{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink-3)}
+.hint.strong{color:var(--ink-2)}
+.cs{display:flex;flex-direction:column;gap:10px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.cs:last-child{padding-bottom:0;border-bottom:0}
+.cs h3{margin:0;font:700 12px/1.2 var(--f-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2)}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bells{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}
+.bells li{display:grid;grid-template-columns:22px minmax(0,1fr) 10px minmax(0,1fr) 32px;align-items:center;gap:6px}
+.bells .bn{font:600 16px/1 var(--f-display);color:var(--accent);text-align:right}
+.bells .dash{text-align:center;color:var(--ink-3)}
+.bells .icon-btn{width:32px;height:32px}
+@media (max-width:560px){.bells{grid-template-columns:1fr}}
+.offlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.offlist li{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}
+.offlist li:first-child{border-top:0}
+.offlist .d{font:600 13px/1 var(--f-mono);min-width:86px}
+.offlist .n{flex:1;min-width:0;color:var(--ink-2)}
+.off-add{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px}
+@media (max-width:520px){.off-add{grid-template-columns:1fr 1fr}.off-add input[type=text]{grid-column:1 / -1;grid-row:1}}
+.file-btn{position:relative;overflow:hidden}
+.copy-area{width:100%;min-height:140px;font:12px/1.4 var(--f-mono)}
+
+.st-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.st-bar .lv-search{flex:1 1 200px}
+.st-list{list-style:none;margin:0;padding:0}
+.st-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;width:100%;padding:10px 6px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;color:var(--ink)}
+.st-row:hover{background:var(--sunken)}
+.st-name{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-name em{margin-left:8px;font:500 12px var(--f-mono);font-style:normal;color:var(--ink-3)}
+.st-meta{font-size:12px;color:var(--ink-3);text-align:right;white-space:nowrap}
+.st-meta b{font-family:var(--f-mono);color:var(--ink-2)}
+.st-stats{display:flex;flex-wrap:wrap;gap:6px}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{border-top:1px solid var(--line)}
+.hist button{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:10px;align-items:baseline;width:100%;padding:8px 2px;border:0;background:transparent;text-align:left;color:var(--ink)}
+.hist button:hover{background:var(--sunken)}
+.hist .hd{font:600 12.5px/1.3 var(--f-mono)}
+.hist .ht{display:flex;align-items:center;gap:7px;min-width:0;font-size:13px}
+.hist .ht span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist .hs{font:600 11px/1 var(--f-mono);color:var(--ink-3)}
+.hist .hs.done{color:var(--ok)}
+.hist .hs.absent{color:var(--warn)}
+.back-btn{margin-left:-8px}
+
+/* ---------- komunikat ---------- */
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:100;max-width:calc(100vw - 32px);padding:10px 16px;border-radius:8px;background:var(--ink);color:var(--surface);box-shadow:var(--shadow);font-weight:600;font-size:13.5px;opacity:0;pointer-events:none;transform:translate(-50%,16px);transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:var(--pen);color:var(--on-pen)}
+@media (max-width:760px){.toast{bottom:calc(88px + env(safe-area-inset-bottom,0px))}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- sejf lokalny ---------- */
+.vault-screen{
+  position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;
+  background:var(--bg);background-image:linear-gradient(var(--kratka) 1px,transparent 1px),linear-gradient(90deg,var(--kratka) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.vault-card{
+  width:min(440px,100%);padding:24px;border:1px solid var(--line);border-radius:12px;
+  background:var(--surface);box-shadow:var(--shadow)
+}
+.vault-card h1{margin:0 0 6px;font:600 25px/1.2 var(--f-display)}
+.vault-card p{margin:0 0 18px;color:var(--ink-2);line-height:1.55}
+.vault-card .fld{margin-bottom:12px}
+.vault-card .vault-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.vault-error{min-height:20px;margin-top:10px;color:var(--pen);font-size:13px}
+.vault-meta{display:flex;align-items:center;gap:7px;margin-bottom:12px;color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.vault-meta svg{width:16px;height:16px}
+
+
+.ev[draggable="true"]{cursor:grab}
+.ev[draggable="true"]:active{cursor:grabbing}
+.wk-col.drag-target{background-color:color-mix(in oklab,var(--accent) 9%,transparent)!important;box-shadow:inset 0 0 0 2px var(--accent)}
+.update-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.update-status{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+
+</style>
+
+<div id="vaultScreen" class="vault-screen">
+  <div class="vault-card">
+    <div class="vault-meta"><span>🔒</span> Kalendarz Specjalisty</div>
+    <h1 id="vaultTitle">Odblokuj kalendarz</h1>
+    <p id="vaultText">Dane uczniów i spotkań są szyfrowane lokalnie na tym komputerze.</p>
+    <label class="fld"><span>Hasło</span><input id="vaultPass" type="password" autocomplete="current-password" minlength="8"></label>
+    <label class="fld" id="vaultConfirmWrap" hidden><span>Powtórz hasło</span><input id="vaultPass2" type="password" autocomplete="new-password" minlength="8"></label>
+    <div class="vault-error" id="vaultError" role="alert"></div>
+    <div class="vault-actions"><button class="btn primary" type="button" id="vaultBtn">Odblokuj</button></div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <span class="brand-name">Kalendarz psychologa</span>
+      <span class="brand-year" id="syLabel">rok szkolny</span>
+    </div>
+    <div class="nav">
+      <button class="icon-btn" type="button" data-action="prev" aria-label="Wstecz" data-i="chevL"></button>
+      <button class="btn ghost" type="button" data-action="today">Dziś</button>
+      <button class="icon-btn" type="button" data-action="next" aria-label="Dalej" data-i="chevR"></button>
+      <h1 class="period" id="period"></h1>
+    </div>
+    <div class="views">
+      <div class="seg" role="tablist" aria-label="Widok kalendarza" id="viewSeg">
+        <button type="button" role="tab" data-view="month" aria-selected="false">Miesiąc</button>
+        <button type="button" role="tab" data-view="week" aria-selected="false">Tydzień</button>
+        <button type="button" role="tab" data-view="day" aria-selected="false">Dzień</button>
+        <button type="button" role="tab" data-view="list" aria-selected="false">Lista</button>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="btn ghost" type="button" data-action="students" aria-label="Uczniowie"><span data-i="users"></span><span class="hide-sm">Uczniowie</span></button>
+      <button class="icon-btn" type="button" data-action="discreet" id="discreetBtn" aria-pressed="false" aria-label="Tryb dyskretny" title="Tryb dyskretny: inicjały zamiast nazwisk, bez tematów i notatek"></button>
+      <button class="icon-btn" type="button" data-action="undo" id="undoBtn" aria-label="Cofnij ostatnią operację" title="Cofnij ostatnią operację" disabled data-i="undo"></button>
+      <button class="icon-btn" type="button" data-action="settings" aria-label="Ustawienia" title="Ustawienia" data-i="sliders"></button>
+      <button class="icon-btn" type="button" data-action="lockapp" aria-label="Zablokuj aplikację" title="Zablokuj aplikację" data-i="lock"></button>
+      <button class="btn primary new-btn" type="button" data-action="new"><span data-i="plus"></span>Spotkanie</button>
+    </div>
+  </header>
+  <div class="notice" id="notice" hidden></div>
+  <div class="layout">
+    <main class="sheet" id="main"></main>
+    <aside class="side" id="side" aria-label="Wybrany dzień i podsumowanie"></aside>
+  </div>
+</div>
+<button class="fab" type="button" data-action="new" aria-label="Nowe spotkanie" data-i="plus"></button>
+
+<dialog id="dlgMeeting" aria-label="Spotkanie"></dialog>
+<dialog id="dlgStudents" aria-label="Uczniowie"></dialog>
+<dialog id="dlgSettings" aria-label="Ustawienia"></dialog>
+<dialog id="dlgExport" aria-label="Eksport i kopia zapasowa"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+// @core-start ── daty, kalendarz szkolny, cykle (czyste funkcje) ──
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, m - 1, d, 12); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const dow = s => (parse(s).getDay() + 6) % 7; // 0 = poniedziałek
+const mondayOf = s => addDays(s, -dow(s));
+const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+const toMin = t => { const [h, m] = String(t).split(':').map(Number); return h * 60 + (m || 0); };
+const fromMin = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/, TIME_RE = /^\d{2}:\d{2}$/;
+
+function easter(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
+    f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30,
+    i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+    month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${y}-${pad(month)}-${pad(day)}`;
+}
+
+const holCache = new Map();
+function holidays(y) {
+  if (holCache.has(y)) return holCache.get(y);
+  const e = easter(y), h = {};
+  const add = (md, name) => { h[`${y}-${md}`] = name; };
+  add('01-01', 'Nowy Rok'); add('01-06', 'Trzech Króli');
+  h[e] = 'Wielkanoc'; h[addDays(e, 1)] = 'Poniedziałek Wielkanocny';
+  add('05-01', 'Święto Pracy'); add('05-03', 'Święto Konstytucji 3 Maja');
+  h[addDays(e, 49)] = 'Zielone Świątki'; h[addDays(e, 60)] = 'Boże Ciało';
+  add('08-15', 'Wniebowzięcie NMP'); add('11-01', 'Wszystkich Świętych'); add('11-11', 'Święto Niepodległości');
+  if (y >= 2025) add('12-24', 'Wigilia');
+  add('12-25', 'Boże Narodzenie'); add('12-26', 'Drugi dzień świąt');
+  holCache.set(y, h);
+  return h;
+}
+
+function observances(y) {
+  const o = {};
+  o[`${y}-10-10`] = 'Dzień Zdrowia Psychicznego';
+  o[`${y}-10-14`] = 'Dzień Edukacji Narodowej';
+  o[`${y}-11-20`] = 'Dzień Praw Dziecka';
+  o[`${y}-02-23`] = 'Dzień Walki z Depresją';
+  o[`${y}-04-02`] = 'Dzień Świadomości Autyzmu';
+  const feb1 = `${y}-02-01`, firstTue = addDays(feb1, (1 - dow(feb1) + 7) % 7);
+  o[addDays(firstTue, 7)] = 'Dzień Bezpiecznego Internetu';
+  return o;
+}
+
+// Ferie zimowe wg województw (komunikaty MEN), klucz = rok kalendarzowy ferii
+const FERIE = {
+  2027: [
+    ['2027-01-18', '2027-01-31', ['dolnoslaskie', 'lodzkie', 'opolskie', 'podkarpackie', 'podlaskie', 'slaskie']],
+    ['2027-02-01', '2027-02-14', ['lubelskie', 'mazowieckie', 'pomorskie', 'swietokrzyskie']],
+    ['2027-02-15', '2027-02-28', ['kujawsko-pomorskie', 'lubuskie', 'malopolskie', 'warminsko-mazurskie', 'wielkopolskie', 'zachodniopomorskie']],
+  ],
+  2028: [
+    ['2028-01-17', '2028-01-30', ['kujawsko-pomorskie', 'lubuskie', 'podlaskie', 'pomorskie', 'swietokrzyskie', 'wielkopolskie', 'zachodniopomorskie']],
+    ['2028-01-31', '2028-02-13', ['lodzkie', 'mazowieckie', 'podkarpackie', 'warminsko-mazurskie']],
+    ['2028-02-14', '2028-02-27', ['dolnoslaskie', 'lubelskie', 'malopolskie', 'opolskie', 'slaskie']],
+  ],
+};
+function ferieRange(year, region) {
+  const g = (FERIE[year] || []).find(x => x[2].includes(region));
+  return g ? [g[0], g[1]] : null;
+}
+
+const EXAMS = {
+  e8: { '2027-05-10': 'E8 · j. polski', '2027-05-11': 'E8 · matematyka', '2027-05-12': 'E8 · j. obcy',
+        '2027-06-09': 'E8 dodatkowy · j. polski', '2027-06-10': 'E8 dodatkowy · matematyka', '2027-06-11': 'E8 dodatkowy · j. obcy' },
+  matura: [['2027-05-04', '2027-05-24', 'Matura pisemna'], ['2027-06-01', '2027-06-16', 'Matura · termin dodatkowy']],
+};
+function examLabel(s, st) {
+  if (st.exams === 'e8') return EXAMS.e8[s] || null;
+  if (st.exams === 'matura' && dow(s) < 5) { const r = EXAMS.matura.find(([a, b]) => s >= a && s <= b); return r ? r[2] : null; }
+  return null;
+}
+
+const schoolYearOf = s => { const d = parse(s); return d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1; };
+const syCache = new Map();
+function schoolYear(Y) {
+  if (syCache.has(Y)) return syCache.get(Y);
+  const sep1 = `${Y}-09-01`, w = dow(sep1);
+  const start = w >= 4 ? addDays(sep1, 7 - w) : sep1; // pt/sob/nd → najbliższy poniedziałek
+  const j20 = `${Y + 1}-06-20`;
+  let k = (4 - dow(j20) + 7) % 7; if (k === 0) k = 7; // najbliższy piątek po 20 czerwca
+  const end = addDays(j20, k);
+  const e = easter(Y + 1);
+  const sy = {
+    Y, start, end,
+    breaks: [
+      { from: `${Y}-12-23`, to: `${Y}-12-31`, name: 'Zimowa przerwa świąteczna', gen: 'zimowej przerwy świątecznej' },
+      { from: addDays(e, -3), to: addDays(e, 2), name: 'Wiosenna przerwa świąteczna', gen: 'wiosennej przerwy świątecznej' },
+      { from: addDays(end, 1), to: `${Y + 1}-08-31`, name: 'Wakacje', gen: 'wakacji' },
+    ],
+  };
+  syCache.set(Y, sy);
+  return sy;
+}
+
+function dayInfo(s, st) {
+  const y = +s.slice(0, 4), wd = dow(s), Y = schoolYearOf(s), sy = schoolYear(Y);
+  const hol = holidays(y)[s] || null;
+  let brk = null;
+  for (const b of sy.breaks) if (s >= b.from && s <= b.to) { brk = b.name; break; }
+  if (!brk) { const f = ferieRange(Y + 1, st.region); if (f && s >= f[0] && s <= f[1]) brk = 'Ferie zimowe'; }
+  const off = st.offDays && Object.prototype.hasOwnProperty.call(st.offDays, s) ? (st.offDays[s] || 'Dzień wolny od zajęć') : null;
+  const obs = st.observances !== false ? (observances(y)[s] || null) : null;
+  const exam = examLabel(s, st);
+  const weekend = wd >= 5, inYear = s >= sy.start && s <= sy.end;
+  const school = inYear && !weekend && !hol && !brk && off == null;
+  return { hol, brk, off, obs, exam, weekend, school, Y, sy };
+}
+
+function nextBreak(s, st) {
+  const all = [];
+  for (const Y of [schoolYearOf(s), schoolYearOf(s) + 1]) {
+    all.push(...schoolYear(Y).breaks);
+    const f = ferieRange(Y + 1, st.region);
+    if (f) all.push({ from: f[0], to: f[1], name: 'Ferie zimowe', gen: 'ferii zimowych' });
+  }
+  const nx = all.filter(b => b.from > s).sort((a, b) => (a.from < b.from ? -1 : 1))[0];
+  return nx ? { ...nx, days: daysBetween(s, nx.from) } : null;
+}
+
+function schoolWeek(s) {
+  const sy = schoolYear(schoolYearOf(s));
+  if (s < sy.start || s > sy.end) return 0;
+  return Math.floor(daysBetween(mondayOf(sy.start), mondayOf(s)) / 7) + 1;
+}
+
+function genSeries(start, step, count, skip, isFree) {
+  const dates = [], skipped = [];
+  let d = start, guard = 0;
+  while (dates.length < count && guard++ < 400) {
+    if (d === start || !skip || !isFree(d)) dates.push(d); else skipped.push(d);
+    d = addDays(d, step);
+  }
+  return { dates, skipped };
+}
+
+function freeLessons(bells, meetings) {
+  const busy = meetings.filter(m => (m.status || 'plan') !== 'cancel').map(m => [toMin(m.start), toMin(m.end)]);
+  const out = [];
+  bells.forEach(([a, b], i) => { const A = toMin(a), B = toMin(b); if (!busy.some(([x, y]) => x < B && y > A)) out.push(i + 1); });
+  return out;
+}
+
+function compressRanges(nums) {
+  const out = [];
+  for (let i = 0; i < nums.length;) {
+    let j = i;
+    while (j + 1 < nums.length && nums[j + 1] === nums[j] + 1) j++;
+    if (j >= i + 2) out.push(`${nums[i]}–${nums[j]}`);
+    else for (let k = i; k <= j; k++) out.push(String(nums[k]));
+    i = j + 1;
+  }
+  return out.join(', ');
+}
+
+function layoutDay(items) {
+  const sorted = [...items].sort((a, b) => a.s - b.s || b.e - a.e);
+  const res = new Map();
+  let cluster = [], colsEnd = [], clusterEnd = -1;
+  const flush = () => { const n = colsEnd.length; cluster.forEach(it => res.set(it.id, { col: it.col, n })); cluster = []; colsEnd = []; clusterEnd = -1; };
+  for (const it of sorted) {
+    if (cluster.length && it.s >= clusterEnd) flush();
+    let c = colsEnd.findIndex(end => end <= it.s);
+    if (c === -1) { c = colsEnd.length; colsEnd.push(it.e); } else colsEnd[c] = it.e;
+    it.col = c; cluster.push(it); clusterEnd = Math.max(clusterEnd, it.e);
+  }
+  flush();
+  return res;
+}
+
+const plural = (n, one, few, many) => {
+  n = Math.abs(n);
+  if (n === 1) return one;
+  const t = n % 10, h = n % 100;
+  return t >= 2 && t <= 4 && !(h >= 12 && h <= 14) ? few : many;
+};
+const csvCell = v => { v = String(v ?? ''); return /[";\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+// @core-end
+
+// ── słowniki ──
+const MONTHS = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+const MONTHS_GEN = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+const DAYS = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela'];
+const DAYS_SHORT = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+const REGIONS = [['dolnoslaskie', 'dolnośląskie'], ['kujawsko-pomorskie', 'kujawsko-pomorskie'], ['lubelskie', 'lubelskie'], ['lubuskie', 'lubuskie'], ['lodzkie', 'łódzkie'], ['malopolskie', 'małopolskie'], ['mazowieckie', 'mazowieckie'], ['opolskie', 'opolskie'], ['podkarpackie', 'podkarpackie'], ['podlaskie', 'podlaskie'], ['pomorskie', 'pomorskie'], ['slaskie', 'śląskie'], ['swietokrzyskie', 'świętokrzyskie'], ['warminsko-mazurskie', 'warmińsko-mazurskie'], ['wielkopolskie', 'wielkopolskie'], ['zachodniopomorskie', 'zachodniopomorskie']];
+const TYPES = [
+  { k: 'kons', label: 'Konsultacja z uczniem', short: 'Konsultacja' },
+  { k: 'kryz', label: 'Interwencja kryzysowa', short: 'Interwencja' },
+  { k: 'diag', label: 'Diagnoza', short: 'Diagnoza' },
+  { k: 'rodz', label: 'Rozmowa z rodzicem', short: 'Rodzic' },
+  { k: 'naucz', label: 'Konsultacja z nauczycielem', short: 'Nauczyciel' },
+  { k: 'grupa', label: 'Zajęcia grupowe / warsztaty', short: 'Zajęcia grupowe' },
+  { k: 'zesp', label: 'Zespół / rada pedagogiczna', short: 'Zespół' },
+  { k: 'inne', label: 'Inne', short: 'Inne' },
+];
+const TYPE = Object.fromEntries(TYPES.map(t => [t.k, t]));
+const TYPE_OF = m => TYPE[m && m.type] || TYPE.inne;
+const STATUSES = [
+  { k: 'plan', label: 'Zaplanowane' },
+  { k: 'done', label: 'Odbyte' },
+  { k: 'absent', label: 'Nieobecność (nb)' },
+  { k: 'cancel', label: 'Odwołane' },
+];
+const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
+const DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
+const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:30', dayTo: '16:00', defaultLen: 45, weekend: false, autoLock: 10, offDays: {} };
+
+// ── narzędzia UI ──
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const today = () => iso(new Date());
+const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const fmtTime = t => String(t || '').replace(/^0(\d)/, '$1');
+const fmtLong = s => { const d = parse(s); return `${DAYS[dow(s)]}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`; };
+const fmtShort = s => { const d = parse(s); return `${d.getDate()}.${pad(d.getMonth() + 1)}`; };
+const fmtFull = s => { const d = parse(s); return `${d.getDate()}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`; };
+const fmtHours = mins => (mins / 60).toLocaleString('pl-PL', { maximumFractionDigits: 1 });
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/ł/g, 'l');
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const newId = p => `${p}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+const syLabel = Y => `${Y}/${String(Y + 1).slice(2)}`;
+const ICONS = {
+  chevL: '<path d="M15 18l-6-6 6-6"/>',
+  chevR: '<path d="M9 18l6-6-6-6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  users: '<path d="M15.5 20v-1.5A3.5 3.5 0 0 0 12 15H7a3.5 3.5 0 0 0-3.5 3.5V20"/><circle cx="9.5" cy="8" r="3.5"/><path d="M20.5 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M15 4.6a3.5 3.5 0 0 1 0 6.8"/>',
+  sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M3 3l18 18M10.6 5.6A9.7 9.7 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3 3.8M6.5 6.9C3.9 8.6 2.5 12 2.5 12S6 18.5 12 18.5c1.8 0 3.3-.5 4.6-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  upload: '<path d="M12 15V4M7 9l5-5 5 5M5 20h14"/>',
+  repeat: '<path d="M17 3l3 3-3 3M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 0 1-3 3H4"/>',
+  alert: '<path d="M12 9v4M12 16.6v.4"/><path d="M10.3 4.2L2.8 17.5a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"/>',
+  lock: '<rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  copy: '<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+  undo: '<path d="M9 7L4 12l5 5"/><path d="M5 12h8a6 6 0 0 1 6 6"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  sync: '<path d="M20 11a8 8 0 0 0-14.3-4.3L4 9M4 4v5h5M4 13a8 8 0 0 0 14.3 4.3L20 15M20 20v-5h-5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.4"/>',
+};
+const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
+// ── stan ──
+const UI_KEY = 'psycal.ui.v1', DATA_KEY = 'psycal.data.v1';
+const uiPrefs = (() => { try { return JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; } catch { return {}; } })();
+const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ view: S.view, discreet: S.discreet, listRange: S.listRange })); } catch { /* pamięć przeglądarki niedostępna */ } };
+const isNarrow = () => window.matchMedia('(max-width: 760px)').matches;
+
+function mergeSettings(d) {
+  const s = { ...DEFAULTS, ...(d && typeof d === 'object' && !Array.isArray(d) ? d : {}) };
+  const parseBell = b => {
+    if (Array.isArray(b) && TIME_RE.test(b[0]) && TIME_RE.test(b[1])) return [b[0], b[1]];
+    const m = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/.exec(String(b));
+    return m ? [m[1], m[2]] : null;
+  };
+  let bells = Array.isArray(s.bells) ? s.bells.map(parseBell) : [];
+  if (!bells.length || bells.some(b => !b || toMin(b[1]) <= toMin(b[0]))) bells = DEFAULT_BELLS.map(parseBell);
+  s.bells = bells.sort((a, b) => toMin(a[0]) - toMin(b[0]));
+  if (!TIME_RE.test(s.dayFrom) || !TIME_RE.test(s.dayTo) || toMin(s.dayTo) <= toMin(s.dayFrom)) { s.dayFrom = DEFAULTS.dayFrom; s.dayTo = DEFAULTS.dayTo; }
+  if (!REGIONS.some(r => r[0] === s.region)) s.region = DEFAULTS.region;
+  if (!['e8', 'matura', 'none'].includes(s.exams)) s.exams = DEFAULTS.exams;
+  s.defaultLen = [30, 45, 60, 90].includes(+s.defaultLen) ? +s.defaultLen : 45;
+  const off = {};
+  if (s.offDays && typeof s.offDays === 'object' && !Array.isArray(s.offDays)) for (const [k, v] of Object.entries(s.offDays)) if (DATE_RE.test(k)) off[k] = String(v || '').slice(0, 80);
+  s.offDays = off;
+  s.weekend = !!s.weekend;
+  s.observances = s.observances !== false;
+  s.autoLock = [0,5,10,15,30,60].includes(+s.autoLock) ? +s.autoLock : 10;
+  return s;
+}
+const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, offDays: s.offDays, updated: Date.now() });
+
+const S = {
+  view: ['month', 'week', 'day', 'list'].includes(uiPrefs.view) ? uiPrefs.view : (isNarrow() ? 'day' : 'week'),
+  cursor: today(), selected: today(),
+  discreet: !!uiPrefs.discreet,
+  listRange: uiPrefs.listRange === 'year' ? 'year' : 'month',
+  filter: { q: '', type: '', status: '' },
+  meetings: new Map(), students: new Map(), settings: mergeSettings(null),
+  mode: 'loading', readOnly: false,
+  loaded: { meetings: false, students: false, settings: false },
+  capped: false,
+};
+let store = null, DL = null, BY = new Map();
+const pending = new Set();
+const info = s => dayInfo(s, S.settings);
+
+// ── zapis: konto (db) albo ta przeglądarka ──
+async function retry(fn) {
+  try { return await fn(); }
+  catch (e) { if (e && e.code === 'unavailable') { await sleep(300 + Math.random() * 700); return fn(); } throw e; }
+}
+function makeCloudStore(db, uid) {
+  const base = db.doc(`data/users/${uid}/cal`);
+  const M = base.collection('meetings'), ST = base.collection('students');
+  const toMap = snap => new Map(snap.docs.map(d => [d.id, d.data()]));
+  return {
+    kind: 'cloud',
+    watchMeetings: (from, to, cb, err) => M.where('date', '>=', from).where('date', '<=', to).orderBy('date').limit(1000).onSnapshot(s => cb(toMap(s)), err),
+    watchStudentMeetings: (sid, cb, err) => M.where('studentId', '==', sid).limit(1000).onSnapshot(s => cb(toMap(s)), err),
+    watchStudents: (cb, err) => ST.limit(1000).onSnapshot(s => cb(toMap(s)), err),
+    watchSettings: (cb, err) => base.onSnapshot(s => cb(s.exists ? s.data() : null), err),
+    setMeeting: (id, d) => retry(() => M.doc(id).set(d)),
+    updateMeeting: (id, p) => retry(() => M.doc(id).update(p)),
+    deleteMeeting: id => retry(() => M.doc(id).delete()),
+    setStudent: (id, d) => retry(() => ST.doc(id).set(d)),
+    updateStudent: (id, p) => retry(() => ST.doc(id).update(p)),
+    deleteStudent: id => retry(() => ST.doc(id).delete()),
+    setSettings: d => retry(() => base.set(d)),
+    async queryMeetings(field, value) { const s = await retry(() => M.where(field, '==', value).limit(1000).get()); return s.docs.map(d => [d.id, d.data()]); },
+    async allMeetings() {
+      const out = new Map();
+      let cursor = '0000-00-00';
+      for (let i = 0; i < 40; i++) {
+        const s = await retry(() => M.where('date', '>=', cursor).orderBy('date').limit(1000).get());
+        let last = cursor;
+        s.docs.forEach(d => { const x = d.data(); out.set(d.id, x); if (x && x.date > last) last = x.date; });
+        if (s.size < 1000 || last === cursor) break;
+        cursor = last;
+      }
+      return [...out];
+    },
+    async allStudents() { const s = await retry(() => ST.limit(1000).get()); return s.docs.map(d => [d.id, d.data()]); },
+  };
+}
+const VAULT_KEY = 'psycal.vault.enc.v1';
+const LEGACY_DATA_KEY = DATA_KEY;
+let vaultPassword = '';
+let vaultKey = null;
+let vaultSalt = null;
+let vaultData = null;
+
+const b64 = bytes => {
+  let s = ''; const a = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
+  return btoa(s);
+};
+const unb64 = s => {
+  const x = atob(s), a = new Uint8Array(x.length);
+  for (let i = 0; i < x.length; i++) a[i] = x.charCodeAt(i);
+  return a;
+};
+
+async function deriveVaultKey(password, salt) {
+  const raw = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' },
+    raw,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptVaultObject(data, key = vaultKey, salt = vaultSalt) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plain = new TextEncoder().encode(JSON.stringify(data));
+  const enc = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain);
+  return JSON.stringify({
+    app: 'kalendarz-specjalisty-encrypted',
+    v: 1,
+    kdf: 'PBKDF2-SHA256',
+    iterations: 310000,
+    cipher: 'AES-256-GCM',
+    salt: b64(salt),
+    iv: b64(iv),
+    data: b64(new Uint8Array(enc))
+  });
+}
+
+async function decryptVaultEnvelope(raw, password) {
+  const env = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  if (!env || env.app !== 'kalendarz-specjalisty-encrypted' || !env.salt || !env.iv || !env.data) throw new Error('format');
+  const salt = unb64(env.salt);
+  const key = await deriveVaultKey(password, salt);
+  const plain = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: unb64(env.iv) },
+    key,
+    unb64(env.data)
+  );
+  const data = JSON.parse(new TextDecoder().decode(plain));
+  return { data, key, salt };
+}
+
+async function persistVault(data) {
+  if (!vaultKey || !vaultSalt) throw new Error('locked');
+  localStorage.setItem(VAULT_KEY, await encryptVaultObject(data));
+}
+
+function makeLocalStore(initial) {
+  let data = initial && typeof initial === 'object' ? initial : { meetings: {}, students: {}, settings: null };
+  if (!data.meetings || typeof data.meetings !== 'object') data.meetings = {};
+  if (!data.students || typeof data.students !== 'object') data.students = {};
+  if (!Object.prototype.hasOwnProperty.call(data, 'settings')) data.settings = null;
+  vaultData = data;
+  const subs = new Set();
+  let timer = 0;
+  let saveQueue = Promise.resolve();
+  const save = () => {
+    saveQueue = saveQueue.then(() => persistVault(data));
+    return saveQueue;
+  };
+  const emit = () => { clearTimeout(timer); timer = setTimeout(() => subs.forEach(fn => fn()), 0); };
+  const sub = fn => { subs.add(fn); setTimeout(fn, 0); return () => subs.delete(fn); };
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const entries = o => Object.entries(o);
+  return {
+    kind: 'local', persists: () => true,
+    watchMeetings: (from, to, cb) => sub(() => cb(new Map(entries(data.meetings).filter(([, m]) => m.date >= from && m.date <= to)))),
+    watchStudentMeetings: (sid, cb) => sub(() => cb(new Map(entries(data.meetings).filter(([, m]) => m.studentId === sid)))),
+    watchStudents: cb => sub(() => cb(new Map(entries(data.students)))),
+    watchSettings: cb => sub(() => cb(data.settings)),
+    async setMeeting(id, d) { data.meetings[id] = clone(d); await save(); emit(); },
+    async updateMeeting(id, p) { if (!data.meetings[id]) throw { code: 'invalid_argument' }; data.meetings[id] = { ...data.meetings[id], ...clone(p) }; await save(); emit(); },
+    async deleteMeeting(id) { delete data.meetings[id]; await save(); emit(); },
+    async setStudent(id, d) { data.students[id] = clone(d); await save(); emit(); },
+    async updateStudent(id, p) { if (!data.students[id]) throw { code: 'invalid_argument' }; data.students[id] = { ...data.students[id], ...clone(p) }; await save(); emit(); },
+    async deleteStudent(id) { delete data.students[id]; await save(); emit(); },
+    async setSettings(d) { data.settings = clone(d); await save(); emit(); },
+    async queryMeetings(field, value) { return entries(data.meetings).filter(([, m]) => m[field] === value); },
+    async allMeetings() { return entries(data.meetings); },
+    async allStudents() { return entries(data.students); },
+  };
+}
+
+async function unlockOrCreateVault() {
+  const raw = localStorage.getItem(VAULT_KEY);
+  const screen = $('#vaultScreen'), title = $('#vaultTitle'), text = $('#vaultText');
+  const pass = $('#vaultPass'), pass2 = $('#vaultPass2'), confirmWrap = $('#vaultConfirmWrap');
+  const btn = $('#vaultBtn'), err = $('#vaultError');
+  const creating = !raw;
+  title.textContent = creating ? 'Utwórz hasło szyfrowania' : 'Odblokuj kalendarz';
+  text.textContent = creating
+    ? 'Hasło chroni dane uczniów i spotkań zapisane na tym komputerze. Nie zapisujemy go nigdzie.'
+    : 'Wpisz hasło szyfrowania, aby otworzyć lokalny kalendarz.';
+  confirmWrap.hidden = !creating;
+  btn.textContent = creating ? 'Utwórz i otwórz' : 'Odblokuj';
+  pass.autocomplete = creating ? 'new-password' : 'current-password';
+
+  return new Promise(resolve => {
+    let busy = false;
+    const run = async () => {
+      if (appLocked) return unlockExistingLock();
+      if (busy) return;
+      err.textContent = '';
+      const pwd = pass.value;
+      if (pwd.length < 8) { err.textContent = 'Hasło musi mieć co najmniej 8 znaków.'; return; }
+      if (creating && pwd !== pass2.value) { err.textContent = 'Hasła nie są identyczne.'; return; }
+      busy = true; btn.disabled = true; btn.textContent = creating ? 'Szyfruję…' : 'Odblokowuję…';
+      try {
+        if (creating) {
+          vaultPassword = pwd;
+          vaultSalt = crypto.getRandomValues(new Uint8Array(16));
+          vaultKey = await deriveVaultKey(pwd, vaultSalt);
+          let initial = { meetings: {}, students: {}, settings: null };
+          const legacy = localStorage.getItem(LEGACY_DATA_KEY);
+          if (legacy) {
+            try {
+              const old = JSON.parse(legacy);
+              if (old && typeof old === 'object') initial = { ...initial, ...old };
+            } catch {}
+          }
+          await persistVault(initial);
+          localStorage.removeItem(LEGACY_DATA_KEY);
+          vaultData = initial;
+        } else {
+          const dec = await decryptVaultEnvelope(raw, pwd);
+          vaultPassword = pwd; vaultKey = dec.key; vaultSalt = dec.salt; vaultData = dec.data;
+        }
+        screen.hidden = true;
+        resolve(vaultData);
+      } catch (e) {
+        console.warn(e);
+        err.textContent = creating ? 'Nie udało się utworzyć sejfu.' : 'Nieprawidłowe hasło albo uszkodzone dane.';
+        busy = false; btn.disabled = false; btn.textContent = creating ? 'Utwórz i otwórz' : 'Odblokuj';
+      }
+    };
+    btn.addEventListener('click', run);
+    pass.addEventListener('keydown', e => { if (e.key === 'Enter' && !creating) run(); });
+    pass2.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+    setTimeout(() => pass.focus(), 80);
+  });
+}
+
+let settingsQueue = Promise.resolve();
+function saveSettings(s) {
+  const body = serializeSettings(s);
+  const p = settingsQueue.then(() => store.setSettings(body));
+  settingsQueue = p.catch(() => {});
+  return p;
+}
+
+async function runLimited(tasks, n) {
+  let i = 0;
+  const worker = async () => { while (i < tasks.length) { const t = tasks[i++]; await t(); } };
+  await Promise.all(Array.from({ length: Math.min(n, tasks.length) }, worker));
+}
+
+function handleWriteError(e) {
+  const code = e && e.code;
+  const msg = code === 'invalid_argument' ? 'Nie udało się zapisać — brak uprawnień do zapisu w tym kalendarzu.'
+    : code === 'quota_exceeded' ? 'Zabrakło miejsca na nowe wpisy. Zrób kopię zapasową i usuń stare spotkania.'
+    : code === 'resource_exhausted' ? 'Za dużo zmian naraz. Spróbuj ponownie za chwilę.'
+    : code === 'revoked' ? 'Dostęp do zapisu został cofnięty.'
+    : 'Nie udało się zapisać. Sprawdź połączenie i spróbuj ponownie.';
+  if (code === 'invalid_argument' || code === 'revoked') S.readOnly = true;
+  toast(msg, 'err');
+  console.warn(e);
+}
+function onDbError(e) {
+  console.warn(e);
+  if (e && e.code === 'revoked') { S.readOnly = true; toast('Dostęp do danych został cofnięty.', 'err'); }
+  else if (e && e.code === 'unavailable') setTimeout(() => { winKey = null; ensureWindow(); }, 2000);
+}
+
+let unsubMeetings = null, winKey = null;
+function ensureWindow() {
+  if (!store) return;
+  const Y = schoolYearOf(S.cursor);
+  if (winKey === Y && unsubMeetings) return;
+  if (unsubMeetings) unsubMeetings();
+  winKey = Y;
+  const from = addDays(`${Y}-09-01`, -45), to = addDays(`${Y + 1}-08-31`, 45);
+  S.loaded.meetings = false;
+  unsubMeetings = store.watchMeetings(from, to, map => {
+    S.meetings = map; S.loaded.meetings = true; S.capped = map.size >= 1000;
+    render();
+    if (dlgS.open) refreshStudentsDialog();
+  }, onDbError);
+}
+
+// ── dane pochodne ──
+function groupByDate() {
+  const g = new Map();
+  for (const [id, m] of S.meetings) {
+    if (!m || !DATE_RE.test(m.date) || !TIME_RE.test(m.start) || !TIME_RE.test(m.end)) continue;
+    const st = STATUS_LABEL[m.status] ? m.status : 'plan';
+    if (!g.has(m.date)) g.set(m.date, []);
+    g.get(m.date).push({ ...m, id, status: st });
+  }
+  for (const arr of g.values()) arr.sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
+  return g;
+}
+const allItems = () => [...BY.values()].flat();
+const studentOf = m => (m.studentId ? S.students.get(m.studentId) : null);
+function initials(name) {
+  const s = String(name || '').trim();
+  if (!s) return '';
+  if (/\d/.test(s)) return s;
+  return s.split(/\s+/).slice(0, 3).map(w => w.charAt(0).toUpperCase() + '.').join('');
+}
+const whoLabel = m => { const st = studentOf(m); return st ? (S.discreet ? initials(st.name) : st.name) : ''; };
+const titleOf = m => (S.discreet ? '' : String(m.title || '').trim());
+function evLabel(m) {
+  const who = whoLabel(m), what = titleOf(m);
+  if (who && what) return `${who} · ${what}`;
+  return who || what || TYPE_OF(m).short;
+}
+const lessonNo = m => S.settings.bells.findIndex(([a, b]) => a === m.start && b === m.end) + 1;
+const isPast = m => m.date < today() || (m.date === today() && toMin(m.end) <= nowMin());
+const isTodo = m => m.status === 'plan' && isPast(m);
+function showWeekends(from, to) {
+  if (S.settings.weekend) return true;
+  for (const [d, arr] of BY) if (d >= from && d <= to && dow(d) >= 5 && arr.length) return true;
+  return false;
+}
+function weekDays() {
+  const mon = mondayOf(S.cursor);
+  const n = showWeekends(mon, addDays(mon, 6)) ? 7 : 5;
+  return Array.from({ length: n }, (_, i) => addDays(mon, i));
+}
+function dayTags(d) {
+  const t = [];
+  if (d.hol) t.push({ k: 'hol', t: d.hol });
+  if (d.off != null) t.push({ k: 'off', t: d.off });
+  if (d.brk) t.push({ k: 'brk', t: d.brk });
+  if (d.exam) t.push({ k: 'exam', t: d.exam });
+  if (d.obs) t.push({ k: 'obs', t: d.obs });
+  return t;
+}
+
+
+const undoStack = [];
+function updateUndoButton() {
+  const b=$('#undoBtn');
+  if (!b) return;
+  b.disabled = !undoStack.length;
+  b.title = undoStack.length ? `Cofnij: ${undoStack[undoStack.length-1].label}` : 'Brak operacji do cofnięcia';
+}
+function pushUndo(label, fn) {
+  undoStack.push({label,fn});
+  if (undoStack.length > 20) undoStack.shift();
+  updateUndoButton();
+}
+async function undoLast() {
+  const u=undoStack.pop();
+  updateUndoButton();
+  if (!u) return;
+  try { await u.fn(); toast(`Cofnięto: ${u.label}`); }
+  catch(e){ handleWriteError(e); }
+}
+
+// ── render ──
+function render() {
+  BY = groupByDate();
+  renderHeader();
+  renderMain();
+  renderSide();
+  renderNotice();
+}
+
+function periodTitle() {
+  const d = parse(S.cursor);
+  if (S.view === 'month' || (S.view === 'list' && S.listRange === 'month')) return `${cap(MONTHS[d.getMonth()])} <span class="yr">${d.getFullYear()}</span>`;
+  if (S.view === 'list') return `Rok szkolny <span class="yr">${syLabel(schoolYearOf(S.cursor))}</span>`;
+  const both = (long, short) => `<span class="pt-long">${long}</span><span class="pt-short">${short}</span>`;
+  if (S.view === 'day') {
+    const tail = `${d.getDate()} ${MONTHS_GEN[d.getMonth()]} <span class="yr">${d.getFullYear()}</span>`;
+    return both(`${cap(DAYS[dow(S.cursor)])}, ${tail}`, tail);
+  }
+  const days = weekDays(), a = parse(days[0]), b = parse(days[days.length - 1]);
+  const yr = `<span class="yr">${b.getFullYear()}</span>`;
+  if (a.getMonth() === b.getMonth()) return `${a.getDate()}–${b.getDate()} ${MONTHS_GEN[b.getMonth()]} ${yr}`;
+  const short = `${a.getDate()}.${pad(a.getMonth() + 1)}–${b.getDate()}.${pad(b.getMonth() + 1)} ${yr}`;
+  if (a.getFullYear() === b.getFullYear()) return both(`${a.getDate()} ${MONTHS_GEN[a.getMonth()]} – ${b.getDate()} ${MONTHS_GEN[b.getMonth()]} ${yr}`, short);
+  return both(`${a.getDate()} ${MONTHS_GEN[a.getMonth()]} ${a.getFullYear()} – ${b.getDate()} ${MONTHS_GEN[b.getMonth()]} ${yr}`, short);
+}
+
+function renderHeader() {
+  $('#period').innerHTML = periodTitle();
+  $$('#viewSeg [data-view]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === S.view)));
+  const db = $('#discreetBtn');
+  db.setAttribute('aria-pressed', String(S.discreet));
+  db.innerHTML = ic(S.discreet ? 'eyeOff' : 'eye');
+  $('#syLabel').textContent = `rok szkolny ${syLabel(schoolYearOf(S.cursor))}`;
+}
+
+function renderNotice() {
+  const n = $('#notice');
+  n.hidden = true;
+}
+
+function renderMain() {
+  const main = $('#main');
+  if (S.view === 'list') {
+    if (main.dataset.v !== 'list') { main.dataset.v = 'list'; main.innerHTML = listShell(); wireListToolbar(); }
+    else syncListToolbar();
+    updateListResults();
+    return;
+  }
+  main.dataset.v = S.view;
+  if (S.view === 'month') main.innerHTML = renderMonth();
+  else if (S.view === 'week') { const days = weekDays(); main.innerHTML = renderTimeGrid(days, false) + gridFoot(days); }
+  else main.innerHTML = renderTimeGrid([S.cursor], true) + gridFoot([S.cursor]);
+}
+
+function gridFoot(days) {
+  let msg;
+  const n = days.reduce((a, d) => a + (BY.get(d) || []).length, 0);
+  if (!S.loaded.meetings) msg = `${ic('sync')}Wczytywanie spotkań…`;
+  else if (S.capped) msg = `${ic('info')}Wyświetlono pierwsze 1000 spotkań tego roku szkolnego.`;
+  else if (!n) msg = `${ic('info')}${days.length > 1 ? 'Brak spotkań w tym tygodniu.' : 'Brak spotkań tego dnia.'} Kliknij pas lekcji, aby zaplanować spotkanie na tę lekcję.`;
+  else msg = `${ic('info')}Kliknij pas lekcji, aby dodać spotkanie; kliknij spotkanie, aby je edytować.`;
+  return `<div class="sheet-foot">${msg}</div>`;
+}
+
+function evChip(m) {
+  const T = TYPE_OF(m), st = m.status;
+  return `<button type="button" class="mc-ev s-${st}" data-action="edit" data-id="${esc(m.id)}" style="--tc:var(--t-${T.k})" title="${esc(`${fmtTime(m.start)}–${fmtTime(m.end)} · ${T.label} · ${STATUS_LABEL[st]}`)}"><i class="dot"></i><span class="t">${fmtTime(m.start)}</span><span class="l">${esc(evLabel(m))}</span>${st === 'absent' ? '<span class="nb">nb</span>' : ''}${st === 'done' ? ic('check') : ''}</button>`;
+}
+
+function renderMonth() {
+  const c = parse(S.cursor), y = c.getFullYear(), mo = c.getMonth();
+  const first = iso(new Date(y, mo, 1, 12)), last = iso(new Date(y, mo + 1, 0, 12));
+  const start = mondayOf(first), end = addDays(mondayOf(last), 6);
+  const we = showWeekends(start, end), cols = we ? 7 : 5, t = today(), maxEv = 3;
+  let h = `<div class="mv" style="--cols:${cols}" role="grid" aria-label="${esc(cap(MONTHS[mo]))} ${y}"><div role="row" style="display:contents">`;
+  for (let i = 0; i < cols; i++) h += `<div class="mv-h${i === 6 ? ' red' : ''}" role="columnheader">${DAYS_SHORT[i]}</div>`;
+  h += '</div>';
+  for (let d = start; d <= end; d = addDays(d, 1)) {
+    const wd = dow(d);
+    if (!we && wd >= 5) continue;
+    if (wd === 0) h += '<div role="row" style="display:contents">';
+    const di = info(d), out = parse(d).getMonth() !== mo, evs = BY.get(d) || [];
+    const red = !!di.hol || wd === 6;
+    const cls = ['mc', out && 'out', (di.hol || di.brk || di.off != null) && 'off', d === S.selected && 'sel'].filter(Boolean).join(' ');
+    const tags = dayTags(di).slice(0, 2);
+    const shown = evs.length > maxEv ? evs.slice(0, maxEv - 1) : evs;
+    h += `<div class="${cls}" data-date="${d}" role="gridcell">
+      <div class="mc-top"><button type="button" class="mc-num${red ? ' red' : ''}${d === t ? ' today' : ''}" data-action="openday" data-date="${d}" aria-label="${esc(cap(fmtLong(d)))}${evs.length ? `, ${evs.length} ${plural(evs.length, 'spotkanie', 'spotkania', 'spotkań')}` : ''}">${parse(d).getDate()}</button>
+      <div class="mc-tags">${tags.map(tg => `<span class="tag ${tg.k}" title="${esc(tg.t)}">${esc(tg.t)}</span>`).join('')}</div></div>
+      <div class="mc-list">${shown.map(evChip).join('')}${evs.length > shown.length ? `<button type="button" class="mc-more" data-action="openday" data-date="${d}">+${evs.length - shown.length} więcej</button>` : ''}</div>
+      <div class="mc-dots" aria-hidden="true">${evs.slice(0, 6).map(m => `<i style="--tc:var(--t-${TYPE_OF(m).k})"></i>`).join('')}</div>
+    </div>`;
+    if (wd === (we ? 6 : 4)) h += '</div>';
+  }
+  h += '</div>';
+  const n = [...BY.entries()].filter(([d]) => d >= first && d <= last).reduce((a, [, arr]) => a + arr.length, 0);
+  const foot = !S.loaded.meetings ? `${ic('sync')}Wczytywanie spotkań…`
+    : n ? `${ic('info')}<span>Kliknij dzień, aby zobaczyć jego plan<span class="hide-sm">; dwuklik dodaje spotkanie</span>.</span>`
+    : `${ic('info')}<span>Brak spotkań w tym miesiącu. Przycisk „+” dodaje spotkanie w wybranym dniu.</span>`;
+  return h + `<div class="sheet-foot">${foot}</div>`;
+}
+
+function evBlock(m, top, hgt, L, detail) {
+  const T = TYPE_OF(m), st = m.status;
+  const w = 100 / L.n, left = L.col * w;
+  const compact = hgt < 38, narrow = L.n > 1 && !detail;
+  const lesson = narrow ? 0 : lessonNo(m);
+  const who = whoLabel(m), title = titleOf(m);
+  const main = who || title || T.short;
+  const sec = who ? (title || T.short) : (title ? T.short : '');
+  const badge = st === 'done' ? `<span class="st" title="Odbyte">${ic('check')}</span>`
+    : st === 'absent' ? '<span class="st" title="Nieobecność ucznia">nb</span>'
+    : st === 'cancel' ? '<span class="st" title="Odwołane">odw.</span>'
+    : isTodo(m) ? '<span class="st todo" title="Do uzupełnienia: czy spotkanie się odbyło?">?</span>' : '';
+  const tip = `${fmtTime(m.start)}–${fmtTime(m.end)} · ${T.label}${who ? ` · ${who}` : ''} · ${STATUS_LABEL[st]}`;
+  return `<button type="button" draggable="true" class="ev s-${st}${compact ? ' compact' : ''}" data-action="edit" data-id="${esc(m.id)}" title="${esc(tip)}" style="--tc:var(--t-${T.k});top:${top}px;height:${hgt}px;left:calc(${left}% + 2px);width:calc(${w}% - 4px)">
+    <span class="ev-t">${fmtTime(m.start)}${compact || narrow ? '' : `–${fmtTime(m.end)}`}${lesson && !compact ? ` <b>L${lesson}</b>` : ''}${compact ? '' : badge}</span>
+    <span class="ev-l">${esc(main)}</span>${compact ? badge : ''}
+    ${!compact && hgt >= 54 && sec ? `<span class="ev-s">${esc(sec)}</span>` : ''}
+    ${detail && !S.discreet && m.note && hgt >= 80 ? `<span class="ev-n">${esc(m.note)}</span>` : ''}
+  </button>`;
+}
+
+function renderTimeGrid(days, detail) {
+  const st = S.settings, t = today();
+  let from = toMin(st.dayFrom), to = toMin(st.dayTo);
+  for (const d of days) for (const m of (BY.get(d) || [])) {
+    from = Math.min(from, Math.floor(toMin(m.start) / 60) * 60);
+    to = Math.max(to, Math.ceil(toMin(m.end) / 60) * 60);
+  }
+  to = Math.min(Math.max(to, from + 120), 24 * 60);
+  const PX = detail ? 1.3 : 1.15, H = Math.round((to - from) * PX);
+  let h = `<div class="wk-scroll"><div class="wk${detail ? ' wk1' : ''}" style="--days:${days.length}">`;
+  h += '<div class="wk-row wk-head"><div class="wk-corner"></div>';
+  for (const d of days) {
+    const di = info(d), wd = dow(d), dd = parse(d);
+    h += `<button type="button" class="wk-day${d === t ? ' today' : ''}${di.hol || wd === 6 ? ' red' : ''}${d === S.selected && !detail ? ' sel' : ''}" data-action="pickday" data-date="${d}" aria-label="${esc(cap(fmtLong(d)))}"><span class="wd">${DAYS_SHORT[wd]}</span><span class="dn">${dd.getDate()}</span>${detail ? `<span class="mn">${MONTHS_GEN[dd.getMonth()]}</span>` : ''}</button>`;
+  }
+  h += '</div><div class="wk-row wk-all"><div class="wk-corner"><span>dzień</span></div>';
+  for (const d of days) h += `<div class="wk-allcell">${dayTags(info(d)).map(tg => `<span class="tag ${tg.k}" title="${esc(tg.t)}">${esc(tg.t)}</span>`).join('')}</div>`;
+  h += `</div><div class="wk-row wk-body" style="height:${H}px" data-from="${from}" data-px="${PX}"><div class="wk-gutter" aria-hidden="true">`;
+  for (let m = Math.ceil(from / 60) * 60; m < to; m += 60) if (m > from) h += `<span class="wk-hl" style="top:${((m - from) * PX).toFixed(1)}px">${m / 60}:00</span>`;
+  st.bells.forEach(([a, b], i) => {
+    const A = Math.max(toMin(a), from), B = Math.min(toMin(b), to);
+    if (B - A >= 15) h += `<span class="wk-ln" style="top:${(((A + B) / 2 - from) * PX).toFixed(1)}px">${i + 1}</span>`;
+  });
+  h += '</div><div class="wk-grid" aria-hidden="true">';
+  st.bells.forEach(([a, b]) => {
+    const A = Math.max(toMin(a), from), B = Math.min(toMin(b), to);
+    if (B > A) h += `<div class="wk-band" style="top:${((A - from) * PX).toFixed(1)}px;height:${((B - A) * PX).toFixed(1)}px"></div>`;
+  });
+  for (let m = Math.ceil(from / 60) * 60; m < to; m += 60) if (m > from) h += `<div class="wk-hour" style="top:${((m - from) * PX).toFixed(1)}px"></div>`;
+  h += '</div>';
+  days.forEach((d, ci) => {
+    const di = info(d), off = !!(di.hol || di.brk || di.off != null);
+    h += `<div class="wk-col${off ? ' off' : ''}${d === S.selected && !detail && days.length > 1 ? ' sel' : ''}" style="grid-column:${ci + 2}" data-date="${d}" title="Kliknij, aby dodać spotkanie">`;
+    const evs = (BY.get(d) || []).map(m => ({ ...m, s: toMin(m.start), e: Math.max(toMin(m.end), toMin(m.start) + 10) }));
+    const lay = layoutDay(evs);
+    for (const m of evs) {
+      const L = lay.get(m.id) || { col: 0, n: 1 };
+      h += evBlock(m, +((m.s - from) * PX).toFixed(1), Math.max(20, Math.round((m.e - m.s) * PX) - 2), L, detail);
+    }
+    if (d === t) { const n = nowMin(); if (n >= from && n <= to) h += `<div class="nowline" style="top:${((n - from) * PX).toFixed(1)}px"></div>`; }
+    h += '</div>';
+  });
+  h += '</div></div></div>';
+  return h;
+}
+
+// ── lista ──
+function listShell() {
+  return `<div class="lv">
+    <div class="lv-bar">
+      <label class="lv-search">${ic('search')}<input type="search" id="lv-q" placeholder="Szukaj: uczeń, klasa, temat, notatka" aria-label="Szukaj spotkań"></label>
+      <select id="lv-type" aria-label="Rodzaj spotkania"><option value="">Wszystkie rodzaje</option>${TYPES.map(T => `<option value="${T.k}">${T.label}</option>`).join('')}</select>
+      <select id="lv-status" aria-label="Status"><option value="">Każdy status</option><option value="todo">Do uzupełnienia</option>${STATUSES.map(s => `<option value="${s.k}">${s.label}</option>`).join('')}</select>
+      <div class="seg" id="lv-range" role="group" aria-label="Zakres"><button type="button" data-lrange="month">Miesiąc</button><button type="button" data-lrange="year">Rok szkolny</button></div>
+    </div>
+    <div class="lv-sum" id="lv-sum"></div>
+    <div id="lv-res"></div>
+  </div>`;
+}
+function wireListToolbar() {
+  const q = $('#lv-q');
+  q.value = S.filter.q;
+  q.addEventListener('input', e => { S.filter.q = e.target.value; updateListResults(); });
+  $('#lv-type').addEventListener('change', e => { S.filter.type = e.target.value; updateListResults(); });
+  $('#lv-status').addEventListener('change', e => { S.filter.status = e.target.value; updateListResults(); });
+  syncListToolbar();
+}
+function syncListToolbar() {
+  const t = $('#lv-type');
+  if (!t) return;
+  t.value = S.filter.type;
+  $('#lv-status').value = S.filter.status;
+  $$('#lv-range [data-lrange]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lrange === S.listRange)));
+}
+function listRange() {
+  if (S.listRange === 'year') { const Y = schoolYearOf(S.cursor); return [`${Y}-09-01`, `${Y + 1}-08-31`]; }
+  const c = parse(S.cursor);
+  return [iso(new Date(c.getFullYear(), c.getMonth(), 1, 12)), iso(new Date(c.getFullYear(), c.getMonth() + 1, 0, 12))];
+}
+function matchesFilter(m) {
+  const f = S.filter;
+  if (f.type && TYPE_OF(m).k !== f.type) return false;
+  if (f.status === 'todo' ? !isTodo(m) : (f.status && m.status !== f.status)) return false;
+  if (f.q) {
+    const st = studentOf(m);
+    const hay = norm([st && st.name, st && st.cls, m.title, m.note, TYPE_OF(m).label].filter(Boolean).join(' '));
+    if (!norm(f.q).split(/\s+/).filter(Boolean).every(w => hay.includes(w))) return false;
+  }
+  return true;
+}
+function updateListResults() {
+  const res = $('#lv-res'), sum = $('#lv-sum');
+  if (!res) return;
+  const [from, to] = listRange();
+  const items = allItems().filter(m => m.date >= from && m.date <= to && matchesFilter(m)).sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+  const c = { done: 0, absent: 0, cancel: 0, todo: 0 };
+  let mins = 0;
+  for (const m of items) {
+    if (c[m.status] != null) c[m.status]++;
+    if (isTodo(m)) c.todo++;
+    if (m.status === 'done') mins += Math.max(0, toMin(m.end) - toMin(m.start));
+  }
+  const n = items.length;
+  sum.innerHTML = `<span><b>${n}</b> ${plural(n, 'spotkanie', 'spotkania', 'spotkań')}</span><span>odbyte: <b>${c.done}</b></span><span>nb: <b>${c.absent}</b></span><span>odwołane: <b>${c.cancel}</b></span><span>do uzupełnienia: <b>${c.todo}</b></span><span>czas odbytych: <b>${fmtHours(mins)} h</b></span>`;
+  if (!S.loaded.meetings) { res.innerHTML = '<p class="lv-empty">Wczytywanie spotkań…</p>'; return; }
+  if (!n) { res.innerHTML = `<p class="lv-empty">${S.filter.q || S.filter.type || S.filter.status ? 'Żadne spotkanie nie pasuje do filtrów.' : 'Brak spotkań w tym okresie.'}</p>`; return; }
+  const groups = new Map();
+  for (const m of items) { if (!groups.has(m.date)) groups.set(m.date, []); groups.get(m.date).push(m); }
+  let h = '';
+  for (const [d, arr] of groups) {
+    const di = info(d);
+    h += `<section class="lv-day"><div class="lv-dh"><h3>${esc(cap(fmtLong(d)))}</h3><span>${esc([di.hol, di.off, di.brk].filter(Boolean).join(' · '))}</span></div><ul class="lv-list">${arr.map(listRow).join('')}</ul></section>`;
+  }
+  res.innerHTML = h;
+}
+function listRow(m) {
+  const T = TYPE_OF(m), st = studentOf(m), lesson = lessonNo(m), who = whoLabel(m), title = titleOf(m);
+  return `<li class="lr" style="--tc:var(--t-${T.k})">
+    <button type="button" class="lr-main" data-action="edit" data-id="${esc(m.id)}">
+      <span class="lr-time">${fmtTime(m.start)}–${fmtTime(m.end)}${lesson ? `<small>L${lesson}</small>` : ''}</span>
+      <span class="lr-type"><i class="sq"></i>${esc(T.short)}</span>
+      <span class="lr-body">${who ? `<span class="lr-who">${esc(who)}${st && st.cls && !S.discreet ? `<em>${esc(st.cls)}</em>` : ''}</span> ` : ''}<span class="lr-what">${esc(title || (who ? '' : T.label))}</span></span>
+      ${!S.discreet && m.note ? `<span class="lr-note">${esc(m.note)}</span>` : ''}
+    </button>
+    ${qsButtons(m)}
+  </li>`;
+}
+
+// ── panel boczny ──
+function qsButtons(m) {
+  const st = m.status, dis = pending.has(m.id) ? ' disabled' : '';
+  const b = (k, label, inner) => `<button type="button" class="s-${k}" data-action="status" data-id="${esc(m.id)}" data-status="${k}" aria-pressed="${st === k}" aria-label="${label}" title="${label}"${dis}>${inner}</button>`;
+  return `<span class="qs" role="group" aria-label="Status spotkania">${b('done', 'Odbyte', ic('check'))}${b('absent', 'Nieobecność ucznia (nb)', 'nb')}${b('cancel', 'Odwołane', ic('x'))}</span>`;
+}
+function agRow(m, withDate) {
+  const T = TYPE_OF(m), st = studentOf(m), lesson = lessonNo(m), who = whoLabel(m), title = titleOf(m);
+  const top = withDate ? fmtShort(m.date) : fmtTime(m.start);
+  const bottom = withDate ? fmtTime(m.start) : (lesson ? `L${lesson}` : fmtTime(m.end));
+  return `<li class="ag s-${m.status}" style="--tc:var(--t-${T.k})">
+    <button type="button" class="ag-main" data-action="edit" data-id="${esc(m.id)}">
+      <span class="ag-time"><b>${top}</b><small>${bottom}</small></span>
+      <span class="ag-body"><span class="ag-who"><span class="nm">${esc(who || title || T.short)}</span>${st && st.cls && !S.discreet ? `<span class="cls">${esc(st.cls)}</span>` : ''}</span>
+      <span class="ag-what"><i class="sq"></i><span>${esc(T.short)}${who && title ? ` · ${esc(title)}` : ''}</span></span></span>
+    </button>
+    ${qsButtons(m)}
+  </li>`;
+}
+function dayPills(d, di) {
+  const p = [];
+  if (di.hol) p.push(`<span class="pill hol">${esc(di.hol)}</span>`);
+  if (di.off != null) p.push(`<span class="pill off">${esc(di.off)}</span>`);
+  if (di.brk) p.push(`<span class="pill brk">${esc(di.brk)}</span>`);
+  if (di.school) { const w = schoolWeek(d); p.push(`<span class="pill school">Dzień zajęć${w ? ` · tydzień ${w}` : ''}</span>`); }
+  else if (di.weekend && !di.hol && !di.brk) p.push(`<span class="pill">${dow(d) === 5 ? 'Sobota' : 'Niedziela'}</span>`);
+  else if (!di.hol && !di.brk && di.off == null) p.push('<span class="pill">Brak zajęć</span>');
+  if (di.exam) p.push(`<span class="pill exam">${esc(di.exam)}</span>`);
+  if (di.obs) p.push(`<span class="pill obs">${esc(di.obs)}</span>`);
+  if (d === today()) { const nb = nextBreak(d, S.settings); if (nb && nb.days <= 200) p.push(`<span class="pill">Do ${esc(nb.gen)}: ${nb.days} ${plural(nb.days, 'dzień', 'dni', 'dni')}</span>`); }
+  return p.join('');
+}
+function renderSide() {
+  const d = S.selected, di = info(d), evs = BY.get(d) || [], t = today();
+  let h = `<section class="sp">
+    <div class="sp-h"><h2 class="sp-title">${esc(cap(fmtLong(d)))}</h2>${d === t ? '<span class="today-badge">dziś</span>' : ''}</div>
+    <div class="sp-meta">${dayPills(d, di)}</div>`;
+  if (!S.loaded.meetings) h += '<p class="empty">Wczytywanie…</p>';
+  else if (evs.length) h += `<ul class="agenda">${evs.map(m => agRow(m, false)).join('')}</ul>`;
+  else h += '<p class="empty">Brak spotkań tego dnia.</p>';
+  if (di.school && S.loaded.meetings) {
+    const fl = freeLessons(S.settings.bells, evs);
+    h += `<p class="free">${fl.length ? `Wolne lekcje: <b>${compressRanges(fl)}</b>` : 'Wszystkie lekcje zajęte.'}</p>`;
+  }
+  h += `<div class="sp-actions"><button type="button" class="btn sm" data-action="new-on" data-date="${d}">${ic('plus')}Dodaj spotkanie</button>${!di.weekend ? `<button type="button" class="btn ghost sm" data-action="toggle-off" data-date="${d}">${di.off != null ? 'Przywróć dzień zajęć' : 'Oznacz dzień wolny w szkole'}</button>` : ''}</div></section>`;
+
+  const todo = allItems().filter(isTodo).sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start));
+  h += `<section class="sp"><h2 class="sp-title sm">Do uzupełnienia${todo.length ? ` <span class="count">${todo.length}</span>` : ''}</h2>`;
+  if (!S.loaded.meetings) h += '<p class="sp-note">Wczytywanie…</p>';
+  else if (todo.length) {
+    h += `<p class="sp-note">Minione spotkania bez statusu. Oznacz: odbyte, nieobecność (nb) albo odwołane.</p><ul class="agenda">${todo.slice(0, 5).map(m => agRow(m, true)).join('')}</ul>`;
+    if (todo.length > 5) h += `<div class="sp-actions"><button type="button" class="btn ghost sm" data-action="show-todo">Pokaż wszystkie (${todo.length})</button></div>`;
+  } else h += '<p class="sp-note">Wszystkie minione spotkania mają status.</p>';
+  h += '</section>';
+
+  h += monthSummary();
+  const foot = [ic('lock'), 'Dane zapisują się wyłącznie na tym komputerze i są szyfrowane hasłem.'];
+  h += `<div class="sp-foot">${foot[0]}<span>${foot[1]}<span class="keys">Skróty: N — nowe spotkanie, T — dziś, ← → — przewijanie, M / W / D / L — widoki.</span></span></div>`;
+  $('#side').innerHTML = h;
+}
+function monthSummary() {
+  const c = parse(S.cursor), y = c.getFullYear(), mo = c.getMonth();
+  const from = iso(new Date(y, mo, 1, 12)), to = iso(new Date(y, mo + 1, 0, 12));
+  const list = allItems().filter(m => m.date >= from && m.date <= to);
+  const by = { plan: 0, done: 0, absent: 0, cancel: 0 }, types = {};
+  let mins = 0;
+  for (const m of list) {
+    by[m.status]++;
+    if (m.status === 'done') mins += Math.max(0, toMin(m.end) - toMin(m.start));
+    if (m.status !== 'cancel') types[TYPE_OF(m).k] = (types[TYPE_OF(m).k] || 0) + 1;
+  }
+  const active = list.length - by.cancel, max = Math.max(1, ...Object.values(types));
+  return `<section class="sp"><h2 class="sp-title sm">${cap(MONTHS[mo])} ${y} w liczbach</h2>
+    <div class="kpis"><div title="Spotkania bez odwołanych"><span>Razem</span><b>${active}</b></div><div><span>Odbyte</span><b>${by.done}</b></div><div title="Nieobecność ucznia"><span>Nb</span><b>${by.absent}</b></div><div title="Czas odbytych spotkań"><span>Godziny</span><b>${fmtHours(mins)}</b></div></div>
+    ${Object.keys(types).length ? `<ul class="bars">${TYPES.filter(T => types[T.k]).map(T => `<li style="--tc:var(--t-${T.k})"><span class="bl">${esc(T.short)}</span><span class="bt"><i style="width:${((types[T.k] / max) * 100).toFixed(1)}%"></i></span><span class="bn">${types[T.k]}</span></li>`).join('')}</ul>` : '<p class="sp-note">Brak spotkań w tym miesiącu.</p>'}
+    <div class="sp-actions"><button type="button" class="btn sm" data-action="export">${ic('download')}Eksport i kopia</button></div>
+  </section>`;
+}
+
+// ── nawigacja ──
+function setView(v) {
+  S.view = v;
+  if (v === 'day') S.cursor = S.selected;
+  if (v === 'week' || v === 'month') S.cursor = S.selected;
+  saveUi(); ensureWindow(); render();
+}
+function goToday() { S.cursor = S.selected = today(); ensureWindow(); render(); }
+function sameMonth(a, b) { return a.slice(0, 7) === b.slice(0, 7); }
+function nav(dir) {
+  if (S.view === 'month' || (S.view === 'list' && S.listRange === 'month')) {
+    const d = parse(S.cursor); d.setDate(1); d.setMonth(d.getMonth() + dir);
+    S.cursor = iso(d);
+    S.selected = sameMonth(today(), S.cursor) ? today() : S.cursor;
+  } else if (S.view === 'list') {
+    const d = parse(S.cursor); d.setFullYear(d.getFullYear() + dir); S.cursor = iso(d);
+  } else if (S.view === 'week') {
+    S.cursor = addDays(S.cursor, 7 * dir); S.selected = addDays(S.selected, 7 * dir);
+  } else {
+    let d = addDays(S.cursor, dir);
+    if (!S.settings.weekend) while (dow(d) >= 5 && !(BY.get(d) || []).length) d = addDays(d, dir);
+    S.cursor = S.selected = d;
+  }
+  ensureWindow(); render();
+}
+function selectDay(d) {
+  if (!d) return;
+  S.selected = d;
+  if (S.view === 'month') {
+    const cell = document.querySelector(`.mc[data-date="${d}"]`);
+    if (cell) { $$('.mc.sel').forEach(c => c.classList.remove('sel')); cell.classList.add('sel'); renderSide(); return; }
+  }
+  if (S.view === 'day' || S.view === 'week') S.cursor = d;
+  ensureWindow(); render();
+}
+function ensureVisible(d) {
+  let visible;
+  if (S.view === 'month') visible = sameMonth(d, S.cursor);
+  else if (S.view === 'week') visible = mondayOf(d) === mondayOf(S.cursor);
+  else if (S.view === 'day') visible = d === S.cursor;
+  else { const [a, b] = listRange(); visible = d >= a && d <= b; }
+  S.selected = d;
+  if (!visible) S.cursor = d;
+  ensureWindow();
+}
+function createAt(col, e) {
+  const body = col.closest('.wk-body'), from = +body.dataset.from, px = +body.dataset.px;
+  const r = col.getBoundingClientRect(), m = from + (e.clientY - r.top) / px;
+  const date = col.dataset.date, bells = S.settings.bells;
+  S.selected = date;
+  const i = bells.findIndex(([a, b]) => m >= toMin(a) && m < toMin(b));
+  if (i >= 0) return openMeeting({ date, start: bells[i][0], end: bells[i][1] });
+  const s = clamp(Math.floor(m / 15) * 15, 0, 24 * 60 - 30);
+  openMeeting({ date, start: fromMin(s), end: fromMin(Math.min(s + S.settings.defaultLen, 24 * 60 - 5)) });
+}
+
+
+let dragMeetingId = '';
+document.addEventListener('dragstart', e => {
+  const ev=e.target.closest('.ev[draggable="true"]');
+  if (!ev) return;
+  dragMeetingId=ev.dataset.id || '';
+  e.dataTransfer.effectAllowed='move';
+  try { e.dataTransfer.setData('text/plain',dragMeetingId); } catch {}
+});
+document.addEventListener('dragover', e => {
+  const col=e.target.closest('.wk-col');
+  if (!col || !dragMeetingId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  $$('.wk-col.drag-target').forEach(x=>{if(x!==col)x.classList.remove('drag-target')});
+  col.classList.add('drag-target');
+});
+document.addEventListener('dragleave', e => {
+  const col=e.target.closest('.wk-col');
+  if (col) col.classList.remove('drag-target');
+});
+document.addEventListener('drop', async e => {
+  const col=e.target.closest('.wk-col');
+  if (!col || !dragMeetingId) return;
+  e.preventDefault();
+  col.classList.remove('drag-target');
+  const id=dragMeetingId; dragMeetingId='';
+  const m=S.meetings.get(id);
+  if (!m) return;
+  const body=col.closest('.wk-body'), from=+body.dataset.from, px=+body.dataset.px;
+  const r=col.getBoundingClientRect();
+  let minute=from+(e.clientY-r.top)/px;
+  minute=clamp(Math.round(minute/5)*5,0,1435);
+  const dur=Math.max(5,toMin(m.end)-toMin(m.start));
+  const newStart=fromMin(minute), newEnd=fromMin(Math.min(1435,minute+dur)), newDate=col.dataset.date;
+  if (newDate===m.date && newStart===m.start) return;
+  const before={date:m.date,start:m.start,end:m.end,updated:m.updated};
+  try{
+    await store.updateMeeting(id,{date:newDate,start:newStart,end:newEnd,updated:Date.now()});
+    pushUndo('przeniesienie spotkania',()=>store.updateMeeting(id,{...before,updated:Date.now()}));
+    S.selected=newDate; S.cursor=newDate;
+    render(); toast(`Przeniesiono na ${fmtFull(newDate)}, ${fmtTime(newStart)}`);
+  }catch(err){handleWriteError(err);}
+});
+document.addEventListener('dragend',()=>{dragMeetingId='';$$('.wk-col.drag-target').forEach(x=>x.classList.remove('drag-target'));});
+
+// ── szybka zmiana statusu, dni wolne ──
+async function setStatus(id, st) {
+  const m = S.meetings.get(id);
+  if (!m || pending.has(id)) return;
+  const next = (m.status || 'plan') === st ? 'plan' : st;
+  pending.add(id); render();
+  try {
+    const prev = m.status || 'plan';
+    await store.updateMeeting(id, { status: next, updated: Date.now() });
+    pushUndo('zmianę statusu', () => store.updateMeeting(id, { status: prev, updated: Date.now() }));
+  }
+  catch (e) { handleWriteError(e); }
+  finally { pending.delete(id); render(); }
+}
+async function toggleOffDay(d) {
+  const off = { ...S.settings.offDays };
+  const adding = !Object.prototype.hasOwnProperty.call(off, d);
+  if (adding) off[d] = 'Dzień wolny od zajęć'; else delete off[d];
+  S.settings = { ...S.settings, offDays: off };
+  render();
+  try { await saveSettings(S.settings); toast(adding ? 'Oznaczono dzień wolny od zajęć' : 'Przywrócono dzień zajęć'); }
+  catch (e) { handleWriteError(e); }
+}
+
+// ── formularz spotkania ──
+const dlgM = $('#dlgMeeting');
+let F = null;
+function nextFreeLesson(date) {
+  const evs = BY.get(date) || [], bells = S.settings.bells, n = date === today() ? nowMin() : -1;
+  const free = bells.find(([a, b]) => toMin(a) >= n && !evs.some(m => m.status !== 'cancel' && toMin(m.start) < toMin(b) && toMin(m.end) > toMin(a)));
+  return free || null;
+}
+function openMeeting(o) {
+  const st = S.settings;
+  if (o.id) {
+    const m = S.meetings.get(o.id) || o.data;
+    if (!m) return;
+    const stu = m.studentId ? S.students.get(m.studentId) : null;
+    F = { id: o.id, orig: { ...m }, date: m.date, start: m.start, end: m.end, type: TYPE[m.type] ? m.type : 'inne', studentId: m.studentId || '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: m.title || '', status: STATUS_LABEL[m.status] ? m.status : 'plan', note: m.note || '', seriesId: m.seriesId || '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
+  } else {
+    const date = o.date || S.selected;
+    let start = o.start, end = o.end;
+    if (!start) { const fl = nextFreeLesson(date); start = fl ? fl[0] : '08:00'; end = fl ? fl[1] : fromMin(toMin(start) + st.defaultLen); }
+    if (!end) end = fromMin(Math.min(toMin(start) + st.defaultLen, 24 * 60 - 5));
+    const stu = o.studentId ? S.students.get(o.studentId) : null;
+    const past = date < today() || (date === today() && toMin(end) <= nowMin());
+    F = { id: null, orig: null, date, start, end, type: o.type || 'kons', studentId: stu ? o.studentId : '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: '', status: past ? 'done' : 'plan', note: '', seriesId: '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
+  }
+  buildMeetingForm();
+  dlgM.showModal();
+  if (!F.id && !F.studentId) setTimeout(() => { const el = $('#f-student', dlgM); if (el) el.focus(); }, 40);
+}
+function buildMeetingForm() {
+  dlgM.innerHTML = meetingFormHtml();
+  wireMeetingForm();
+  refreshMeetingForm();
+}
+function meetingFormHtml() {
+  const isNew = !F.id;
+  return `<form class="dlg" id="mf" novalidate>
+  <header class="dlg-h"><h2>${isNew ? 'Nowe spotkanie' : 'Spotkanie'}</h2>${F.seriesId ? `<span class="pill">${ic('repeat')}w cyklu</span>` : ''}<button type="button" class="icon-btn" data-close aria-label="Zamknij">${ic('x')}</button></header>
+  <div class="dlg-b">
+    <div class="f-when">
+      <label class="fld f-date"><span>Data</span><input type="date" id="f-date" value="${F.date}" required></label>
+      <label class="fld"><span>Od</span><input type="time" id="f-start" value="${F.start}" step="300" required></label>
+      <label class="fld"><span>Do</span><input type="time" id="f-end" value="${F.end}" step="300" required></label>
+    </div>
+    <div class="fld"><span class="lab" id="f-l-lab">Lekcja</span><div class="lessons" id="f-lessons" role="group" aria-labelledby="f-l-lab">${S.settings.bells.map(([a, b], i) => `<button type="button" data-l="${i}" title="Lekcja ${i + 1}: ${fmtTime(a)}–${fmtTime(b)}" aria-label="Lekcja ${i + 1}, ${fmtTime(a)}–${fmtTime(b)}">${i + 1}</button>`).join('')}</div></div>
+    <div class="f-warn" id="f-warn" role="status" hidden></div>
+    <fieldset class="fld"><legend>Rodzaj</legend><div class="types">${TYPES.map(T => `<label style="--tc:var(--t-${T.k})"><input type="radio" name="f-type" value="${T.k}"${F.type === T.k ? ' checked' : ''}><i class="sq"></i><span>${T.label}</span></label>`).join('')}</div></fieldset>
+    <div class="fld combo"><label class="lab" for="f-student">Uczeń <small>— opcjonalnie</small></label>
+      <div class="combo-box"><input type="text" id="f-student" autocomplete="off" spellcheck="false" placeholder="Imię i nazwisko, inicjały albo kod" value="${esc(F.studentText)}" role="combobox" aria-expanded="false" aria-controls="f-slist" aria-autocomplete="list"><span class="combo-cls" id="f-scls"></span></div>
+      <ul class="combo-list" id="f-slist" role="listbox" hidden></ul>
+    </div>
+    <label class="fld" id="f-newcls-w" hidden><span>Klasa nowego ucznia</span><input type="text" id="f-newcls" placeholder="np. 5b" value="${esc(F.newCls)}"></label>
+    <label class="fld"><span>Temat / z kim</span><input type="text" id="f-title" value="${esc(F.title)}" placeholder="np. rozmowa z mamą, adaptacja w nowej klasie"></label>
+    <fieldset class="fld"><legend>Status</legend><div class="seg seg-fill">${STATUSES.map(s => `<label><input type="radio" name="f-status" value="${s.k}"${F.status === s.k ? ' checked' : ''}><span>${s.label}</span></label>`).join('')}</div></fieldset>
+    <label class="fld"><span>Notatka</span><textarea id="f-note" rows="3" placeholder="Krótka notatka dla siebie">${esc(F.note)}</textarea></label>
+    ${isNew ? `<fieldset class="fld"><legend>Powtarzanie</legend>
+      <div class="rep-row"><select id="f-rep" aria-label="Powtarzanie"><option value="none">Jednorazowo</option><option value="7">Co tydzień</option><option value="14">Co 2 tygodnie</option><option value="custom">Co N tygodni</option></select>
+      <label class="rep-n" id="f-weeks-w" hidden><span>co</span><input type="number" id="f-weeks" min="1" max="52" value="${F.repWeeks}"><span>tygodni</span></label>
+      <label class="rep-n" id="f-count-w" hidden><input type="number" id="f-count" min="2" max="40" value="${F.count}"><span>spotkań w cyklu</span></label></div>
+      <label class="check" id="f-skip-w" hidden><input type="checkbox" id="f-skip"${F.skip ? ' checked' : ''}><span>Pomijaj dni bez zajęć (święta, przerwy, ferie, dni wolne szkoły)</span></label>
+      <p class="hint strong" id="f-rep-prev" hidden></p></fieldset>` : ''}
+    ${!isNew && F.seriesId ? `<fieldset class="fld"><legend>Zmiany w cyklu</legend><div class="seg seg-fill"><label><input type="radio" name="f-scope" value="one"${F.scope === 'one' ? ' checked' : ''}><span>Tylko to spotkanie</span></label><label><input type="radio" name="f-scope" value="following"${F.scope === 'following' ? ' checked' : ''}><span>To i kolejne w cyklu</span></label></div><p class="hint">„To i kolejne” przenosi na następne spotkania godziny, rodzaj, ucznia i temat — daty, statusy i notatki zostają.</p></fieldset>` : ''}
+  </div>
+  <footer class="dlg-f" id="f-foot">${meetingFootHtml()}</footer>
+  </form>`;
+}
+function meetingFootHtml() {
+  return `${F.id ? `<button type="button" class="btn ghost danger" id="f-del">${ic('trash')}Usuń</button><button type="button" class="btn ghost" id="f-dup">${ic('copy')}Duplikuj</button>` : ''}
+    <button type="button" class="btn ghost" id="f-google">${ic('calendar')}Google Calendar</button>
+    <span class="grow"></span>
+    <button type="button" class="btn ghost" data-close>Anuluj</button>
+    <button type="submit" class="btn primary" id="f-save">Zapisz</button>`;
+}
+function wireMeetingForm() {
+  const f = $('#mf', dlgM);
+  f.addEventListener('submit', e => { e.preventDefault(); saveMeeting(); });
+  f.addEventListener('click', e => {
+    if (e.target.closest('[data-close]')) return dlgM.close();
+    const lb = e.target.closest('#f-lessons [data-l]');
+    if (lb) {
+      const [a, z] = S.settings.bells[+lb.dataset.l];
+      F.start = a; F.end = z; $('#f-start', f).value = a; $('#f-end', f).value = z;
+      refreshMeetingForm();
+    }
+    if (e.target.closest('#f-del')) confirmDelete();
+    if (e.target.closest('#f-dup')) {
+      const o = { date:F.date, start:F.start, end:F.end, type:F.type, studentId:F.studentId };
+      const title = F.title, note = F.note;
+      dlgM.close();
+      openMeeting(o);
+      F.title = title; F.note = note; F.status = 'plan';
+      buildMeetingForm();
+      return;
+    }
+    if (e.target.closest('#f-google')) openGoogleCalendarFromForm();
+  });
+  $('#f-date', f).addEventListener('input', e => { if (DATE_RE.test(e.target.value)) { F.date = e.target.value; refreshMeetingForm(); } });
+  $('#f-start', f).addEventListener('input', e => {
+    const v = e.target.value;
+    if (!TIME_RE.test(v)) return;
+    const dur = TIME_RE.test(F.end) && TIME_RE.test(F.start) ? Math.max(5, toMin(F.end) - toMin(F.start)) : S.settings.defaultLen;
+    F.start = v; F.end = fromMin(Math.min(toMin(v) + dur, 24 * 60 - 5)); $('#f-end', f).value = F.end;
+    refreshMeetingForm();
+  });
+  $('#f-end', f).addEventListener('input', e => { if (TIME_RE.test(e.target.value)) { F.end = e.target.value; refreshMeetingForm(); } });
+  $$('input[name=f-type]', f).forEach(r => r.addEventListener('change', e => { F.type = e.target.value; }));
+  $$('input[name=f-status]', f).forEach(r => r.addEventListener('change', e => { F.status = e.target.value; }));
+  $$('input[name=f-scope]', f).forEach(r => r.addEventListener('change', e => { F.scope = e.target.value; }));
+  $('#f-title', f).addEventListener('input', e => { F.title = e.target.value; });
+  $('#f-note', f).addEventListener('input', e => { F.note = e.target.value; });
+  $('#f-newcls', f).addEventListener('input', e => { F.newCls = e.target.value; });
+  const rep = $('#f-rep', f);
+  if (rep) {
+    rep.value = F.rep;
+    rep.addEventListener('change', e => { F.rep = e.target.value; refreshMeetingForm(); });
+    $('#f-count', f).addEventListener('input', e => { F.count = clamp(Math.round(+e.target.value || 2), 2, 40); refreshMeetingForm(); });
+    const rw = $('#f-weeks', f);
+    if (rw) rw.addEventListener('input', e => { F.repWeeks = clamp(Math.round(+e.target.value || 1), 1, 52); refreshMeetingForm(); });
+    $('#f-skip', f).addEventListener('change', e => { F.skip = e.target.checked; refreshMeetingForm(); });
+  }
+  wireCombo();
+}
+function conflicts() {
+  if (!DATE_RE.test(F.date) || !TIME_RE.test(F.start) || !TIME_RE.test(F.end)) return [];
+  const a = toMin(F.start), b = toMin(F.end);
+  return (BY.get(F.date) || []).filter(m => m.id !== F.id && m.status !== 'cancel' && toMin(m.start) < b && toMin(m.end) > a);
+}
+const seriesDates = () => genSeries(F.date, F.rep === 'custom' ? 7 * Math.max(1, +F.repWeeks || 1) : +F.rep, F.count, F.skip, d => !info(d).school);
+function refreshMeetingForm() {
+  const f = $('#mf', dlgM);
+  if (!f) return;
+  $$('#f-lessons [data-l]', f).forEach(b => { const [a, z] = S.settings.bells[+b.dataset.l]; b.setAttribute('aria-pressed', String(a === F.start && z === F.end)); });
+  const w = [];
+  if (DATE_RE.test(F.date)) {
+    const di = info(F.date);
+    if (!di.school) {
+      const why = di.hol || di.off || di.brk || (di.weekend ? (dow(F.date) === 5 ? 'sobota' : 'niedziela') : 'dzień bez zajęć w szkole');
+      w.push(`${cap(fmtLong(F.date))}: ${why}.`);
+    }
+  }
+  if (TIME_RE.test(F.start) && TIME_RE.test(F.end) && toMin(F.end) <= toMin(F.start)) w.push('Koniec spotkania musi być później niż początek.');
+  const conf = conflicts();
+  if (conf.length) w.push(`Nakłada się na: ${conf.slice(0, 3).map(m => `${fmtTime(m.start)}–${fmtTime(m.end)} ${evLabel(m)}`).join('; ')}.`);
+  const box = $('#f-warn', f);
+  box.hidden = !w.length;
+  box.innerHTML = w.map(x => `<p>${ic('alert')}<span>${esc(x)}</span></p>`).join('');
+  const rep = $('#f-rep', f);
+  if (rep) {
+    const on = F.rep !== 'none';
+    $('#f-count-w', f).hidden = !on; $('#f-skip-w', f).hidden = !on;
+    const ww = $('#f-weeks-w', f); if (ww) ww.hidden = F.rep !== 'custom';
+    const pv = $('#f-rep-prev', f);
+    pv.hidden = !on || !DATE_RE.test(F.date);
+    if (on && DATE_RE.test(F.date)) {
+      const { dates, skipped } = seriesDates();
+      pv.textContent = `Powstanie ${dates.length} ${plural(dates.length, 'spotkanie', 'spotkania', 'spotkań')}: od ${fmtFull(dates[0])} do ${fmtFull(dates[dates.length - 1])}.` +
+        (skipped.length ? ` Pominięte: ${skipped.slice(0, 4).map(fmtShort).join(', ')}${skipped.length > 4 ? ` i ${skipped.length - 4} ${plural(skipped.length - 4, 'inny dzień', 'inne dni', 'innych dni')}` : ''}.` : '');
+    }
+  }
+  const stu = F.studentId ? S.students.get(F.studentId) : null;
+  $('#f-scls', f).textContent = stu ? (stu.cls || '') : (F.newStudent ? 'nowy' : '');
+  $('#f-newcls-w', f).hidden = !F.newStudent;
+}
+function wireCombo() {
+  const inp = $('#f-student', dlgM), list = $('#f-slist', dlgM);
+  let items = [], act = -1;
+  const close = () => { list.hidden = true; inp.setAttribute('aria-expanded', 'false'); inp.removeAttribute('aria-activedescendant'); act = -1; };
+  function build() {
+    const raw = inp.value.trim(), q = norm(raw);
+    const all = [...S.students].filter(([, s]) => s && !s.archived && s.name).map(([id, s]) => ({ id, ...s }));
+    let res = q ? all.filter(s => norm(`${s.name} ${s.cls || ''}`).includes(q)) : all;
+    res = res.sort((a, b) => a.name.localeCompare(b.name, 'pl')).slice(0, 8);
+    items = res.map(s => ({ kind: 's', id: s.id, label: s.name, cls: s.cls }));
+    if (raw && !all.some(s => norm(s.name) === q)) items.push({ kind: 'new', label: raw });
+    if (F.studentId) items.unshift({ kind: 'none', label: 'Bez ucznia' });
+    if (!items.length) return close();
+    act = Math.min(act, items.length - 1);
+    list.innerHTML = items.map((it, i) => `<li role="option" id="f-opt-${i}" data-i="${i}" class="${it.kind}${i === act ? ' act' : ''}" aria-selected="${i === act}">${it.kind === 'new' ? `${ic('plus')}<span>Dodaj ucznia: <b>${esc(it.label)}</b></span>` : it.kind === 'none' ? `<span>${esc(it.label)}</span>` : `<span>${esc(S.discreet ? initials(it.label) : it.label)}</span>${it.cls ? `<em>${esc(it.cls)}</em>` : ''}`}</li>`).join('');
+    list.hidden = false;
+    inp.setAttribute('aria-expanded', 'true');
+    if (act >= 0) inp.setAttribute('aria-activedescendant', `f-opt-${act}`); else inp.removeAttribute('aria-activedescendant');
+  }
+  function pick(i) {
+    const it = items[i];
+    if (!it) return;
+    if (it.kind === 's') { F.studentId = it.id; F.newStudent = false; F.studentText = it.label; inp.value = it.label; }
+    else if (it.kind === 'new') { F.studentId = ''; F.newStudent = true; F.studentText = it.label; }
+    else { F.studentId = ''; F.newStudent = false; F.studentText = ''; inp.value = ''; }
+    close(); refreshMeetingForm();
+    if (it.kind === 'new') setTimeout(() => { const c = $('#f-newcls', dlgM); if (c) c.focus(); }, 0);
+  }
+  inp.addEventListener('input', () => { F.studentText = inp.value; F.studentId = ''; F.newStudent = false; act = -1; build(); refreshMeetingForm(); });
+  inp.addEventListener('focus', () => { if (!F.studentId) build(); });
+  inp.addEventListener('blur', () => setTimeout(close, 150));
+  inp.addEventListener('keydown', e => {
+    if (list.hidden) { if (e.key === 'ArrowDown') { e.preventDefault(); act = 0; build(); } return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); act = Math.min(items.length - 1, act + 1); build(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); act = Math.max(0, act - 1); build(); }
+    else if (e.key === 'Enter' && act >= 0) { e.preventDefault(); pick(act); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); comboEsc = Date.now(); close(); }
+  });
+  list.addEventListener('mousedown', e => { e.preventDefault(); const li = e.target.closest('[data-i]'); if (li) pick(+li.dataset.i); });
+}
+let comboEsc = 0;
+dlgM.addEventListener('cancel', e => { if (Date.now() - comboEsc < 200) e.preventDefault(); });
+
+async function resolveStudent(f) {
+  if (F.studentId && S.students.has(F.studentId)) return F.studentId;
+  const text = String($('#f-student', f).value || '').trim();
+  if (!text) return '';
+  const ex = [...S.students].find(([, s]) => s && norm(s.name) === norm(text));
+  if (ex) return ex[0];
+  const id = newId('s'), now = Date.now();
+  await store.setStudent(id, { name: text.slice(0, 120), cls: String(F.newCls || '').trim().slice(0, 20), note: '', archived: false, created: now, updated: now });
+  return id;
+}
+function formWarn(msg) {
+  const box = $('#f-warn', dlgM);
+  box.hidden = false;
+  box.innerHTML = `<p>${ic('alert')}<span>${esc(msg)}</span></p>`;
+  box.scrollIntoView({ block: 'nearest' });
+}
+
+function googleCalendarUrlFromF() {
+  if (!DATE_RE.test(F.date) || !TIME_RE.test(F.start) || !TIME_RE.test(F.end)) return '';
+  const compact = (d,t) => d.replaceAll('-','') + 'T' + t.replace(':','') + '00';
+  const T = TYPE[F.type] || TYPE.inne;
+  const stu = F.studentId ? S.students.get(F.studentId) : null;
+  const safeTitle = stu && stu.cls ? `${T.short} · ${stu.cls}` : T.short;
+  const p = new URLSearchParams({
+    action:'TEMPLATE',
+    text:safeTitle,
+    dates:`${compact(F.date,F.start)}/${compact(F.date,F.end)}`,
+    details:'Spotkanie szkolne',
+    stz:'Europe/Warsaw',
+    etz:'Europe/Warsaw'
+  });
+  if (F.rep !== 'none') {
+    const interval = F.rep === 'custom' ? Math.max(1,+F.repWeeks||1) : (+F.rep / 7);
+    p.set('recur', `RRULE:FREQ=WEEKLY;INTERVAL=${interval}`);
+  }
+  return `https://calendar.google.com/calendar/render?${p.toString()}`;
+}
+function openGoogleCalendarFromForm() {
+  const u = googleCalendarUrlFromF();
+  if (!u) return formWarn('Uzupełnij datę i godziny.');
+  window.open(u, '_blank', 'noopener');
+}
+
+async function saveMeeting() {
+  const f = $('#mf', dlgM);
+  F.date = $('#f-date', f).value; F.start = $('#f-start', f).value; F.end = $('#f-end', f).value;
+  if (!DATE_RE.test(F.date) || !TIME_RE.test(F.start) || !TIME_RE.test(F.end)) return formWarn('Uzupełnij datę oraz godzinę początku i końca.');
+  if (toMin(F.end) <= toMin(F.start)) return formWarn('Koniec spotkania musi być później niż początek.');
+  const btn = $('#f-save', f), label = btn.textContent;
+  btn.disabled = true;
+  try {
+    const studentId = await resolveStudent(f);
+    const now = Date.now();
+    const base = { date: F.date, start: F.start, end: F.end, type: F.type, studentId, title: F.title.trim().slice(0, 200), status: F.status, note: F.note.trim().slice(0, 4000) };
+    if (!F.id) {
+      if (F.rep !== 'none') {
+        const { dates } = seriesDates(), sid = newId('r');
+        let done = 0;
+        btn.textContent = `Zapisywanie 0/${dates.length}`;
+        await runLimited(dates.map(d => () => store.setMeeting(newId('m'), { ...base, date: d, status: d === F.date ? F.status : 'plan', seriesId: sid, created: now, updated: now }).then(() => { done++; btn.textContent = `Zapisywanie ${done}/${dates.length}`; })), 4);
+        toast(`Dodano ${dates.length} ${plural(dates.length, 'spotkanie', 'spotkania', 'spotkań')} w cyklu`);
+      } else {
+        await store.setMeeting(newId('m'), { ...base, seriesId: '', created: now, updated: now });
+        toast('Dodano spotkanie');
+      }
+    } else {
+      await store.updateMeeting(F.id, { ...base, updated: now });
+      if (F.seriesId && F.scope === 'following') {
+        const rest = (await store.queryMeetings('seriesId', F.seriesId)).filter(([id, m]) => id !== F.id && m && m.date > F.orig.date);
+        const patch = { start: F.start, end: F.end, type: F.type, studentId, title: base.title, updated: now };
+        await runLimited(rest.map(([id]) => () => store.updateMeeting(id, patch)), 4);
+        toast(`Zapisano zmiany w ${rest.length + 1} ${plural(rest.length + 1, 'spotkaniu', 'spotkaniach', 'spotkaniach')}`);
+      } else toast('Zapisano zmiany');
+    }
+    dlgM.close();
+    ensureVisible(F.date);
+    render();
+  } catch (e) {
+    handleWriteError(e);
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+function confirmDelete() {
+  const foot = $('#f-foot', dlgM), series = !!F.seriesId;
+  foot.innerHTML = `<span class="confirm-q">${series ? 'Usunąć spotkanie z cyklu?' : 'Usunąć to spotkanie?'}</span><span class="grow"></span>
+    <button type="button" class="btn ghost" id="fd-no">Nie usuwaj</button>
+    ${series ? '<button type="button" class="btn danger" id="fd-fol">To i kolejne</button>' : ''}
+    <button type="button" class="btn danger solid" id="fd-one">${series ? 'Tylko to' : 'Usuń'}</button>`;
+  $('#fd-no', foot).addEventListener('click', () => { foot.innerHTML = meetingFootHtml(); });
+  $('#fd-one', foot).addEventListener('click', () => deleteMeeting('one'));
+  const fol = $('#fd-fol', foot);
+  if (fol) fol.addEventListener('click', () => deleteMeeting('following'));
+  $('#fd-one', foot).focus();
+}
+async function deleteMeeting(scope) {
+  $$('#f-foot button', dlgM).forEach(b => { b.disabled = true; });
+  try {
+    const deleted = [[F.id, {...F.orig}]];
+    await store.deleteMeeting(F.id);
+    let n = 1;
+    if (scope === 'following') {
+      const rest = (await store.queryMeetings('seriesId', F.seriesId)).filter(([id, m]) => id !== F.id && m && m.date > F.orig.date);
+      await runLimited(rest.map(([id]) => () => store.deleteMeeting(id)), 4);
+      n += rest.length;
+    }
+    dlgM.close();
+    pushUndo('usunięcie spotkania', () => runLimited(deleted.map(([id,m]) => () => store.setMeeting(id,m)),4));
+    toast(n > 1 ? `Usunięto ${n} ${plural(n, 'spotkanie', 'spotkania', 'spotkań')}` : 'Usunięto spotkanie');
+  } catch (e) {
+    handleWriteError(e);
+    $$('#f-foot button', dlgM).forEach(b => { b.disabled = false; });
+  }
+}
+
+// ── uczniowie ──
+const dlgS = $('#dlgStudents');
+const SD = { mode: 'list', q: '', arch: false, id: null, hist: new Map(), unsub: null, histReady: false };
+function openStudents(id) {
+  setStudentMode(id ? 'detail' : 'list', id || null);
+  if (!dlgS.open) dlgS.showModal();
+}
+dlgS.addEventListener('close', () => { if (SD.unsub) SD.unsub(); SD.unsub = null; });
+function setStudentMode(mode, id) {
+  if (SD.unsub) { SD.unsub(); SD.unsub = null; }
+  SD.mode = mode; SD.id = id; SD.hist = new Map(); SD.histReady = false;
+  if (mode === 'detail' && id && store) {
+    SD.unsub = store.watchStudentMeetings(id, map => { SD.hist = map; SD.histReady = true; if (SD.mode === 'detail') updateHistory(); }, onDbError);
+  }
+  renderStudents();
+}
+function studentStats() {
+  const stats = new Map(), t = today();
+  for (const m of allItems()) {
+    if (!m.studentId || m.status === 'cancel') continue;
+    const s = stats.get(m.studentId) || { n: 0, last: '', next: '' };
+    s.n++;
+    if (m.date <= t && m.date > s.last) s.last = m.date;
+    if (m.date > t && (!s.next || m.date < s.next)) s.next = m.date;
+    stats.set(m.studentId, s);
+  }
+  return stats;
+}
+function renderStudents() {
+  if (SD.mode === 'list') {
+    dlgS.innerHTML = `<div class="dlg">
+      <header class="dlg-h"><h2>Uczniowie</h2><button type="button" class="icon-btn" data-sclose aria-label="Zamknij">${ic('x')}</button></header>
+      <div class="dlg-b">
+        <div class="st-bar">
+          <label class="lv-search">${ic('search')}<input type="search" id="s-q" placeholder="Szukaj po nazwisku lub klasie" aria-label="Szukaj ucznia" value="${esc(SD.q)}"></label>
+          <div class="seg" role="group" aria-label="Lista"><button type="button" data-sarch="0" aria-pressed="${!SD.arch}">Aktywni</button><button type="button" data-sarch="1" aria-pressed="${SD.arch}">Archiwum</button></div>
+          <button type="button" class="btn primary sm" data-snew>${ic('plus')}Dodaj ucznia</button>
+        </div>
+        <p class="hint">Liczba spotkań dotyczy roku szkolnego ${syLabel(schoolYearOf(S.cursor))}. Możesz wpisywać inicjały albo własne kody zamiast pełnych nazwisk.</p>
+        <ul class="st-list" id="s-list"></ul>
+      </div></div>`;
+    $('#s-q', dlgS).addEventListener('input', e => { SD.q = e.target.value; updateStudentList(); });
+    updateStudentList();
+  } else {
+    const s = SD.id ? S.students.get(SD.id) : null;
+    const isNew = !SD.id;
+    dlgS.innerHTML = `<form class="dlg" id="sf" novalidate>
+      <header class="dlg-h"><button type="button" class="icon-btn back-btn" data-sback aria-label="Wróć do listy uczniów">${ic('chevL')}</button><h2>${isNew ? 'Nowy uczeń' : esc(S.discreet && s ? initials(s.name) : (s ? s.name : 'Uczeń'))}</h2><button type="button" class="icon-btn" data-sclose aria-label="Zamknij">${ic('x')}</button></header>
+      <div class="dlg-b">
+        <div class="row2 stack-sm">
+          <label class="fld"><span>Imię i nazwisko, inicjały lub kod</span><input type="text" id="s-name" required value="${esc(s ? s.name : '')}" maxlength="120"></label>
+          <label class="fld"><span>Klasa</span><input type="text" id="s-cls" value="${esc(s ? s.cls || '' : '')}" placeholder="np. 5b" maxlength="20"></label>
+        </div>
+        <label class="fld"><span>Notatka o uczniu</span><textarea id="s-note" rows="3" placeholder="Np. kto zgłosił, ustalenia z wychowawcą">${esc(s ? s.note || '' : '')}</textarea></label>
+        ${isNew ? '' : `<div class="st-stats" id="s-stats"></div><div class="fld"><span class="lab">Historia spotkań</span><ul class="hist" id="s-hist"><li><p class="hint">Wczytywanie…</p></li></ul></div>`}
+        <div class="f-warn" id="s-warn" hidden></div>
+      </div>
+      <footer class="dlg-f" id="s-foot">
+        ${isNew ? '' : `<button type="button" class="btn ghost danger" data-sdel>${ic('trash')}Usuń</button><button type="button" class="btn ghost" data-sarchive>${s && s.archived ? 'Przywróć z archiwum' : 'Do archiwum'}</button>`}
+        <span class="grow"></span>
+        ${isNew ? '' : `<button type="button" class="btn" data-smeet>${ic('plus')}Spotkanie</button>`}
+        <button type="submit" class="btn primary">Zapisz</button>
+      </footer></form>`;
+    $('#sf', dlgS).addEventListener('submit', e => { e.preventDefault(); saveStudent(); });
+    if (!isNew) updateHistory();
+    setTimeout(() => { if (isNew) $('#s-name', dlgS).focus(); }, 30);
+  }
+}
+function updateStudentList() {
+  const ul = $('#s-list', dlgS);
+  if (!ul) return;
+  const stats = studentStats(), q = norm(SD.q);
+  const rows = [...S.students].filter(([, s]) => s && s.name && !!s.archived === SD.arch && (!q || norm(`${s.name} ${s.cls || ''}`).includes(q)))
+    .sort((a, b) => (a[1].cls || '').localeCompare(b[1].cls || '', 'pl', { numeric: true }) || a[1].name.localeCompare(b[1].name, 'pl'));
+  if (!S.loaded.students) { ul.innerHTML = '<li class="hint">Wczytywanie…</li>'; return; }
+  if (!rows.length) { ul.innerHTML = `<li class="lv-empty">${S.students.size ? 'Nikt nie pasuje.' : 'Nie ma jeszcze uczniów. Dodaj ucznia tutaj albo wpisz nowe imię w formularzu spotkania.'}</li>`; return; }
+  ul.innerHTML = rows.map(([id, s]) => {
+    const st = stats.get(id);
+    const meta = st ? `<b>${st.n}</b> ${plural(st.n, 'spotkanie', 'spotkania', 'spotkań')}${st.next ? ` · następne ${fmtShort(st.next)}` : st.last ? ` · ostatnie ${fmtShort(st.last)}` : ''}` : 'brak spotkań';
+    return `<li><button type="button" class="st-row" data-sopen="${esc(id)}"><span class="st-name">${esc(S.discreet ? initials(s.name) : s.name)}${s.cls ? `<em>${esc(s.cls)}</em>` : ''}</span><span class="st-meta">${meta}</span></button></li>`;
+  }).join('');
+}
+function updateHistory() {
+  const ul = $('#s-hist', dlgS), stats = $('#s-stats', dlgS);
+  if (!ul) return;
+  if (!SD.histReady) return;
+  const items = [...SD.hist].filter(([, m]) => m && DATE_RE.test(m.date)).map(([id, m]) => ({ ...m, id, status: STATUS_LABEL[m.status] ? m.status : 'plan' }))
+    .sort((a, b) => b.date.localeCompare(a.date) || String(b.start).localeCompare(String(a.start)));
+  const done = items.filter(m => m.status === 'done'), absent = items.filter(m => m.status === 'absent').length;
+  const mins = done.reduce((a, m) => a + Math.max(0, toMin(m.end) - toMin(m.start)), 0);
+  const t = today(), next = items.filter(m => m.date >= t && m.status === 'plan').pop();
+  stats.innerHTML = `<span class="pill">${items.length} ${plural(items.length, 'spotkanie', 'spotkania', 'spotkań')} w sumie</span><span class="pill">odbyte: ${done.length} · ${fmtHours(mins)} h</span>${absent ? `<span class="pill">nb: ${absent}</span>` : ''}${next ? `<span class="pill school">następne: ${fmtShort(next.date)}, ${fmtTime(next.start)}</span>` : ''}`;
+  if (!items.length) { ul.innerHTML = '<li><p class="hint">Brak spotkań z tym uczniem.</p></li>'; return; }
+  ul.innerHTML = items.map(m => {
+    const T = TYPE_OF(m), title = titleOf(m);
+    const stc = m.status === 'plan' ? (isTodo(m) ? 'do uzup.' : 'plan') : m.status === 'done' ? 'odbyte' : m.status === 'absent' ? 'nb' : 'odwołane';
+    return `<li style="--tc:var(--t-${T.k})"><button type="button" data-hopen="${esc(m.id)}"><span class="hd">${fmtFull(m.date)}</span><span class="ht"><i class="sq"></i><span>${esc(T.short)}${title ? ` · ${esc(title)}` : ''}</span></span><span class="hs ${m.status}">${stc}</span></button></li>`;
+  }).join('');
+}
+function refreshStudentsDialog() {
+  if (SD.mode === 'list') updateStudentList();
+}
+async function saveStudent() {
+  const name = $('#s-name', dlgS).value.trim(), cls = $('#s-cls', dlgS).value.trim(), note = $('#s-note', dlgS).value.trim();
+  const warn = $('#s-warn', dlgS);
+  if (!name) { warn.hidden = false; warn.innerHTML = `<p>${ic('alert')}<span>Wpisz imię i nazwisko, inicjały albo kod ucznia.</span></p>`; return; }
+  const dup = [...S.students].find(([id, s]) => id !== SD.id && s && norm(s.name) === norm(name) && norm(s.cls) === norm(cls));
+  if (dup) { warn.hidden = false; warn.innerHTML = `<p>${ic('alert')}<span>Uczeń o tym nazwisku i klasie już jest na liście.</span></p>`; return; }
+  try {
+    const now = Date.now();
+    if (SD.id) await store.updateStudent(SD.id, { name: name.slice(0, 120), cls: cls.slice(0, 20), note: note.slice(0, 4000), updated: now });
+    else { const id = newId('s'); await store.setStudent(id, { name: name.slice(0, 120), cls: cls.slice(0, 20), note: note.slice(0, 4000), archived: false, created: now, updated: now }); SD.id = id; }
+    toast('Zapisano ucznia');
+    setStudentMode('detail', SD.id);
+  } catch (e) { handleWriteError(e); }
+}
+dlgS.addEventListener('click', async e => {
+  if (e.target === dlgS) return dlgS.close();
+  const t = e.target;
+  if (t.closest('[data-sclose]')) return dlgS.close();
+  if (t.closest('[data-sback]')) return setStudentMode('list', null);
+  if (t.closest('[data-snew]')) return setStudentMode('detail', null);
+  const ar = t.closest('[data-sarch]');
+  if (ar) { SD.arch = ar.dataset.sarch === '1'; $$('[data-sarch]', dlgS).forEach(b => b.setAttribute('aria-pressed', String(b === ar))); return updateStudentList(); }
+  const op = t.closest('[data-sopen]');
+  if (op) return setStudentMode('detail', op.dataset.sopen);
+  const hop = t.closest('[data-hopen]');
+  if (hop) {
+    const m = SD.hist.get(hop.dataset.hopen);
+    if (!m) return;
+    dlgS.close();
+    ensureVisible(m.date); render();
+    return openMeeting({ id: hop.dataset.hopen, data: m });
+  }
+  if (t.closest('[data-smeet]')) { const id = SD.id; dlgS.close(); return openMeeting({ date: S.selected, studentId: id }); }
+  if (t.closest('[data-sarchive]')) {
+    const s = S.students.get(SD.id);
+    if (!s) return;
+    try { await store.updateStudent(SD.id, { archived: !s.archived, updated: Date.now() }); toast(s.archived ? 'Przywrócono z archiwum' : 'Przeniesiono do archiwum'); setStudentMode('list', null); }
+    catch (err) { handleWriteError(err); }
+    return;
+  }
+  if (t.closest('[data-sdel]')) {
+    const foot = $('#s-foot', dlgS);
+    foot.innerHTML = `<span class="confirm-q">Usunąć ucznia?</span><span class="hint">Spotkania zostaną, ale bez przypisanego ucznia.</span><span class="grow"></span><button type="button" class="btn ghost" data-sdelno>Nie usuwaj</button><button type="button" class="btn danger solid" data-sdelyes>Usuń ucznia</button>`;
+    return;
+  }
+  if (t.closest('[data-sdelno]')) return setStudentMode('detail', SD.id);
+  if (t.closest('[data-sdelyes]')) {
+    try { await store.deleteStudent(SD.id); toast('Usunięto ucznia'); setStudentMode('list', null); }
+    catch (err) { handleWriteError(err); }
+  }
+});
+
+// ── ustawienia ──
+const dlgC = $('#dlgSettings');
+let CF = null;
+function openSettings() {
+  CF = JSON.parse(JSON.stringify(S.settings));
+  dlgC.innerHTML = settingsHtml();
+  dlgC.showModal();
+}
+function bellsHtml() {
+  return CF.bells.map(([a, b], i) => `<li><span class="bn">${i + 1}</span><input type="time" id="c-b${i}a" data-b="${i}" data-k="0" value="${a}" aria-label="Lekcja ${i + 1} — początek"><span class="dash">–</span><input type="time" id="c-b${i}b" data-b="${i}" data-k="1" value="${b}" aria-label="Lekcja ${i + 1} — koniec"><button type="button" class="icon-btn" data-bdel="${i}" aria-label="Usuń lekcję ${i + 1}">${ic('x')}</button></li>`).join('');
+}
+function offHtml() {
+  const rows = Object.entries(CF.offDays).sort((a, b) => a[0].localeCompare(b[0]));
+  return rows.length ? rows.map(([d, n]) => `<li><span class="d">${fmtFull(d)}</span><span class="n">${esc(n || 'Dzień wolny od zajęć')}</span><button type="button" class="icon-btn" data-odel="${d}" aria-label="Usuń dzień wolny ${fmtFull(d)}">${ic('x')}</button></li>`).join('') : '<li class="hint">Brak dodatkowych dni wolnych.</li>';
+}
+function settingsHtml() {
+  return `<form class="dlg" id="cf" novalidate>
+    <header class="dlg-h"><h2>Ustawienia</h2><button type="button" class="icon-btn" data-cclose aria-label="Zamknij">${ic('x')}</button></header>
+    <div class="dlg-b">
+      <section class="cs"><h3>Dzwonki</h3>
+        <p class="hint">Godziny lekcji w Twojej szkole. Z nich powstają pasy lekcji w widoku tygodnia i szybki wybór lekcji w formularzu.</p>
+        <ol class="bells" id="c-bells">${bellsHtml()}</ol>
+        <div class="row-btns"><button type="button" class="btn sm" data-badd>${ic('plus')}Dodaj lekcję</button><button type="button" class="btn ghost sm" data-breset>Przywróć typowe dzwonki</button></div>
+      </section>
+      <section class="cs"><h3>Kalendarz szkolny</h3>
+        <div class="row2 stack-sm">
+          <label class="fld"><span>Województwo (termin ferii)</span><select id="c-region">${REGIONS.map(([k, n]) => `<option value="${k}"${CF.region === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+          <label class="fld"><span>Egzaminy w kalendarzu</span><select id="c-exams"><option value="e8"${CF.exams === 'e8' ? ' selected' : ''}>Egzamin ósmoklasisty</option><option value="matura"${CF.exams === 'matura' ? ' selected' : ''}>Matura</option><option value="none"${CF.exams === 'none' ? ' selected' : ''}>Nie pokazuj</option></select></label>
+        </div>
+        <label class="check"><input type="checkbox" id="c-obs"${CF.observances ? ' checked' : ''}><span>Pokazuj dni tematyczne (Dzień Zdrowia Psychicznego, Dzień Praw Dziecka, Dzień Bezpiecznego Internetu i inne)</span></label>
+        <p class="hint">Święta, przerwy świąteczne i wakacje liczone są według przepisów MEN. Ferie zimowe są wpisane na lata szkolne 2026/27 i 2027/28.</p>
+      </section>
+      <section class="cs"><h3>Dni wolne od zajęć w szkole</h3>
+        <p class="hint">Dni dyrektorskie, rekolekcje itp. Są kreskowane w kalendarzu i pomijane w cyklach spotkań.</p>
+        <ul class="offlist" id="c-off">${offHtml()}</ul>
+        <div class="off-add"><input type="date" id="c-offd" aria-label="Data dnia wolnego"><input type="text" id="c-offn" placeholder="Nazwa, np. dzień dyrektorski" aria-label="Nazwa dnia wolnego" maxlength="80"><button type="button" class="btn sm" data-oadd>Dodaj</button></div>
+      </section>
+      <section class="cs"><h3>Widok</h3>
+        <div class="row3">
+          <label class="fld"><span>Dzień od</span><input type="time" id="c-from" value="${CF.dayFrom}"></label>
+          <label class="fld"><span>Dzień do</span><input type="time" id="c-to" value="${CF.dayTo}"></label>
+          <label class="fld"><span>Długość spotkania</span><select id="c-len">${[30, 45, 60, 90].map(n => `<option value="${n}"${CF.defaultLen === n ? ' selected' : ''}>${n} min</option>`).join('')}</select></label>
+        </div>
+        <div class="row2 stack-sm">
+          <label class="fld"><span>Automatyczna blokada</span><select id="c-lock">${[[0,'wyłączona'],[5,'po 5 min'],[10,'po 10 min'],[15,'po 15 min'],[30,'po 30 min'],[60,'po 60 min']].map(([v,l])=>`<option value="${v}"${CF.autoLock===v?' selected':''}>${l}</option>`).join('')}</select></label>
+        </div>
+        <label class="check"><input type="checkbox" id="c-we"${CF.weekend ? ' checked' : ''}><span>Pokazuj soboty i niedziele (weekend z zaplanowanym spotkaniem pokazuje się zawsze)</span></label>
+      </section>
+      <section class="cs"><h3>Aktualizacje aplikacji</h3>
+        <p class="hint">Aplikacja może sprawdzać nową wersję przy uruchomieniu i podmienić własny plik EXE po Twojej zgodzie. Potrzebny jest mały plik update.json opublikowany pod stałym adresem HTTPS.</p>
+        <label class="fld"><span>Adres pliku aktualizacji</span><input type="text" id="c-update-url" value="${esc(localStorage.getItem('psycal.update.url') || 'https://raw.githubusercontent.com/lukaszdylka/terapianawigator/main/kalendarz-specjalisty/update.json')}" placeholder="https://twojastrona.pl/kalendarz/update.json"></label>
+        <label class="check"><input type="checkbox" id="c-update-auto"${localStorage.getItem('psycal.update.auto') !== '0' ? ' checked' : ''}><span>Sprawdzaj aktualizacje automatycznie przy uruchomieniu</span></label>
+        <div class="update-row"><button type="button" class="btn sm" data-check-update>Sprawdź teraz</button><span class="update-status" id="c-update-status"></span></div>
+      </section>
+      <section class="cs"><h3>Dane</h3>
+        <p class="hint">Spotkania, uczniowie i ustawienia są zapisane wyłącznie lokalnie i szyfrowane hasłem. Rób regularnie zaszyfrowaną kopię zapasową.</p>
+        <div class="row-btns"><button type="button" class="btn sm" data-cexport>${ic('download')}Eksport i kopia zapasowa</button></div>
+      </section>
+      <div class="f-warn" id="c-warn" hidden></div>
+    </div>
+    <footer class="dlg-f"><span class="grow"></span><button type="button" class="btn ghost" data-cclose>Anuluj</button><button type="submit" class="btn primary">Zapisz ustawienia</button></footer>
+  </form>`;
+}
+function readBells() {
+  $$('#c-bells input[data-b]', dlgC).forEach(inp => { const i = +inp.dataset.b, k = +inp.dataset.k; if (CF.bells[i] && TIME_RE.test(inp.value)) CF.bells[i][k] = inp.value; });
+}
+dlgC.addEventListener('click', e => {
+  if (e.target === dlgC) return dlgC.close();
+  const t = e.target;
+  if (t.closest('[data-cclose]')) return dlgC.close();
+  if (t.closest('[data-badd]')) {
+    readBells();
+    const last = CF.bells[CF.bells.length - 1];
+    const s = last ? toMin(last[1]) + 10 : 8 * 60;
+    if (s + 45 < 24 * 60) CF.bells.push([fromMin(s), fromMin(s + 45)]);
+    $('#c-bells', dlgC).innerHTML = bellsHtml();
+    return;
+  }
+  if (t.closest('[data-breset]')) { CF.bells = DEFAULT_BELLS.map(b => b.split('-')); $('#c-bells', dlgC).innerHTML = bellsHtml(); return; }
+  const bd = t.closest('[data-bdel]');
+  if (bd) { readBells(); CF.bells.splice(+bd.dataset.bdel, 1); $('#c-bells', dlgC).innerHTML = bellsHtml(); return; }
+  if (t.closest('[data-oadd]')) {
+    const d = $('#c-offd', dlgC).value, n = $('#c-offn', dlgC).value.trim();
+    if (!DATE_RE.test(d)) { $('#c-offd', dlgC).focus(); return; }
+    CF.offDays[d] = n || 'Dzień wolny od zajęć';
+    $('#c-off', dlgC).innerHTML = offHtml();
+    $('#c-offd', dlgC).value = ''; $('#c-offn', dlgC).value = '';
+    return;
+  }
+  const od = t.closest('[data-odel]');
+  if (od) { delete CF.offDays[od.dataset.odel]; $('#c-off', dlgC).innerHTML = offHtml(); return; }
+  if (t.closest('[data-cexport]')) { dlgC.close(); openExport(); }
+  if (t.closest('[data-check-update]')) { checkForUpdates(true); }
+});
+dlgC.addEventListener('submit', async e => {
+  e.preventDefault();
+  readBells();
+  const warn = $('#c-warn', dlgC);
+  const fail = msg => { warn.hidden = false; warn.innerHTML = `<p>${ic('alert')}<span>${esc(msg)}</span></p>`; warn.scrollIntoView({ block: 'nearest' }); };
+  if (!CF.bells.length) return fail('Dodaj co najmniej jedną lekcję.');
+  const badBell = CF.bells.findIndex(([a, b]) => !TIME_RE.test(a) || !TIME_RE.test(b) || toMin(b) <= toMin(a));
+  if (badBell >= 0) return fail(`Lekcja ${badBell + 1}: koniec musi być później niż początek.`);
+  CF.region = $('#c-region', dlgC).value;
+  CF.exams = $('#c-exams', dlgC).value;
+  CF.observances = $('#c-obs', dlgC).checked;
+  CF.dayFrom = $('#c-from', dlgC).value; CF.dayTo = $('#c-to', dlgC).value;
+  if (!TIME_RE.test(CF.dayFrom) || !TIME_RE.test(CF.dayTo) || toMin(CF.dayTo) - toMin(CF.dayFrom) < 120) return fail('Widok dnia musi obejmować co najmniej dwie godziny.');
+  CF.defaultLen = +$('#c-len', dlgC).value;
+  CF.autoLock = +$('#c-lock', dlgC).value;
+  CF.weekend = $('#c-we', dlgC).checked;
+  localStorage.setItem('psycal.update.url', ($('#c-update-url', dlgC)?.value || '').trim());
+  localStorage.setItem('psycal.update.auto', $('#c-update-auto', dlgC)?.checked ? '1' : '0');
+  const next = mergeSettings(serializeSettings(CF));
+  S.settings = next;
+  dlgC.close();
+  render();
+  try { await saveSettings(next); toast('Zapisano ustawienia'); } catch (err) { handleWriteError(err); }
+});
+
+// ── eksport, kopia zapasowa, import ──
+const dlgE = $('#dlgExport');
+let importData = null;
+function openExport() {
+  const c = parse(S.cursor), Y = schoolYearOf(S.cursor);
+  importData = null;
+  dlgE.innerHTML = `<div class="dlg">
+    <header class="dlg-h"><h2>Eksport i kopia</h2><button type="button" class="icon-btn" data-eclose aria-label="Zamknij">${ic('x')}</button></header>
+    <div class="dlg-b">
+      <section class="cs"><h3>Zestawienie do Excela (CSV)</h3>
+        <p class="hint">Do dziennika zajęć lub sprawozdania. Plik otworzysz w Excelu albo w Arkuszach Google.</p>
+        <div class="seg seg-fill" role="radiogroup" aria-label="Zakres"><label><input type="radio" name="e-scope" value="month" checked><span>${cap(MONTHS[c.getMonth()])} ${c.getFullYear()}</span></label><label><input type="radio" name="e-scope" value="year"><span>Rok szkolny ${syLabel(Y)}</span></label></div>
+        <label class="check"><input type="checkbox" id="e-notes"><span>Dołącz notatki</span></label>
+        <div class="row-btns"><button type="button" class="btn primary" data-ecsv>${ic('download')}Pobierz CSV</button></div>
+      </section>
+      <section class="cs"><h3>Kopia zapasowa</h3>
+        <p class="hint">Wszystkie spotkania, uczniowie i ustawienia w jednym zaszyfrowanym pliku. Do odczytu potrzebne jest Twoje hasło.</p>
+        <div class="row-btns"><button type="button" class="btn" data-ejson>${ic('download')}Pobierz zaszyfrowaną kopię</button><label class="btn ghost file-btn">${ic('upload')}Wczytaj kopię<input type="file" id="e-file" class="vh" accept=".ksbackup,.json,.csv,application/json,text/csv"></label></div>
+        <div id="e-import" hidden></div>
+      </section>
+      <section class="cs"><h3>Migracja ze starszej wersji</h3>
+        <p class="hint">Możesz wczytać kopię JSON ze starszego Kalendarza psychologa albo CSV wyeksportowany ze starej aplikacji. Program spróbuje rozpoznać kolumny automatycznie.</p>
+        <label class="btn file-btn">${ic('upload')}Import starego JSON / CSV<input type="file" id="e-legacy" class="vh" accept=".json,.csv,application/json,text/csv"></label>
+        <div id="e-legacy-result"></div>
+      </section>
+      <section class="cs" id="e-fallback" hidden></section>
+    </div></div>`;
+  $('#e-file', dlgE).addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if (file) readImport(file); e.target.value = ''; });
+  $('#e-legacy', dlgE).addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if (file) readLegacyImport(file); e.target.value = ''; });
+  dlgE.showModal();
+}
+function buildCsv(scope, withNotes) {
+  let from, to;
+  if (scope === 'year') { const Y = schoolYearOf(S.cursor); from = `${Y}-09-01`; to = `${Y + 1}-08-31`; }
+  else { const c = parse(S.cursor); from = iso(new Date(c.getFullYear(), c.getMonth(), 1, 12)); to = iso(new Date(c.getFullYear(), c.getMonth() + 1, 0, 12)); }
+  const items = allItems().filter(m => m.date >= from && m.date <= to).sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+  const head = ['Data', 'Dzień', 'Od', 'Do', 'Lekcja', 'Rodzaj', 'Uczeń', 'Klasa', 'Temat', 'Status', 'Minuty'];
+  if (withNotes) head.push('Notatka');
+  const rows = items.map(m => {
+    const st = studentOf(m), l = lessonNo(m);
+    const r = [m.date, DAYS[dow(m.date)], m.start, m.end, l || '', TYPE_OF(m).label, st ? st.name : '', st ? st.cls || '' : '', m.title || '', STATUS_LABEL[m.status], Math.max(0, toMin(m.end) - toMin(m.start))];
+    if (withNotes) r.push(m.note || '');
+    return r.map(csvCell).join(';');
+  });
+  const name = scope === 'year' ? `spotkania_${syLabel(schoolYearOf(S.cursor)).replace('/', '-')}.csv` : `spotkania_${from.slice(0, 7)}.csv`;
+  return { name, text: '﻿' + [head.join(';'), ...rows].join('\r\n'), n: items.length };
+}
+async function offerFile(filename, text) {
+  const blob = new Blob([text], { type: filename.endsWith('.csv') ? 'text/csv;charset=utf-8' : 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast('Plik gotowy');
+}
+
+const cleanStr = (v, n) => String(v ?? '').slice(0, n);
+const ID_RE = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
+function readImport(file) {
+  const box = $('#e-import', dlgE);
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const o = JSON.parse(r.result);
+      if (o && o.app === 'kalendarz-specjalisty-encrypted') {
+        const dec = await decryptVaultEnvelope(o, vaultPassword);
+        const data = dec.data || {};
+        const meetings = Object.entries(data.meetings || {}).filter(([, m]) => m && DATE_RE.test(m.date) && TIME_RE.test(m.start) && TIME_RE.test(m.end));
+        const students = Object.entries(data.students || {}).filter(([, s]) => s && s.name);
+        importData = { meetings, students, settings: data.settings || null };
+        box.hidden = false;
+        box.innerHTML = `<div class="f-warn"><p>${ic('info')}<span>Zaszyfrowana kopia: ${meetings.length} ${plural(meetings.length, 'spotkanie', 'spotkania', 'spotkań')}, ${students.length} ${plural(students.length, 'uczeń', 'uczniów', 'uczniów')}. Wpisy z kopii zostaną dodane lub zastąpią wpisy o tych samych identyfikatorach.</span></p></div><div class="row-btns"><button type="button" class="btn primary sm" data-eimport>Wczytaj kopię</button><button type="button" class="btn ghost sm" data-ecancel>Anuluj</button></div>`;
+        return;
+      }
+      if (!o || o.app !== 'kalendarz-psychologa' || typeof o.meetings !== 'object') throw new Error('format');
+      const meetings = Object.entries(o.meetings || {}).filter(([, m]) => m && DATE_RE.test(m.date) && TIME_RE.test(m.start) && TIME_RE.test(m.end));
+      const students = Object.entries(o.students || {}).filter(([, s]) => s && s.name);
+      importData = { meetings, students, settings: o.settings || null };
+      box.hidden = false;
+      box.innerHTML = `<div class="f-warn"><p>${ic('info')}<span>Starsza kopia JSON: ${meetings.length} ${plural(meetings.length, 'spotkanie', 'spotkania', 'spotkań')}, ${students.length} ${plural(students.length, 'uczeń', 'uczniów', 'uczniów')}.</span></p></div><div class="row-btns"><button type="button" class="btn primary sm" data-eimport>Wczytaj kopię</button><button type="button" class="btn ghost sm" data-ecancel>Anuluj</button></div>`;
+    } catch {
+      box.hidden = false;
+      box.innerHTML = `<div class="f-warn"><p>${ic('alert')}<span>Nie udało się odczytać kopii. Zaszyfrowana kopia musi być utworzona przy użyciu tego samego hasła.</span></p></div>`;
+    }
+  };
+  r.readAsText(file);
+}
+
+
+function splitCsvLine(line, sep) {
+  const out=[]; let cur='', q=false;
+  for (let i=0;i<line.length;i++) {
+    const c=line[i];
+    if (c === '"') { if (q && line[i+1] === '"') { cur+='"'; i++; } else q=!q; }
+    else if (c===sep && !q) { out.push(cur); cur=''; }
+    else cur+=c;
+  }
+  out.push(cur); return out.map(x=>x.trim());
+}
+function detectSep(line) { return (line.split(';').length >= line.split(',').length) ? ';' : ','; }
+function mapOldType(v) {
+  const x=norm(v);
+  if (x.includes('rewalid')) return 'kons';
+  if (x.includes('kryz')||x.includes('interw')) return 'kryz';
+  if (x.includes('diag')) return 'diag';
+  if (x.includes('rodz')) return 'rodz';
+  if (x.includes('naucz')) return 'naucz';
+  if (x.includes('grup')||x.includes('warszt')) return 'grupa';
+  if (x.includes('zesp')||x.includes('rada')) return 'zesp';
+  return 'kons';
+}
+function mapOldStatus(v) {
+  const x=norm(v);
+  if (x.includes('odbyte')||x==='done') return 'done';
+  if (x.includes('nieobec')||x==='absent') return 'absent';
+  if (x.includes('odwol')||x==='cancel') return 'cancel';
+  return 'plan';
+}
+function convertOldEvents(events) {
+  const students = new Map(), meetings=[];
+  const now=Date.now();
+  const studentIdFor = (name, cls) => {
+    const n=String(name||'').trim(), c=String(cls||'').trim();
+    if (!n) return '';
+    const key=norm(n)+'|'+norm(c);
+    if (!students.has(key)) students.set(key, ['s_'+Math.random().toString(36).slice(2,10), {name:n.slice(0,120),cls:c.slice(0,20),note:'',archived:false,created:now,updated:now}]);
+    return students.get(key)[0];
+  };
+  for (const e of events) {
+    const date=String(e.date||e.Data||'').slice(0,10);
+    const start=String(e.time||e.start||e.Od||'').slice(0,5);
+    if (!DATE_RE.test(date)||!TIME_RE.test(start)) continue;
+    const dur=Math.max(5,Math.min(600,+e.duration||+e.Minuty||45));
+    const end=e.end&&TIME_RE.test(String(e.end).slice(0,5)) ? String(e.end).slice(0,5) : fromMin(Math.min(1435,toMin(start)+dur));
+    const name=e.title||e.student||e['Uczeń']||e['Uczen']||'';
+    const cls=e.className||e.cls||e.Klasa||'';
+    const sid=studentIdFor(name,cls);
+    meetings.push([ID_RE.test(String(e.id||''))?String(e.id):newId('m'), {
+      date,start,end,type:mapOldType(e.type||e.Rodzaj||''),studentId:sid,
+      title:cleanStr(e.topic||e.Temat||'',200),status:mapOldStatus(e.status||e.Status||''),
+      note:cleanStr(e.notes||e.Notatka||'',4000),seriesId:'',created:now,updated:now
+    }]);
+  }
+  return {students:[...students.values()],meetings};
+}
+function parseLegacyCsv(text) {
+  const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());
+  if (lines.length<2) throw new Error('csv');
+  const sep=detectSep(lines[0]), head=splitCsvLine(lines[0],sep);
+  const rows=lines.slice(1).map(l=>splitCsvLine(l,sep));
+  return rows.map(r=>Object.fromEntries(head.map((h,i)=>[h,r[i]||''])));
+}
+function readLegacyImport(file) {
+  const box=$('#e-legacy-result',dlgE);
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      let converted;
+      if (file.name.toLowerCase().endsWith('.csv')) converted=convertOldEvents(parseLegacyCsv(r.result));
+      else {
+        const o=JSON.parse(r.result);
+        if (Array.isArray(o.events)) converted=convertOldEvents(o.events);
+        else if (Array.isArray(o)) converted=convertOldEvents(o);
+        else if (o && typeof o.meetings==='object') {
+          const students=Object.entries(o.students||{});
+          const meetings=Object.entries(o.meetings||{});
+          converted={students,meetings};
+        } else throw new Error('format');
+      }
+      importData={meetings:converted.meetings,students:converted.students,settings:null};
+      box.innerHTML=`<div class="f-warn"><p>${ic('info')}<span>Rozpoznano ${converted.meetings.length} ${plural(converted.meetings.length,'spotkanie','spotkania','spotkań')} i ${converted.students.length} ${plural(converted.students.length,'ucznia','uczniów','uczniów')}.</span></p></div><div class="row-btns"><button type="button" class="btn primary sm" data-eimport>Importuj dane</button></div>`;
+    }catch(e){
+      box.innerHTML=`<div class="f-warn"><p>${ic('alert')}<span>Nie udało się rozpoznać formatu pliku.</span></p></div>`;
+    }
+  };
+  r.readAsText(file);
+}
+
+async function runImport(btn) {
+  const d = importData;
+  if (!d) return;
+  btn.disabled = true;
+  try {
+    const now = Date.now();
+    const tasks = [];
+    for (const [id, s] of d.students) tasks.push(() => store.setStudent(ID_RE.test(id) ? id : newId('s'), { name: cleanStr(s.name, 120), cls: cleanStr(s.cls, 20), note: cleanStr(s.note, 4000), archived: !!s.archived, created: +s.created || now, updated: now }));
+    for (const [id, m] of d.meetings) tasks.push(() => store.setMeeting(ID_RE.test(id) ? id : newId('m'), {
+      date: m.date, start: m.start, end: m.end, type: TYPE[m.type] ? m.type : 'inne', studentId: ID_RE.test(m.studentId || '') ? m.studentId : '',
+      title: cleanStr(m.title, 200), status: STATUS_LABEL[m.status] ? m.status : 'plan', note: cleanStr(m.note, 4000), seriesId: ID_RE.test(m.seriesId || '') ? m.seriesId : '', created: +m.created || now, updated: now }));
+    let done = 0;
+    await runLimited(tasks.map(t => () => t().then(() => { done++; btn.textContent = `Wczytywanie ${done}/${tasks.length}`; })), 4);
+    if (d.settings) { S.settings = mergeSettings(d.settings); await saveSettings(S.settings); }
+    toast('Wczytano kopię zapasową');
+    dlgE.close();
+    winKey = null; ensureWindow(); render();
+  } catch (e) { handleWriteError(e); btn.disabled = false; btn.textContent = 'Wczytaj kopię'; }
+}
+dlgE.addEventListener('click', async e => {
+  if (e.target === dlgE) return dlgE.close();
+  const t = e.target;
+  if (t.closest('[data-eclose]')) return dlgE.close();
+  if (t.closest('[data-ecsv]')) {
+    const scope = ($('input[name=e-scope]:checked', dlgE) || {}).value || 'month';
+    const { name, text, n } = buildCsv(scope, $('#e-notes', dlgE).checked);
+    if (!n) return toast('W wybranym okresie nie ma spotkań.', 'err');
+    return offerFile(name, text);
+  }
+  if (t.closest('[data-ejson]')) {
+    const b = t.closest('[data-ejson]');
+    b.disabled = true;
+    try {
+      const text = localStorage.getItem(VAULT_KEY);
+      if (!text) throw new Error('Brak sejfu');
+      await offerFile(`kalendarz-specjalisty_kopia_${today()}.ksbackup`, text);
+    } catch (err) { handleWriteError(err); }
+    b.disabled = false;
+    return;
+  }
+  if (t.closest('[data-eimport]')) return runImport(t.closest('[data-eimport]'));
+  if (t.closest('[data-ecancel]')) { importData = null; const box = $('#e-import', dlgE); box.hidden = true; box.innerHTML = ''; return; }
+  if (t.closest('[data-ecopy]')) {
+    const ta = $('#e-copy', dlgE);
+    try { await navigator.clipboard.writeText(ta.value); toast('Skopiowano'); }
+    catch { ta.focus(); ta.select(); toast('Zaznaczono tekst — skopiuj go skrótem Ctrl+C.'); }
+  }
+});
+
+
+let lastActivity = Date.now();
+let appLocked = false;
+function showLockScreen() {
+  if (appLocked || !store) return;
+  appLocked = true;
+  $('#vaultScreen').hidden = false;
+  $('#vaultTitle').textContent = 'Kalendarz zablokowany';
+  $('#vaultText').textContent = 'Wpisz hasło szyfrowania, aby wrócić do kalendarza.';
+  $('#vaultConfirmWrap').hidden = true;
+  $('#vaultPass').value = '';
+  $('#vaultPass2').value = '';
+  $('#vaultError').textContent = '';
+  const btn=$('#vaultBtn');
+  btn.textContent='Odblokuj';
+  btn.disabled=false;
+  $('#vaultPass').focus();
+}
+async function unlockExistingLock() {
+  const pwd=$('#vaultPass').value;
+  const err=$('#vaultError'), btn=$('#vaultBtn');
+  if (!appLocked) return;
+  btn.disabled=true; btn.textContent='Odblokowuję…'; err.textContent='';
+  try {
+    const raw=localStorage.getItem(VAULT_KEY);
+    const dec=await decryptVaultEnvelope(raw,pwd);
+    vaultPassword=pwd; vaultKey=dec.key; vaultSalt=dec.salt;
+    appLocked=false; $('#vaultScreen').hidden=true; lastActivity=Date.now();
+  } catch {
+    err.textContent='Nieprawidłowe hasło.';
+  } finally {
+    btn.disabled=false; btn.textContent='Odblokuj';
+  }
+}
+['mousemove','mousedown','keydown','touchstart','scroll'].forEach(ev=>document.addEventListener(ev,()=>{ if(!appLocked) lastActivity=Date.now(); },{passive:true}));
+setInterval(()=>{
+  if (!store || appLocked || !S.settings.autoLock) return;
+  if (Date.now()-lastActivity >= S.settings.autoLock*60000) showLockScreen();
+},30000);
+
+// ── komunikat ──
+function toast(msg, kind) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = `toast show${kind ? ` ${kind}` : ''}`;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { el.className = 'toast'; }, kind === 'err' ? 4200 : 2400);
+}
+
+// ── zdarzenia globalne ──
+document.addEventListener('click', e => {
+  if (e.target.closest('dialog')) return;
+  const a = e.target.closest('[data-action]');
+  if (a) {
+    if (!store && !['prev', 'next', 'today', 'pickday', 'openday', 'discreet'].includes(a.dataset.action)) return toast('Chwileczkę — trwa łączenie z zapisem.');
+    switch (a.dataset.action) {
+      case 'prev': return nav(-1);
+      case 'next': return nav(1);
+      case 'today': return goToday();
+      case 'new': return openMeeting({ date: S.selected });
+      case 'new-on': return openMeeting({ date: a.dataset.date });
+      case 'edit': return openMeeting({ id: a.dataset.id });
+      case 'status': return setStatus(a.dataset.id, a.dataset.status);
+      case 'pickday': return selectDay(a.dataset.date);
+      case 'openday': S.selected = a.dataset.date; return setView('day');
+      case 'students': return openStudents();
+      case 'undo': return undoLast();
+      case 'settings': return openSettings();
+      case 'lockapp': return showLockScreen();
+      case 'export': return openExport();
+      case 'toggle-off': return toggleOffDay(a.dataset.date);
+      case 'show-todo': S.filter = { q: '', type: '', status: 'todo' }; S.listRange = 'year'; $('#main').dataset.v = ''; return setView('list');
+      case 'discreet':
+        S.discreet = !S.discreet; saveUi(); render();
+        return toast(S.discreet ? 'Tryb dyskretny: inicjały zamiast nazwisk' : 'Tryb dyskretny wyłączony');
+    }
+    return;
+  }
+  const v = e.target.closest('[data-view]');
+  if (v) return setView(v.dataset.view);
+  const lr = e.target.closest('[data-lrange]');
+  if (lr) { S.listRange = lr.dataset.lrange; saveUi(); renderHeader(); syncListToolbar(); updateListResults(); return; }
+  const col = e.target.closest('.wk-col');
+  if (col && e.target === col) return store ? createAt(col, e) : toast('Chwileczkę — trwa łączenie z zapisem.');
+  const mc = e.target.closest('.mc');
+  if (mc) return selectDay(mc.dataset.date);
+});
+document.addEventListener('dblclick', e => {
+  const mc = e.target.closest('.mc');
+  if (mc && !e.target.closest('button')) openMeeting({ date: mc.dataset.date });
+});
+document.addEventListener('keydown', e => {
+  if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (document.querySelector('dialog[open]') || e.target.closest('input,textarea,select,[contenteditable]')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'n') { e.preventDefault(); openMeeting({ date: S.selected }); }
+  else if (k === 't') goToday();
+  else if (e.key === 'ArrowLeft') nav(-1);
+  else if (e.key === 'ArrowRight') nav(1);
+  else if (k === 'm') setView('month');
+  else if (k === 'w') setView('week');
+  else if (k === 'd') setView('day');
+  else if (k === 'l') setView('list');
+});
+[dlgM, dlgS, dlgC, dlgE].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+function startTicker() {
+  let last = today(), tick = 0;
+  setInterval(() => {
+    tick++;
+    const t = today();
+    if (t !== last) { last = t; render(); return; }
+    const n = nowMin();
+    $$('.nowline').forEach(el => { const b = el.closest('.wk-body'); el.style.top = `${((n - +b.dataset.from) * +b.dataset.px).toFixed(1)}px`; });
+    if (tick % 5 === 0 && !document.querySelector('dialog[open]')) renderSide();
+  }, 60000);
+}
+
+// ── start ──
+document.documentElement.lang = 'pl';
+$$('[data-i]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.i)); });
+
+async function autoBackupEncrypted() {
+  try {
+    const raw=localStorage.getItem(VAULT_KEY);
+    if (!raw) return;
+    const day=today();
+    if (localStorage.getItem('psycal.last.auto.backup')===day) return;
+    const r=await fetch('/__backup',{method:'POST',headers:{'Content-Type':'application/json'},body:raw});
+    if (r.ok) localStorage.setItem('psycal.last.auto.backup',day);
+  } catch(e) { console.warn('auto backup',e); }
+}
+
+async function checkForUpdates(manual=false) {
+  const url=(localStorage.getItem('psycal.update.url')||'https://raw.githubusercontent.com/lukaszdylka/terapianawigator/main/kalendarz-specjalisty/update.json').trim();
+  const status=$('#c-update-status',dlgC);
+  if (!url) {
+    if (manual && status) status.textContent='Najpierw wpisz adres update.json.';
+    return;
+  }
+  if (status) status.textContent='Sprawdzam…';
+  try{
+    const r=await fetch('/__update/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const j=await r.json();
+    if (!r.ok) throw new Error(j.error||'Błąd');
+    if (j.available) {
+      const msg=`Dostępna wersja ${j.version}. Zainstalować teraz?`;
+      if (status) status.textContent=`Dostępna wersja ${j.version}.`;
+      if (confirm(msg)) {
+        if (status) status.textContent='Pobieram aktualizację…';
+        const ir=await fetch('/__update/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+        const ij=await ir.json();
+        if (!ir.ok) throw new Error(ij.error||'Nie udało się zainstalować');
+        alert('Aktualizacja pobrana. Aplikacja zostanie zamknięta, podmieniona i uruchomiona ponownie.');
+        try{ await fetch('/__quit',{method:'POST'}); }catch{}
+      }
+    } else {
+      if (status) status.textContent='Masz najnowszą wersję.';
+      if (manual) toast('Masz najnowszą wersję');
+    }
+  }catch(e){
+    if (status) status.textContent='Nie udało się sprawdzić aktualizacji.';
+    if (manual) toast('Nie udało się sprawdzić aktualizacji','err');
+    console.warn(e);
+  }
+}
+
+async function init() {
+  render();
+  startTicker();
+  const data = await unlockOrCreateVault();
+  store = makeLocalStore(data);
+  S.mode = 'local';
+  store.watchSettings(d => { S.settings = mergeSettings(d); S.loaded.settings = true; render(); }, onDbError);
+  store.watchStudents(map => { S.students = map; S.loaded.students = true; render(); if (dlgS.open) refreshStudentsDialog(); }, onDbError);
+  ensureWindow();
+  render();
+  setTimeout(autoBackupEncrypted, 1200);
+  if (localStorage.getItem('psycal.update.auto') !== '0') setTimeout(()=>checkForUpdates(false), 1800);
+}
+init();
+})();
+</script>
+
+</body></html>
