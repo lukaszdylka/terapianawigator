@@ -1139,7 +1139,7 @@ async function unlockOrCreateVault() {
       }
     };
     btn.addEventListener('click', run);
-    helloBtn.addEventListener('click', () => unlockWithWindowsHello(resolve));
+    helloBtn.onclick = () => unlockWithWindowsHello(resolve);
     pass.addEventListener('keydown', e => { if (e.key === 'Enter' && !creating) run(); });
     pass2.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
     setTimeout(() => pass.focus(), 80);
@@ -2267,7 +2267,7 @@ function settingsHtml() {
 function readBells() {
   $$('#c-bells input[data-b]', dlgC).forEach(inp => { const i = +inp.dataset.b, k = +inp.dataset.k; if (CF.bells[i] && TIME_RE.test(inp.value)) CF.bells[i][k] = inp.value; });
 }
-dlgC.addEventListener('click', e => {
+dlgC.addEventListener('click', async e => {
   if (e.target === dlgC) return dlgC.close();
   const t = e.target;
   if (t.closest('[data-cclose]')) return dlgC.close();
