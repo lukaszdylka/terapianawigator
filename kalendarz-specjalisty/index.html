@@ -31,6 +31,7 @@
   --tint-line:34%;
   --tint-ink:74%;
   --t-kons:#3D5BD9;
+  --t-rewal:#147D92;
   --t-kryz:#D0362C;
   --t-diag:#8246C8;
   --t-rodz:#0F8C80;
@@ -52,7 +53,7 @@
     --pen:#FF7D6E;--pen-soft:#3A2321;--on-pen:#2A0D0A;--warn:#F2B04E;--warn-soft:#3A2D16;--ok:#7FD39B;--ok-soft:#1C3527;
     --hatch:rgba(227,234,231,.065);--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.45);
     --tint:20%;--tint-line:44%;--tint-ink:82%;
-    --t-kons:#8EA2FF;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-rodz:#4FD1C2;--t-naucz:#F0B357;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
+    --t-kons:#8EA2FF;--t-rewal:#62C7DA;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-rodz:#4FD1C2;--t-naucz:#F0B357;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
     color-scheme:dark;
   }
 }
@@ -63,7 +64,7 @@
   --pen:#FF7D6E;--pen-soft:#3A2321;--on-pen:#2A0D0A;--warn:#F2B04E;--warn-soft:#3A2D16;--ok:#7FD39B;--ok-soft:#1C3527;
   --hatch:rgba(227,234,231,.065);--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.45);
   --tint:20%;--tint-line:44%;--tint-ink:82%;
-  --t-kons:#8EA2FF;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-rodz:#4FD1C2;--t-naucz:#F0B357;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
+  --t-kons:#8EA2FF;--t-rewal:#62C7DA;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-rodz:#4FD1C2;--t-naucz:#F0B357;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
   color-scheme:dark;
 }
 
@@ -495,7 +496,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
     <label class="fld"><span>Hasło</span><input id="vaultPass" type="password" autocomplete="current-password" minlength="8"></label>
     <label class="fld" id="vaultConfirmWrap" hidden><span>Powtórz hasło</span><input id="vaultPass2" type="password" autocomplete="new-password" minlength="8"></label>
     <div class="vault-error" id="vaultError" role="alert"></div>
-    <div class="vault-actions"><button class="btn primary" type="button" id="vaultBtn">Odblokuj</button></div>
+    <div class="vault-actions"><button class="btn" type="button" id="vaultHelloBtn" hidden>Windows Hello</button><button class="btn primary" type="button" id="vaultBtn">Odblokuj</button></div>
   </div>
 </div>
 
@@ -737,6 +738,7 @@ const DAYS_SHORT = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
 const REGIONS = [['dolnoslaskie', 'dolnośląskie'], ['kujawsko-pomorskie', 'kujawsko-pomorskie'], ['lubelskie', 'lubelskie'], ['lubuskie', 'lubuskie'], ['lodzkie', 'łódzkie'], ['malopolskie', 'małopolskie'], ['mazowieckie', 'mazowieckie'], ['opolskie', 'opolskie'], ['podkarpackie', 'podkarpackie'], ['podlaskie', 'podlaskie'], ['pomorskie', 'pomorskie'], ['slaskie', 'śląskie'], ['swietokrzyskie', 'świętokrzyskie'], ['warminsko-mazurskie', 'warmińsko-mazurskie'], ['wielkopolskie', 'wielkopolskie'], ['zachodniopomorskie', 'zachodniopomorskie']];
 const TYPES = [
   { k: 'kons', label: 'Konsultacja z uczniem', short: 'Konsultacja' },
+  { k: 'rewal', label: 'Zajęcia rewalidacyjne', short: 'Rewalidacja' },
   { k: 'kryz', label: 'Interwencja kryzysowa', short: 'Interwencja' },
   { k: 'diag', label: 'Diagnoza', short: 'Diagnoza' },
   { k: 'rodz', label: 'Rozmowa z rodzicem', short: 'Rodzic' },
@@ -888,6 +890,7 @@ let vaultPassword = '';
 let vaultKey = null;
 let vaultSalt = null;
 let vaultData = null;
+const HELLO_KEY = 'psycal.hello.v1';
 
 const b64 = bytes => {
   let s = ''; const a = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
@@ -946,6 +949,95 @@ async function persistVault(data) {
   localStorage.setItem(VAULT_KEY, await encryptVaultObject(data));
 }
 
+
+function helloConfig() {
+  try { return JSON.parse(localStorage.getItem(HELLO_KEY) || 'null'); } catch { return null; }
+}
+const hasHelloConfig = () => !!helloConfig();
+
+async function platformHelloAvailable() {
+  try {
+    return !!(window.PublicKeyCredential &&
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable &&
+      await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+  } catch { return false; }
+}
+function randomBytes(n) { return crypto.getRandomValues(new Uint8Array(n)); }
+async function helloPrfKey(secret) {
+  const digest = await crypto.subtle.digest('SHA-256', secret);
+  return crypto.subtle.importKey('raw', digest, {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+}
+async function getHelloPrf(credentialId, prfSalt) {
+  const cred = await navigator.credentials.get({
+    publicKey: {
+      challenge: randomBytes(32),
+      rpId: location.hostname,
+      allowCredentials: [{type:'public-key', id: unb64(credentialId)}],
+      userVerification: 'required',
+      timeout: 60000,
+      extensions: { prf: { eval: { first: unb64(prfSalt) } } }
+    }
+  });
+  const ext = cred && cred.getClientExtensionResults ? cred.getClientExtensionResults() : {};
+  const first = ext && ext.prf && ext.prf.results && ext.prf.results.first;
+  if (!first) throw new Error('prf_unavailable');
+  return new Uint8Array(first);
+}
+async function enableWindowsHello() {
+  if (!vaultPassword) throw new Error('password_unavailable');
+  if (!(await platformHelloAvailable())) throw new Error('hello_unavailable');
+  const prfSalt = randomBytes(32);
+  const cred = await navigator.credentials.create({
+    publicKey: {
+      challenge: randomBytes(32),
+      rp: { name: 'Kalendarz Specjalisty', id: location.hostname },
+      user: { id: randomBytes(32), name: 'kalendarz-specjalisty', displayName: 'Kalendarz Specjalisty' },
+      pubKeyCredParams: [{type:'public-key', alg:-7}, {type:'public-key', alg:-257}],
+      authenticatorSelection: { authenticatorAttachment:'platform', residentKey:'preferred', userVerification:'required' },
+      timeout: 60000,
+      attestation: 'none',
+      extensions: { prf: { eval: { first: prfSalt } } }
+    }
+  });
+  if (!cred) throw new Error('cancelled');
+  const credentialId = b64(new Uint8Array(cred.rawId));
+  const ext = cred.getClientExtensionResults ? cred.getClientExtensionResults() : {};
+  let secret = ext && ext.prf && ext.prf.results && ext.prf.results.first ? new Uint8Array(ext.prf.results.first) : null;
+  if (!secret) secret = await getHelloPrf(credentialId, b64(prfSalt));
+  const key = await helloPrfKey(secret);
+  const iv = randomBytes(12);
+  const enc = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, new TextEncoder().encode(vaultPassword));
+  localStorage.setItem(HELLO_KEY, JSON.stringify({v:1,credentialId,prfSalt:b64(prfSalt),iv:b64(iv),wrapped:b64(new Uint8Array(enc))}));
+}
+function disableWindowsHello() { localStorage.removeItem(HELLO_KEY); }
+async function passwordFromWindowsHello() {
+  const cfg = helloConfig();
+  if (!cfg || !cfg.credentialId || !cfg.prfSalt || !cfg.iv || !cfg.wrapped) throw new Error('hello_not_configured');
+  const secret = await getHelloPrf(cfg.credentialId, cfg.prfSalt);
+  const key = await helloPrfKey(secret);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(cfg.iv)}, key, unb64(cfg.wrapped));
+  return new TextDecoder().decode(plain);
+}
+async function unlockWithWindowsHello(resolve) {
+  const err=$('#vaultError'), hb=$('#vaultHelloBtn');
+  if (hb) { hb.disabled=true; hb.textContent='Windows Hello…'; }
+  err.textContent='';
+  try {
+    const pwd=await passwordFromWindowsHello();
+    const dec=await decryptVaultEnvelope(localStorage.getItem(VAULT_KEY),pwd);
+    vaultPassword=pwd; vaultKey=dec.key; vaultSalt=dec.salt; vaultData=dec.data;
+    appLocked=false; $('#vaultScreen').hidden=true; lastActivity=Date.now();
+    if (resolve) resolve(vaultData);
+    return true;
+  } catch(e) {
+    console.warn('Windows Hello',e);
+    err.textContent=e && e.name==='NotAllowedError' ? 'Windows Hello zostało anulowane.' : 'Nie udało się odblokować przez Windows Hello. Użyj hasła.';
+    return false;
+  } finally {
+    if(hb){hb.disabled=false;hb.textContent='Windows Hello';}
+  }
+}
+
 function makeLocalStore(initial) {
   let data = initial && typeof initial === 'object' ? initial : { meetings: {}, students: {}, settings: null };
   if (!data.meetings || typeof data.meetings !== 'object') data.meetings = {};
@@ -986,8 +1078,9 @@ async function unlockOrCreateVault() {
   const raw = localStorage.getItem(VAULT_KEY);
   const screen = $('#vaultScreen'), title = $('#vaultTitle'), text = $('#vaultText');
   const pass = $('#vaultPass'), pass2 = $('#vaultPass2'), confirmWrap = $('#vaultConfirmWrap');
-  const btn = $('#vaultBtn'), err = $('#vaultError');
+  const btn = $('#vaultBtn'), helloBtn = $('#vaultHelloBtn'), err = $('#vaultError');
   const creating = !raw;
+  helloBtn.hidden = creating || !hasHelloConfig();
   title.textContent = creating ? 'Utwórz hasło szyfrowania' : 'Odblokuj kalendarz';
   text.textContent = creating
     ? 'Hasło chroni dane uczniów i spotkań zapisane na tym komputerze. Nie zapisujemy go nigdzie.'
@@ -1019,6 +1112,17 @@ async function unlockOrCreateVault() {
               if (old && typeof old === 'object') initial = { ...initial, ...old };
             } catch {}
           }
+          const veryOld = localStorage.getItem('tme_psycholog_calendar_v1');
+          if (veryOld && !Object.keys(initial.meetings || {}).length) {
+            try {
+              const arr = JSON.parse(veryOld);
+              if (Array.isArray(arr)) {
+                const conv = convertOldEvents(arr);
+                initial.students = Object.fromEntries(conv.students);
+                initial.meetings = Object.fromEntries(conv.meetings);
+              }
+            } catch {}
+          }
           await persistVault(initial);
           localStorage.removeItem(LEGACY_DATA_KEY);
           vaultData = initial;
@@ -1035,6 +1139,7 @@ async function unlockOrCreateVault() {
       }
     };
     btn.addEventListener('click', run);
+    helloBtn.addEventListener('click', () => unlockWithWindowsHello(resolve));
     pass.addEventListener('keydown', e => { if (e.key === 'Enter' && !creating) run(); });
     pass2.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
     setTimeout(() => pass.focus(), 80);
@@ -2136,6 +2241,14 @@ function settingsHtml() {
         </div>
         <label class="check"><input type="checkbox" id="c-we"${CF.weekend ? ' checked' : ''}><span>Pokazuj soboty i niedziele (weekend z zaplanowanym spotkaniem pokazuje się zawsze)</span></label>
       </section>
+      <section class="cs"><h3>Windows Hello</h3>
+        <p class="hint">Możesz odblokowywać kalendarz odciskiem palca, rozpoznawaniem twarzy albo PIN-em Windows Hello. Hasło szyfrowania pozostaje metodą awaryjną.</p>
+        <div class="row-btns">
+          <button type="button" class="btn sm" data-hello-enable>${hasHelloConfig() ? 'Skonfiguruj ponownie Windows Hello' : 'Włącz Windows Hello'}</button>
+          ${hasHelloConfig() ? '<button type="button" class="btn ghost sm danger" data-hello-disable>Wyłącz Windows Hello</button>' : ''}
+        </div>
+        <p class="hint" id="c-hello-status">${hasHelloConfig() ? 'Windows Hello jest skonfigurowane na tym komputerze.' : 'Windows Hello nie jest jeszcze skonfigurowane.'}</p>
+      </section>
       <section class="cs"><h3>Aktualizacje aplikacji</h3>
         <p class="hint">Aplikacja może sprawdzać nową wersję przy uruchomieniu i podmienić własny plik EXE po Twojej zgodzie. Potrzebny jest mały plik update.json opublikowany pod stałym adresem HTTPS.</p>
         <label class="fld"><span>Adres pliku aktualizacji</span><input type="text" id="c-update-url" value="${esc(localStorage.getItem('psycal.update.url') || 'https://raw.githubusercontent.com/lukaszdylka/terapianawigator/main/kalendarz-specjalisty/update.json')}" placeholder="https://twojastrona.pl/kalendarz/update.json"></label>
@@ -2181,6 +2294,26 @@ dlgC.addEventListener('click', e => {
   if (od) { delete CF.offDays[od.dataset.odel]; $('#c-off', dlgC).innerHTML = offHtml(); return; }
   if (t.closest('[data-cexport]')) { dlgC.close(); openExport(); }
   if (t.closest('[data-check-update]')) { checkForUpdates(true); }
+  if (t.closest('[data-hello-enable]')) {
+    const b=t.closest('[data-hello-enable]'), st=$('#c-hello-status',dlgC);
+    b.disabled=true; if(st) st.textContent='Otwieram Windows Hello…';
+    try {
+      await enableWindowsHello();
+      toast('Włączono Windows Hello');
+      dlgC.innerHTML=settingsHtml();
+    } catch(err) {
+      console.warn(err);
+      if(st) st.textContent='Nie udało się skonfigurować Windows Hello. Możesz nadal używać hasła.';
+      b.disabled=false;
+    }
+    return;
+  }
+  if (t.closest('[data-hello-disable]')) {
+    disableWindowsHello();
+    toast('Wyłączono Windows Hello');
+    dlgC.innerHTML=settingsHtml();
+    return;
+  }
 });
 dlgC.addEventListener('submit', async e => {
   e.preventDefault();
@@ -2214,7 +2347,7 @@ function openExport() {
   const c = parse(S.cursor), Y = schoolYearOf(S.cursor);
   importData = null;
   dlgE.innerHTML = `<div class="dlg">
-    <header class="dlg-h"><h2>Eksport i kopia</h2><button type="button" class="icon-btn" data-eclose aria-label="Zamknij">${ic('x')}</button></header>
+    <header class="dlg-h"><h2>Import, eksport i kopia</h2><button type="button" class="icon-btn" data-eclose aria-label="Zamknij">${ic('x')}</button></header>
     <div class="dlg-b">
       <section class="cs"><h3>Zestawienie do Excela (CSV)</h3>
         <p class="hint">Do dziennika zajęć lub sprawozdania. Plik otworzysz w Excelu albo w Arkuszach Google.</p>
@@ -2227,7 +2360,7 @@ function openExport() {
         <div class="row-btns"><button type="button" class="btn" data-ejson>${ic('download')}Pobierz zaszyfrowaną kopię</button><label class="btn ghost file-btn">${ic('upload')}Wczytaj kopię<input type="file" id="e-file" class="vh" accept=".ksbackup,.json,.csv,application/json,text/csv"></label></div>
         <div id="e-import" hidden></div>
       </section>
-      <section class="cs"><h3>Migracja ze starszej wersji</h3>
+      <section class="cs"><h3>Import danych ze starszej wersji</h3>
         <p class="hint">Możesz wczytać kopię JSON ze starszego Kalendarza psychologa albo CSV wyeksportowany ze starej aplikacji. Program spróbuje rozpoznać kolumny automatycznie.</p>
         <label class="btn file-btn">${ic('upload')}Import starego JSON / CSV<input type="file" id="e-legacy" class="vh" accept=".json,.csv,application/json,text/csv"></label>
         <div id="e-legacy-result"></div>
@@ -2310,7 +2443,7 @@ function splitCsvLine(line, sep) {
 function detectSep(line) { return (line.split(';').length >= line.split(',').length) ? ';' : ','; }
 function mapOldType(v) {
   const x=norm(v);
-  if (x.includes('rewalid')) return 'kons';
+  if (x.includes('rewalid')) return 'rewal';
   if (x.includes('kryz')||x.includes('interw')) return 'kryz';
   if (x.includes('diag')) return 'diag';
   if (x.includes('rodz')) return 'rodz';
@@ -2448,9 +2581,11 @@ function showLockScreen() {
   $('#vaultPass').value = '';
   $('#vaultPass2').value = '';
   $('#vaultError').textContent = '';
-  const btn=$('#vaultBtn');
+  const btn=$('#vaultBtn'), hb=$('#vaultHelloBtn');
   btn.textContent='Odblokuj';
   btn.disabled=false;
+  hb.hidden=!hasHelloConfig();
+  hb.onclick=()=>unlockWithWindowsHello();
   $('#vaultPass').focus();
 }
 async function unlockExistingLock() {
