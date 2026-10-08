@@ -14,8 +14,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
+	"encoding/base64"
+	"unicode/utf16"
 	"time"
 )
 
@@ -120,15 +121,41 @@ func downloadUpdate(m updateManifest) (string,error) {
 	return p,nil
 }
 
+func psQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "''") + "'"
+}
+
+func encodePowerShell(script string) string {
+	runes := utf16.Encode([]rune(script))
+	buf := make([]byte, len(runes)*2)
+	for i, r := range runes {
+		buf[i*2] = byte(r)
+		buf[i*2+1] = byte(r >> 8)
+	}
+	return base64.StdEncoding.EncodeToString(buf)
+}
+
 func scheduleReplacement(newExe string) error {
-	cur,err:=os.Executable(); if err!=nil{return err}
-	cur,_=filepath.Abs(cur)
-	helper:=filepath.Join(appDataDir(),"apply_update.cmd")
-	script:=fmt.Sprintf("@echo off\r\nping 127.0.0.1 -n 3 >nul\r\ncopy /Y %s %s >nul\r\nstart \"\" %s\r\ndel /Q %s\r\ndel /Q \"%%~f0\"\r\n",
-		strconv.Quote(newExe),strconv.Quote(cur),strconv.Quote(cur),strconv.Quote(newExe))
-	if err:=os.WriteFile(helper,[]byte(script),0600);err!=nil{return err}
-	cmd:=exec.Command("cmd.exe","/C",helper)
-	cmd.SysProcAttr = nil
+	cur, err := os.Executable()
+	if err != nil { return err }
+	cur, err = filepath.Abs(cur)
+	if err != nil { return err }
+
+	script := "$ErrorActionPreference='Stop'; " +
+		"Start-Sleep -Seconds 2; " +
+		"$src=" + psQuote(newExe) + "; " +
+		"$dst=" + psQuote(cur) + "; " +
+		"Copy-Item -LiteralPath $src -Destination $dst -Force; " +
+		"Start-Process -FilePath $dst; " +
+		"Remove-Item -LiteralPath $src -Force -ErrorAction SilentlyContinue"
+
+	cmd := exec.Command(
+		"powershell.exe",
+		"-NoProfile",
+		"-NonInteractive",
+		"-WindowStyle", "Hidden",
+		"-EncodedCommand", encodePowerShell(script),
+	)
 	return cmd.Start()
 }
 
