@@ -756,7 +756,8 @@ const STATUSES = [
   { k: 'cancel', label: 'Odwołane' },
 ];
 const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
-const DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
+const OLD_DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
+const DEFAULT_BELLS = ['07:30-08:15', '08:20-09:05', '09:15-10:00', '10:10-10:55', '11:15-12:00', '12:10-12:55', '13:00-13:45', '13:50-14:35', '14:40-15:25', '15:30-16:15'];
 const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:30', dayTo: '16:00', defaultLen: 45, weekend: false, autoLock: 10, offDays: {} };
 
 // ── narzędzia UI ──
@@ -2213,7 +2214,7 @@ function settingsHtml() {
     <header class="dlg-h"><h2>Ustawienia</h2><button type="button" class="icon-btn" data-cclose aria-label="Zamknij">${ic('x')}</button></header>
     <div class="dlg-b">
       <section class="cs"><h3>Dzwonki</h3>
-        <p class="hint">Godziny lekcji w Twojej szkole. Z nich powstają pasy lekcji w widoku tygodnia i szybki wybór lekcji w formularzu.</p>
+        <p class="hint">Godziny lekcji w Twojej szkole. Domyślnie ustawiono plan TME: 10 lekcji od 7:30 do 16:15. Z nich powstają pasy lekcji w widoku tygodnia i szybki wybór lekcji w formularzu.</p>
         <ol class="bells" id="c-bells">${bellsHtml()}</ol>
         <div class="row-btns"><button type="button" class="btn sm" data-badd>${ic('plus')}Dodaj lekcję</button><button type="button" class="btn ghost sm" data-breset>Przywróć typowe dzwonki</button></div>
       </section>
