@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "label": "3.0",
-  "url": "https://github.com/lukaszdylka/terapianawigator/releases/latest/download/KalendarzSpecjalisty.exe",
-  "sha256": "e7ead98745e1326d6dcf4440d1c4c0b3a0f33bfc220ea7562b9d1f20bca9d007"
+  "version": 1011,
+  "label": "1011",
+  "url": "https://github.com/lukaszdylka/terapianawigator/releases/download/kalendarz-v1011/KalendarzSpecjalisty.exe",
+  "sha256": "c50adcc916a9ca5db32dc109e50e045131f6ecf5b190b877511b2392f3b49f9e"
 }
