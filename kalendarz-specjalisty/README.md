@@ -1,38 +1,41 @@
 # Kalendarz Specjalisty
 
-Offline'owy kalendarz pracy psychologa, pedagoga i innych specjalistów szkolnych.
+Szyfrowany kalendarz pracy psychologa, pedagoga i innych specjalistów szkolnych.
 
-## Dane
+## Wersja docelowa: PWA
 
-Aplikacja nie korzysta z bazy danych online. Dane uczniów i spotkań są przechowywane lokalnie na komputerze użytkownika i szyfrowane hasłem.
+Aplikacja działa jako PWA pod adresem:
 
-## Budowanie ręczne
+`https://terapianawigator.pl/kalendarz-specjalisty/`
 
-W katalogu `kalendarz-specjalisty`:
+Najlepiej otworzyć ten adres w Brave i zainstalować aplikację z poziomu Brave. Po instalacji uruchamia się w osobnym oknie bez kart i paska adresu.
 
-```bash
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-H=windowsgui -s -w" -o KalendarzSpecjalisty.exe .
-```
+Nie jest wymagany instalator EXE ani Microsoft Edge.
 
 ## Aktualizacje
 
-Aplikacja sprawdza manifest:
+Kod PWA jest pobierany z serwera przy uruchomieniu. Service Worker przechowuje ostatnią działającą wersję do pracy offline.
 
-`https://raw.githubusercontent.com/lukaszdylka/terapianawigator/main/kalendarz-specjalisty/update.json`
+Aktualizacja nie podmienia plików na komputerze i nie uruchamia skryptów CMD ani PowerShell. Dzięki temu nie ma problemu z aktualizacją EXE, polskimi znakami w ścieżkach ani blokadą pliku przez Windows.
 
-Plik `update.json` jest aktualizowany automatycznie przez GitHub Actions po zmianach w kodzie aplikacji.
+## Dane
 
-Workflow:
-- buduje nowe EXE,
-- oblicza SHA-256,
-- publikuje Release na GitHubie,
-- aktualizuje `update.json`,
-- dzięki temu zainstalowane aplikacje mogą pobrać nową wersję bez ręcznego podmieniania plików.
+Dane uczniów i spotkań:
+- pozostają lokalnie w profilu przeglądarki Brave,
+- są szyfrowane hasłem,
+- nie są zapisywane w repozytorium ani bazie online,
+- można eksportować i importować przez zaszyfrowane kopie `.ksbackup`.
 
-## Kopie zapasowe
+Przy przejściu ze starego EXE do PWA należy wyeksportować kopię w starej aplikacji i zaimportować ją do PWA, ponieważ `127.0.0.1` i `terapianawigator.pl` mają osobne magazyny przeglądarki.
 
-Automatyczne zaszyfrowane kopie są zapisywane lokalnie w:
+## Offline
 
-`%LOCALAPPDATA%\KalendarzSpecjalisty\Backups`
+Po pierwszym poprawnym uruchomieniu online aplikacja działa także bez Internetu dzięki Service Workerowi.
 
-Pliki `.ksbackup` pozostają zaszyfrowane tym samym hasłem co dane aplikacji.
+## Windows Hello
+
+Jeżeli Brave i komputer obsługują wymagane mechanizmy WebAuthn i Windows Hello, w ustawieniach można włączyć odblokowanie biometrią albo PIN-em Windows. Hasło szyfrowania pozostaje metodą awaryjną.
+
+## Stara wersja EXE
+
+Pliki Go pozostają w repozytorium jako wersja archiwalna. Automatyczne publikowanie kolejnych EXE zostało wyłączone.
