@@ -1,13 +1,6 @@
 name: Kalendarz Specjalisty - build and release
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "kalendarz-specjalisty/index.html"
-      - "kalendarz-specjalisty/main.go"
-      - "kalendarz-specjalisty/go.mod"
-      - ".github/workflows/kalendarz-specjalisty-release.yml"
   workflow_dispatch:
 
 permissions:
