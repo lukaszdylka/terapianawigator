@@ -1,0 +1,20 @@
+{
+  "name": "Kalendarz Specjalisty",
+  "short_name": "Kalendarz",
+  "description": "Offline'owy, szyfrowany kalendarz pracy psychologa, pedagoga i specjalisty szkolnego.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111817",
+  "theme_color": "#172120",
+  "lang": "pl",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
