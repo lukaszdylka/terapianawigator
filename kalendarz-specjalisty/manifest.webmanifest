@@ -1,7 +1,7 @@
 {
   "name": "Kalendarz Specjalisty",
   "short_name": "Kalendarz",
-  "description": "Offline'owy, szyfrowany kalendarz pracy psychologa, pedagoga i specjalisty szkolnego.",
+  "description": "Lokalny, szyfrowany kalendarz pracy specjalisty szkolnego",
   "id": "./",
   "start_url": "./",
   "scope": "./",
