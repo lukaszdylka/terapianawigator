@@ -540,6 +540,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 <dialog id="dlgStudents" aria-label="Uczniowie"></dialog>
 <dialog id="dlgSettings" aria-label="Ustawienia"></dialog>
 <dialog id="dlgExport" aria-label="Eksport i kopia zapasowa"></dialog>
+<dialog id="dlgToday" aria-label="Plan na dziś"></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -757,7 +758,7 @@ const STATUSES = [
 const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
 const OLD_DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
 const DEFAULT_BELLS = ['07:30-08:15', '08:20-09:05', '09:15-10:00', '10:10-10:55', '11:15-12:00', '12:10-12:55', '13:00-13:45', '13:50-14:35', '14:40-15:25', '15:30-16:15'];
-const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:30', dayTo: '16:00', defaultLen: 45, weekend: false, autoLock: 10, offDays: {} };
+const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:30', dayTo: '16:00', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {} };
 
 // ── narzędzia UI ──
 const $ = (s, r = document) => r.querySelector(s);
@@ -827,9 +828,11 @@ function mergeSettings(d) {
   s.weekend = !!s.weekend;
   s.observances = s.observances !== false;
   s.autoLock = [0,5,10,15,30,60].includes(+s.autoLock) ? +s.autoLock : 10;
+  s.notify = !!s.notify;
+  s.notifyBefore = [5,10,15,30,60].includes(+s.notifyBefore) ? +s.notifyBefore : 15;
   return s;
 }
-const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, offDays: s.offDays, updated: Date.now() });
+const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, updated: Date.now() });
 
 const S = {
   view: ['month', 'week', 'day', 'list'].includes(uiPrefs.view) ? uiPrefs.view : (isNarrow() ? 'day' : 'week'),
@@ -1271,6 +1274,8 @@ function render() {
   renderMain();
   renderSide();
   renderNotice();
+  const td = $('#dlgToday');
+  if (td && td.open) renderTodayDashboardContent();
 }
 
 function periodTitle() {
@@ -1301,7 +1306,16 @@ function renderHeader() {
 
 function renderNotice() {
   const n = $('#notice');
-  n.hidden = true;
+  if (!store) { n.hidden = true; return; }
+  const seenKey = 'psycal.backup.first.seen';
+  let first = +(localStorage.getItem(seenKey) || 0);
+  if (!first) { first = Date.now(); localStorage.setItem(seenKey, String(first)); }
+  const last = +(localStorage.getItem('psycal.last.manual.backup') || 0);
+  const ref = last || first;
+  const days = Math.floor((Date.now() - ref) / 86400000);
+  if (days < 7) { n.hidden = true; return; }
+  n.hidden = false;
+  n.innerHTML = `${ic('alert')}<span>Od ostatniej pobranej kopii zapasowej minęło <b>${days}</b> ${plural(days,'dzień','dni','dni')}. Automatyczne kopie są przechowywane lokalnie, ale warto pobrać także plik .ksbackup.</span><button type="button" class="btn sm" data-action="export">Zrób kopię</button>`;
 }
 
 function renderMain() {
@@ -1594,6 +1608,47 @@ function monthSummary() {
   </section>`;
 }
 
+// ── plan na dziś ──
+const dlgT = $('#dlgToday');
+function renderTodayDashboardContent() {
+  if (!dlgT) return;
+  const d = today(), di = info(d), evs = (BY.get(d) || []).slice().sort((a,b)=>a.start.localeCompare(b.start));
+  const n = nowMin();
+  const upcoming = evs.find(m => m.status === 'plan' && toMin(m.end) > n);
+  const done = evs.filter(m => m.status === 'done').length;
+  const absent = evs.filter(m => m.status === 'absent').length;
+  const active = evs.filter(m => m.status !== 'cancel').length;
+  dlgT.innerHTML = `<div class="dlg">
+    <header class="dlg-h"><h2>Dzisiaj · ${esc(fmtLong(d))}</h2><button type="button" class="icon-btn" data-today-close aria-label="Zamknij">${ic('x')}</button></header>
+    <div class="dlg-b">
+      <div class="sp-meta">${dayPills(d, di)}</div>
+      <div class="kpis"><div><span>Spotkania</span><b>${active}</b></div><div><span>Odbyte</span><b>${done}</b></div><div><span>Nb</span><b>${absent}</b></div><div><span>Pozostało</span><b>${evs.filter(m=>m.status==='plan' && toMin(m.end)>n).length}</b></div></div>
+      ${upcoming ? `<div class="notice"><span>${ic('calendar')}</span><span><b>Następne: ${fmtTime(upcoming.start)}–${fmtTime(upcoming.end)}</b><br>${esc(TYPE_OF(upcoming).short)}${studentOf(upcoming) && studentOf(upcoming).cls ? ` · ${esc(studentOf(upcoming).cls)}` : ''}</span></div>` : '<p class="hint">Brak kolejnych zaplanowanych spotkań na dziś.</p>'}
+      ${evs.length ? `<ul class="agenda">${evs.map(m=>agRow(m,false)).join('')}</ul>` : '<p class="lv-empty">Na dziś nie ma zaplanowanych spotkań.</p>'}
+    </div>
+    <footer class="dlg-f"><button type="button" class="btn" data-today-new>${ic('plus')}Nowe spotkanie</button><span class="grow"></span><button type="button" class="btn ghost" data-today-day>Pokaż pełny dzień</button><button type="button" class="btn primary" data-today-close>Zamknij</button></footer>
+  </div>`;
+}
+function openTodayDashboard() {
+  S.cursor = S.selected = today();
+  ensureWindow();
+  render();
+  renderTodayDashboardContent();
+  if (!dlgT.open) dlgT.showModal();
+}
+dlgT.addEventListener('click', async e => {
+  if (e.target === dlgT || e.target.closest('[data-today-close]')) return dlgT.close();
+  if (e.target.closest('[data-today-new]')) { dlgT.close(); return openMeeting({date:today()}); }
+  if (e.target.closest('[data-today-day]')) { dlgT.close(); S.selected = S.cursor = today(); return setView('day'); }
+  const a = e.target.closest('[data-action]');
+  if (!a) return;
+  if (a.dataset.action === 'edit') { dlgT.close(); return openMeeting({id:a.dataset.id}); }
+  if (a.dataset.action === 'status') {
+    await setStatus(a.dataset.id, a.dataset.status);
+    setTimeout(renderTodayDashboardContent, 40);
+  }
+});
+
 // ── nawigacja ──
 function setView(v) {
   S.view = v;
@@ -1601,7 +1656,7 @@ function setView(v) {
   if (v === 'week' || v === 'month') S.cursor = S.selected;
   saveUi(); ensureWindow(); render();
 }
-function goToday() { S.cursor = S.selected = today(); ensureWindow(); render(); }
+function goToday() { openTodayDashboard(); }
 function sameMonth(a, b) { return a.slice(0, 7) === b.slice(0, 7); }
 function nav(dir) {
   if (S.view === 'month' || (S.view === 'list' && S.listRange === 'month')) {
@@ -2208,6 +2263,53 @@ function offHtml() {
   const rows = Object.entries(CF.offDays).sort((a, b) => a[0].localeCompare(b[0]));
   return rows.length ? rows.map(([d, n]) => `<li><span class="d">${fmtFull(d)}</span><span class="n">${esc(n || 'Dzień wolny od zajęć')}</span><button type="button" class="icon-btn" data-odel="${d}" aria-label="Usuń dzień wolny ${fmtFull(d)}">${ic('x')}</button></li>`).join('') : '<li class="hint">Brak dodatkowych dni wolnych.</li>';
 }
+function notificationStatusText() {
+  if (!('Notification' in window)) return 'Ta przeglądarka nie udostępnia powiadomień systemowych.';
+  if (Notification.permission === 'granted') return 'Powiadomienia systemowe są dozwolone.';
+  if (Notification.permission === 'denied') return 'Powiadomienia są zablokowane w Brave. Zmień uprawnienie tej strony w ustawieniach przeglądarki.';
+  return 'Powiadomienia nie mają jeszcze przyznanego dostępu.';
+}
+async function showWindowsNotification(title, body, tag='ks-notification') {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration('./') || await navigator.serviceWorker.ready;
+      if (reg && reg.showNotification) {
+        await reg.showNotification(title, { body, tag, icon:'./icon.svg', badge:'./icon.svg' });
+        return true;
+      }
+    }
+    new Notification(title, { body, tag, icon:'./icon.svg' });
+    return true;
+  } catch (e) { console.warn('notification', e); return false; }
+}
+async function requestWindowsNotifications() {
+  if (!('Notification' in window)) return 'unsupported';
+  if (Notification.permission === 'granted') return 'granted';
+  try { return await Notification.requestPermission(); } catch { return Notification.permission || 'default'; }
+}
+async function changeVaultPasswordFromSettings() {
+  const oldEl=$('#c-pass-old',dlgC), newEl=$('#c-pass-new',dlgC), repEl=$('#c-pass-new2',dlgC), st=$('#c-pass-status',dlgC);
+  const oldPwd=oldEl.value, newPwd=newEl.value, rep=repEl.value;
+  st.textContent='';
+  if (newPwd.length < 8) { st.textContent='Nowe hasło musi mieć co najmniej 8 znaków.'; return; }
+  if (newPwd !== rep) { st.textContent='Nowe hasła nie są identyczne.'; return; }
+  try {
+    const raw=localStorage.getItem(VAULT_KEY);
+    const dec=await decryptVaultEnvelope(raw,oldPwd);
+    const newSalt=crypto.getRandomValues(new Uint8Array(16));
+    const newKey=await deriveVaultKey(newPwd,newSalt);
+    localStorage.setItem(VAULT_KEY,await encryptVaultObject(dec.data,newKey,newSalt));
+    vaultPassword=newPwd; vaultKey=newKey; vaultSalt=newSalt; vaultData=dec.data;
+    disableWindowsHello();
+    oldEl.value=''; newEl.value=''; repEl.value='';
+    st.textContent='Hasło zostało zmienione. Windows Hello wyłączono, ponieważ było powiązane ze starym hasłem. Możesz skonfigurować je ponownie.';
+    toast('Zmieniono hasło szyfrowania');
+  } catch(e) {
+    console.warn(e);
+    st.textContent='Bieżące hasło jest nieprawidłowe.';
+  }
+}
 function settingsHtml() {
   return `<form class="dlg" id="cf" novalidate>
     <header class="dlg-h"><h2>Ustawienia</h2><button type="button" class="icon-btn" data-cclose aria-label="Zamknij">${ic('x')}</button></header>
@@ -2240,6 +2342,25 @@ function settingsHtml() {
           <label class="fld"><span>Automatyczna blokada</span><select id="c-lock">${[[0,'wyłączona'],[5,'po 5 min'],[10,'po 10 min'],[15,'po 15 min'],[30,'po 30 min'],[60,'po 60 min']].map(([v,l])=>`<option value="${v}"${CF.autoLock===v?' selected':''}>${l}</option>`).join('')}</select></label>
         </div>
         <label class="check"><input type="checkbox" id="c-we"${CF.weekend ? ' checked' : ''}><span>Pokazuj soboty i niedziele (weekend z zaplanowanym spotkaniem pokazuje się zawsze)</span></label>
+      </section>
+      <section class="cs"><h3>Powiadomienia Windows</h3>
+        <p class="hint">Powiadomienie nie pokazuje nazwiska ani notatki. Zawiera tylko rodzaj spotkania, klasę i godzinę. Działa, gdy PWA / Brave jest uruchomione, także zminimalizowane. Bez serwera nie można zagwarantować alarmu po całkowitym zamknięciu aplikacji.</p>
+        <div class="row2 stack-sm">
+          <label class="check"><input type="checkbox" id="c-notify"${CF.notify ? ' checked' : ''}><span>Przypominaj o zaplanowanych spotkaniach</span></label>
+          <label class="fld"><span>Ile wcześniej</span><select id="c-notify-before">${[5,10,15,30,60].map(n=>`<option value="${n}"${CF.notifyBefore===n?' selected':''}>${n} min</option>`).join('')}</select></label>
+        </div>
+        <div class="row-btns"><button type="button" class="btn sm" data-notify-enable>Włącz uprawnienie</button><button type="button" class="btn ghost sm" data-notify-test>Wyślij test</button></div>
+        <p class="hint" id="c-notify-status">${notificationStatusText()}</p>
+      </section>
+      <section class="cs"><h3>Hasło szyfrowania</h3>
+        <p class="hint">Zmiana hasła ponownie szyfruje cały lokalny sejf. Po zmianie trzeba ponownie skonfigurować Windows Hello.</p>
+        <div class="row3">
+          <label class="fld"><span>Bieżące hasło</span><input type="password" id="c-pass-old" autocomplete="current-password"></label>
+          <label class="fld"><span>Nowe hasło</span><input type="password" id="c-pass-new" autocomplete="new-password" minlength="8"></label>
+          <label class="fld"><span>Powtórz nowe</span><input type="password" id="c-pass-new2" autocomplete="new-password" minlength="8"></label>
+        </div>
+        <div class="row-btns"><button type="button" class="btn sm" data-change-password>Zmień hasło</button></div>
+        <p class="hint" id="c-pass-status"></p>
       </section>
       <section class="cs"><h3>Windows Hello</h3>
         <p class="hint">Możesz odblokowywać kalendarz odciskiem palca, rozpoznawaniem twarzy albo PIN-em Windows Hello. Hasło szyfrowania pozostaje metodą awaryjną.</p>
@@ -2300,6 +2421,27 @@ dlgC.addEventListener('click', async e => {
     return;
   }
   if (t.closest('[data-pwa-install]')) { installPwa(); }
+  if (t.closest('[data-notify-enable]')) {
+    const perm=await requestWindowsNotifications();
+    const st=$('#c-notify-status',dlgC);
+    if (st) st.textContent=notificationStatusText();
+    if (perm==='granted') {
+      CF.notify=true;
+      const cb=$('#c-notify',dlgC); if(cb) cb.checked=true;
+      toast('Powiadomienia są włączone');
+    }
+    return;
+  }
+  if (t.closest('[data-notify-test]')) {
+    if (!('Notification' in window) || Notification.permission!=='granted') {
+      const perm=await requestWindowsNotifications();
+      const st=$('#c-notify-status',dlgC); if(st) st.textContent=notificationStatusText();
+      if (perm!=='granted') return toast('Brak zgody na powiadomienia','err');
+    }
+    const ok=await showWindowsNotification('Kalendarz Specjalisty','Test powiadomień Windows · bez danych ucznia','ks-test-'+Date.now());
+    return toast(ok?'Wysłano test powiadomienia':'Nie udało się wysłać powiadomienia',ok?'':'err');
+  }
+  if (t.closest('[data-change-password]')) { await changeVaultPasswordFromSettings(); return; }
   if (t.closest('[data-hello-enable]')) {
     const b=t.closest('[data-hello-enable]'), st=$('#c-hello-status',dlgC);
     b.disabled=true; if(st) st.textContent='Otwieram Windows Hello…';
@@ -2336,6 +2478,8 @@ dlgC.addEventListener('submit', async e => {
   if (!TIME_RE.test(CF.dayFrom) || !TIME_RE.test(CF.dayTo) || toMin(CF.dayTo) - toMin(CF.dayFrom) < 120) return fail('Widok dnia musi obejmować co najmniej dwie godziny.');
   CF.defaultLen = +$('#c-len', dlgC).value;
   CF.autoLock = +$('#c-lock', dlgC).value;
+  CF.notify = $('#c-notify', dlgC).checked;
+  CF.notifyBefore = +$('#c-notify-before', dlgC).value;
   CF.weekend = $('#c-we', dlgC).checked;
   const next = mergeSettings(serializeSettings(CF));
   S.settings = next;
@@ -2347,6 +2491,67 @@ dlgC.addEventListener('submit', async e => {
 // ── eksport, kopia zapasowa, import ──
 const dlgE = $('#dlgExport');
 let importData = null;
+function reportRange(scope) {
+  if (scope === 'year') {
+    const Y=schoolYearOf(S.cursor);
+    return {from:`${Y}-09-01`,to:`${Y+1}-08-31`,label:`rok szkolny ${syLabel(Y)}`};
+  }
+  const c=parse(S.cursor), from=iso(new Date(c.getFullYear(),c.getMonth(),1,12)), to=iso(new Date(c.getFullYear(),c.getMonth()+1,0,12));
+  return {from,to,label:`${MONTHS[c.getMonth()]} ${c.getFullYear()}`};
+}
+function buildReportText(scope) {
+  const r=reportRange(scope);
+  const items=allItems().filter(m=>m.date>=r.from && m.date<=r.to);
+  const byStatus={plan:0,done:0,absent:0,cancel:0}, byType={};
+  let mins=0;
+  const students=new Set();
+  for(const m of items){
+    byStatus[m.status]=(byStatus[m.status]||0)+1;
+    if(m.status==='done') mins+=Math.max(0,toMin(m.end)-toMin(m.start));
+    if(m.status!=='cancel') byType[TYPE_OF(m).k]=(byType[TYPE_OF(m).k]||0)+1;
+    if(m.studentId && m.status!=='cancel') students.add(m.studentId);
+  }
+  const active=items.length-byStatus.cancel;
+  const lines=[
+    `Podsumowanie pracy psychologa szkolnego — ${r.label}`,
+    `Łącznie spotkań (bez odwołanych): ${active}`,
+    `Odbyte: ${byStatus.done}`,
+    `Nieobecności: ${byStatus.absent}`,
+    `Odwołane: ${byStatus.cancel}`,
+    `Pozostające jako zaplanowane: ${byStatus.plan}`,
+    `Czas odbytych spotkań: ${fmtHours(mins)} h`,
+    `Liczba uczniów przypisanych do spotkań: ${students.size}`,
+    '',
+    'Rodzaje działań:'
+  ];
+  TYPES.forEach(T=>{ if(byType[T.k]) lines.push(`${T.label}: ${byType[T.k]}`); });
+  return lines.join('\n');
+}
+function latestAutoBackupKey() {
+  return Object.keys(localStorage).filter(k=>k.startsWith('psycal.auto.backup.')).sort().reverse()[0] || '';
+}
+function backupStatusHtml() {
+  const last=+(localStorage.getItem('psycal.last.manual.backup')||0);
+  const auto=latestAutoBackupKey();
+  const manual=last ? new Date(last).toLocaleString('pl-PL') : 'jeszcze nie pobrano';
+  const autoDate=auto ? auto.replace('psycal.auto.backup.','') : 'brak';
+  return `Ostatnia pobrana kopia: <b>${esc(manual)}</b>. Najnowsza automatyczna kopia lokalna: <b>${esc(autoDate)}</b>.`;
+}
+async function verifyBackupFile(file) {
+  const raw=await file.text();
+  const env=JSON.parse(raw);
+  if(!env || env.app!=='kalendarz-specjalisty-encrypted') throw new Error('format');
+  let dec;
+  try { dec=await decryptVaultEnvelope(env,vaultPassword); }
+  catch {
+    const pwd=prompt('Kopia ma inne hasło. Podaj hasło użyte do jej utworzenia:');
+    if(!pwd) throw new Error('cancelled');
+    dec=await decryptVaultEnvelope(env,pwd);
+  }
+  const meetings=Object.keys((dec.data&&dec.data.meetings)||{}).length;
+  const students=Object.keys((dec.data&&dec.data.students)||{}).length;
+  return {meetings,students};
+}
 function openExport() {
   const c = parse(S.cursor), Y = schoolYearOf(S.cursor);
   importData = null;
@@ -2359,9 +2564,16 @@ function openExport() {
         <label class="check"><input type="checkbox" id="e-notes"><span>Dołącz notatki</span></label>
         <div class="row-btns"><button type="button" class="btn primary" data-ecsv>${ic('download')}Pobierz CSV</button></div>
       </section>
+      <section class="cs"><h3>Podsumowanie do sprawozdania</h3>
+        <p class="hint">Tworzy tekst z liczbą spotkań, statusami, czasem pracy i podziałem na rodzaje zajęć. Zakres bierze z wyboru powyżej: miesiąc albo rok szkolny.</p>
+        <div class="row-btns"><button type="button" class="btn" data-ereport>${ic('copy')}Kopiuj podsumowanie</button></div>
+      </section>
       <section class="cs"><h3>Kopia zapasowa</h3>
         <p class="hint">Wszystkie spotkania, uczniowie i ustawienia w jednym zaszyfrowanym pliku. Do odczytu potrzebne jest Twoje hasło.</p>
+        <p class="hint" id="e-backup-status">${backupStatusHtml()}</p>
         <div class="row-btns"><button type="button" class="btn" data-ejson>${ic('download')}Pobierz zaszyfrowaną kopię</button><label class="btn ghost file-btn">${ic('upload')}Wczytaj kopię<input type="file" id="e-file" class="vh" accept=".ksbackup,.json,.csv,application/json,text/csv"></label></div>
+        <div class="row-btns"><label class="btn ghost file-btn">Sprawdź plik kopii<input type="file" id="e-verify" class="vh" accept=".ksbackup,application/json"></label>${latestAutoBackupKey() ? '<button type="button" class="btn ghost" data-eauto>Pobierz ostatnią automatyczną</button>' : ''}</div>
+        <div id="e-verify-result"></div>
         <div id="e-import" hidden></div>
       </section>
       <section class="cs"><h3>Import danych ze starszej wersji</h3>
@@ -2372,6 +2584,18 @@ function openExport() {
       <section class="cs" id="e-fallback" hidden></section>
     </div></div>`;
   $('#e-file', dlgE).addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if (file) readImport(file); e.target.value = ''; });
+  $('#e-verify', dlgE).addEventListener('change', async e => {
+    const file=e.target.files && e.target.files[0], out=$('#e-verify-result',dlgE);
+    if(!file) return;
+    out.innerHTML='<p class="hint">Sprawdzam kopię…</p>';
+    try {
+      const x=await verifyBackupFile(file);
+      out.innerHTML=`<div class="f-warn"><p>${ic('check')}<span>Kopia jest poprawna i można ją odszyfrować. Zawiera ${x.meetings} ${plural(x.meetings,'spotkanie','spotkania','spotkań')} i ${x.students} ${plural(x.students,'ucznia','uczniów','uczniów')}.</span></p></div>`;
+    } catch {
+      out.innerHTML=`<div class="f-warn"><p>${ic('alert')}<span>Nie udało się poprawnie odszyfrować tej kopii.</span></p></div>`;
+    }
+    e.target.value='';
+  });
   $('#e-legacy', dlgE).addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if (file) readLegacyImport(file); e.target.value = ''; });
   dlgE.showModal();
 }
@@ -2559,6 +2783,20 @@ dlgE.addEventListener('click', async e => {
     if (!n) return toast('W wybranym okresie nie ma spotkań.', 'err');
     return offerFile(name, text);
   }
+  if (t.closest('[data-ereport]')) {
+    const scope = ($('input[name=e-scope]:checked', dlgE) || {}).value || 'month';
+    const report=buildReportText(scope);
+    try { await navigator.clipboard.writeText(report); toast('Skopiowano podsumowanie do schowka'); }
+    catch {
+      await offerFile(`podsumowanie_${today()}.txt`,report);
+    }
+    return;
+  }
+  if (t.closest('[data-eauto]')) {
+    const k=latestAutoBackupKey(), raw=k && localStorage.getItem(k);
+    if(!raw) return toast('Brak automatycznej kopii','err');
+    return offerFile(`kalendarz-specjalisty_auto_${k.replace('psycal.auto.backup.','')}.ksbackup`,raw);
+  }
   if (t.closest('[data-ejson]')) {
     const b = t.closest('[data-ejson]');
     b.disabled = true;
@@ -2566,6 +2804,9 @@ dlgE.addEventListener('click', async e => {
       const text = localStorage.getItem(VAULT_KEY);
       if (!text) throw new Error('Brak sejfu');
       await offerFile(`kalendarz-specjalisty_kopia_${today()}.ksbackup`, text);
+      localStorage.setItem('psycal.last.manual.backup',String(Date.now()));
+      const st=$('#e-backup-status',dlgE); if(st) st.innerHTML=backupStatusHtml();
+      renderNotice();
     } catch (err) { handleWriteError(err); }
     b.disabled = false;
     return;
@@ -2685,7 +2926,32 @@ document.addEventListener('keydown', e => {
   else if (k === 'd') setView('day');
   else if (k === 'l') setView('list');
 });
-[dlgM, dlgS, dlgC, dlgE].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+[dlgM, dlgS, dlgC, dlgE, dlgT].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+async function checkMeetingNotifications() {
+  if (!store || !S.settings.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const d=today(), now=nowMin(), before=+S.settings.notifyBefore||15;
+  const key='psycal.notified.'+d;
+  let seen=[];
+  try { seen=JSON.parse(localStorage.getItem(key)||'[]'); if(!Array.isArray(seen)) seen=[]; } catch { seen=[]; }
+  const done=new Set(seen);
+  let changed=false;
+  for(const m of (BY.get(d)||[])){
+    if(m.status!=='plan') continue;
+    const diff=toMin(m.start)-now;
+    if(diff<0 || diff>before) continue;
+    const sig=`${m.id}|${m.start}|${before}`;
+    if(done.has(sig)) continue;
+    const st=studentOf(m);
+    const body=`${TYPE_OF(m).short}${st&&st.cls ? ' · '+st.cls : ''} · ${fmtTime(m.start)}–${fmtTime(m.end)}`;
+    const title=diff<=1 ? 'Spotkanie teraz' : `Spotkanie za ${diff} min`;
+    if(await showWindowsNotification(title,body,'ks-'+m.id+'-'+m.start.replace(':',''))){
+      done.add(sig); changed=true;
+    }
+  }
+  if(changed) localStorage.setItem(key,JSON.stringify([...done].slice(-100)));
+  Object.keys(localStorage).filter(k=>k.startsWith('psycal.notified.') && k!==key).forEach(k=>localStorage.removeItem(k));
+}
 
 function startTicker() {
   let last = today(), tick = 0;
@@ -2695,6 +2961,7 @@ function startTicker() {
     if (t !== last) { last = t; render(); return; }
     const n = nowMin();
     $$('.nowline').forEach(el => { const b = el.closest('.wk-body'); el.style.top = `${((n - +b.dataset.from) * +b.dataset.px).toFixed(1)}px`; });
+    checkMeetingNotifications();
     if (tick % 5 === 0 && !document.querySelector('dialog[open]')) renderSide();
   }, 60000);
 }
@@ -2782,6 +3049,8 @@ async function init() {
   setTimeout(autoBackupEncrypted, 1200);
   setTimeout(registerPwa, 300);
   setTimeout(() => checkForUpdates(false), 1800);
+  setTimeout(checkMeetingNotifications, 2400);
+  setTimeout(() => { if (!document.querySelector('dialog[open]')) openTodayDashboard(); }, 700);
 }
 init();
 })();
