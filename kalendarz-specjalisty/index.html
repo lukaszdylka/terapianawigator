@@ -2292,6 +2292,13 @@ dlgC.addEventListener('click', async e => {
   if (od) { delete CF.offDays[od.dataset.odel]; $('#c-off', dlgC).innerHTML = offHtml(); return; }
   if (t.closest('[data-cexport]')) { dlgC.close(); openExport(); }
   if (t.closest('[data-check-update]')) { checkForUpdates(true); }
+  if (t.closest('[data-pwa-install]')) {
+    if (window.KSPWA && window.KSPWA.install) {
+      const ok = await window.KSPWA.install();
+      if (!ok) toast('W Brave wybierz Menu → Zainstaluj Kalendarz Specjalisty');
+    } else toast('Otwórz tę stronę w Brave i wybierz instalację aplikacji');
+    return;
+  }
   if (t.closest('[data-pwa-install]')) { installPwa(); }
   if (t.closest('[data-hello-enable]')) {
     const b=t.closest('[data-hello-enable]'), st=$('#c-hello-status',dlgC);
@@ -2403,7 +2410,14 @@ function readImport(file) {
     try {
       const o = JSON.parse(r.result);
       if (o && o.app === 'kalendarz-specjalisty-encrypted') {
-        const dec = await decryptVaultEnvelope(o, vaultPassword);
+        let dec;
+        try {
+          dec = await decryptVaultEnvelope(o, vaultPassword);
+        } catch {
+          const backupPassword = prompt('Kopia ma inne hasło. Podaj hasło użyte do jej utworzenia:');
+          if (!backupPassword) throw new Error('cancelled');
+          dec = await decryptVaultEnvelope(o, backupPassword);
+        }
         const data = dec.data || {};
         const meetings = Object.entries(data.meetings || {}).filter(([, m]) => m && DATE_RE.test(m.date) && TIME_RE.test(m.start) && TIME_RE.test(m.end));
         const students = Object.entries(data.students || {}).filter(([, s]) => s && s.name);
@@ -2773,4 +2787,5 @@ init();
 })();
 </script>
 
+<script src="./pwa.js"></script>
 </body></html>
