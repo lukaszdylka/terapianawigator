@@ -1,14 +1,13 @@
-const CACHE = 'kalendarz-specjalisty-pwa-v1';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'ks-pwa-shell-v1';
+const SHELL = ['./','./index.html','./manifest.webmanifest','./icon.svg','./pwa.js'];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).catch(() => {}));
+  event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('kalendarz-specjalisty-pwa-') && k !== CACHE).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -21,22 +20,17 @@ self.addEventListener('fetch', event => {
 
   event.respondWith((async () => {
     try {
-      const fresh = await fetch(req, { cache: 'no-store' });
+      const fresh = await fetch(req, {cache:'no-store'});
       if (fresh && fresh.ok) {
-        const cache = await caches.open(CACHE);
-        let key = req;
-        if (url.pathname.endsWith('/index.html') || req.mode === 'navigate') {
-          key = new Request(new URL('./index.html', self.location.href).href);
-        }
-        cache.put(key, fresh.clone()).catch(() => {});
+        const copy = fresh.clone();
+        caches.open(CACHE).then(c => c.put(req, copy));
       }
       return fresh;
-    } catch {
-      const cache = await caches.open(CACHE);
-      if (req.mode === 'navigate') {
-        return (await cache.match('./index.html')) || (await cache.match('./')) || Response.error();
-      }
-      return (await cache.match(req)) || Response.error();
+    } catch (e) {
+      const cached = await caches.match(req);
+      if (cached) return cached;
+      if (req.mode === 'navigate') return caches.match('./index.html');
+      throw e;
     }
   })());
 });
