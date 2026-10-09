@@ -1,5 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Kalendarz Specjalisty</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#172120"><meta name="mobile-web-app-capable" content="yes"><meta name="application-name" content="Kalendarz Specjalisty"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><title>Kalendarz Specjalisty</title><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <style>
 /* Układ: terminarz w kratkę. Arkusz kalendarza leży na chłodnym papierze, oś dnia wyznaczają dzwonki (pasy lekcji 1–8),
    dni bez zajęć są kreskowane, święta czerwone jak w ściennym kalendarzu, kolor „atramentu” prowadzi akcje. */
@@ -2250,11 +2249,9 @@ function settingsHtml() {
         </div>
         <p class="hint" id="c-hello-status">${hasHelloConfig() ? 'Windows Hello jest skonfigurowane na tym komputerze.' : 'Windows Hello nie jest jeszcze skonfigurowane.'}</p>
       </section>
-      <section class="cs"><h3>Aktualizacje aplikacji</h3>
-        <p class="hint">Aplikacja może sprawdzać nową wersję przy uruchomieniu i podmienić własny plik EXE po Twojej zgodzie. Potrzebny jest mały plik update.json opublikowany pod stałym adresem HTTPS.</p>
-        <label class="fld"><span>Adres pliku aktualizacji</span><input type="text" id="c-update-url" value="${esc(localStorage.getItem('psycal.update.url') || 'https://raw.githubusercontent.com/lukaszdylka/terapianawigator/main/kalendarz-specjalisty/update.json')}" placeholder="https://twojastrona.pl/kalendarz/update.json"></label>
-        <label class="check"><input type="checkbox" id="c-update-auto"${localStorage.getItem('psycal.update.auto') !== '0' ? ' checked' : ''}><span>Sprawdzaj aktualizacje automatycznie przy uruchomieniu</span></label>
-        <div class="update-row"><button type="button" class="btn sm" data-check-update>Sprawdź teraz</button><span class="update-status" id="c-update-status"></span></div>
+      <section class="cs"><h3>Aplikacja PWA</h3>
+        <p class="hint">Ta wersja działa jako aplikacja internetowa instalowana z Brave. Kod aplikacji aktualizuje się automatycznie przy uruchomieniu, a zaszyfrowane dane pozostają lokalnie w profilu Brave.</p>
+        <div class="update-row"><button type="button" class="btn sm" data-pwa-install id="c-pwa-install">Zainstaluj w Brave</button><button type="button" class="btn ghost sm" data-check-update>Sprawdź aktualizację</button><span class="update-status" id="c-update-status"></span></div>
       </section>
       <section class="cs"><h3>Dane</h3>
         <p class="hint">Spotkania, uczniowie i ustawienia są zapisane wyłącznie lokalnie i szyfrowane hasłem. Rób regularnie zaszyfrowaną kopię zapasową.</p>
@@ -2295,6 +2292,7 @@ dlgC.addEventListener('click', async e => {
   if (od) { delete CF.offDays[od.dataset.odel]; $('#c-off', dlgC).innerHTML = offHtml(); return; }
   if (t.closest('[data-cexport]')) { dlgC.close(); openExport(); }
   if (t.closest('[data-check-update]')) { checkForUpdates(true); }
+  if (t.closest('[data-pwa-install]')) { installPwa(); }
   if (t.closest('[data-hello-enable]')) {
     const b=t.closest('[data-hello-enable]'), st=$('#c-hello-status',dlgC);
     b.disabled=true; if(st) st.textContent='Otwieram Windows Hello…';
@@ -2332,8 +2330,6 @@ dlgC.addEventListener('submit', async e => {
   CF.defaultLen = +$('#c-len', dlgC).value;
   CF.autoLock = +$('#c-lock', dlgC).value;
   CF.weekend = $('#c-we', dlgC).checked;
-  localStorage.setItem('psycal.update.url', ($('#c-update-url', dlgC)?.value || '').trim());
-  localStorage.setItem('psycal.update.auto', $('#c-update-auto', dlgC)?.checked ? '1' : '0');
   const next = mergeSettings(serializeSettings(CF));
   S.settings = next;
   dlgC.close();
@@ -2693,48 +2689,69 @@ function startTicker() {
 document.documentElement.lang = 'pl';
 $$('[data-i]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.i)); });
 
-async function autoBackupEncrypted() {
-  try {
-    const raw=localStorage.getItem(VAULT_KEY);
-    if (!raw) return;
-    const day=today();
-    if (localStorage.getItem('psycal.last.auto.backup')===day) return;
-    const r=await fetch('/__backup',{method:'POST',headers:{'Content-Type':'application/json'},body:raw});
-    if (r.ok) localStorage.setItem('psycal.last.auto.backup',day);
-  } catch(e) { console.warn('auto backup',e); }
-}
 
-async function checkForUpdates(manual=false) {
-  const url=(localStorage.getItem('psycal.update.url')||'https://raw.githubusercontent.com/lukaszdylka/terapianawigator/main/kalendarz-specjalisty/update.json').trim();
-  const status=$('#c-update-status',dlgC);
-  if (!url) {
-    if (manual && status) status.textContent='Najpierw wpisz adres update.json.';
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const b = $('#c-pwa-install', dlgC);
+  if (b) { b.disabled = false; b.textContent = 'Zainstaluj w Brave'; }
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  toast('Kalendarz został zainstalowany jako aplikacja');
+});
+
+async function installPwa() {
+  const status = $('#c-update-status', dlgC);
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (status) status.textContent = 'Aplikacja jest już zainstalowana.';
     return;
   }
-  if (status) status.textContent='Sprawdzam…';
-  try{
-    const r=await fetch('/__update/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-    const j=await r.json();
-    if (!r.ok) throw new Error(j.error||'Błąd');
-    if (j.available) {
-      const msg=`Dostępna wersja ${j.version}. Zainstalować teraz?`;
-      if (status) status.textContent=`Dostępna wersja ${j.version}.`;
-      if (confirm(msg)) {
-        if (status) status.textContent='Pobieram aktualizację…';
-        const ir=await fetch('/__update/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-        const ij=await ir.json();
-        if (!ir.ok) throw new Error(ij.error||'Nie udało się zainstalować');
-        alert('Aktualizacja pobrana. Aplikacja zostanie zamknięta, podmieniona i uruchomiona ponownie.');
-        try{ await fetch('/__quit',{method:'POST'}); }catch{}
-      }
-    } else {
-      if (status) status.textContent='Masz najnowszą wersję.';
-      if (manual) toast('Masz najnowszą wersję');
+  if (!deferredInstallPrompt) {
+    if (status) status.textContent = 'W Brave wybierz Menu → Zapisz i udostępnij → Zainstaluj Kalendarz Specjalisty.';
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  try { await deferredInstallPrompt.userChoice; } catch {}
+  deferredInstallPrompt = null;
+}
+
+async function autoBackupEncrypted() {
+  try {
+    const raw = localStorage.getItem(VAULT_KEY);
+    if (!raw) return;
+    const day = today();
+    if (localStorage.getItem('psycal.last.auto.backup') === day) return;
+    localStorage.setItem('psycal.auto.backup.' + day, raw);
+    localStorage.setItem('psycal.last.auto.backup', day);
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('psycal.auto.backup.')).sort().reverse();
+    keys.slice(7).forEach(k => localStorage.removeItem(k));
+  } catch (e) { console.warn('auto backup', e); }
+}
+
+async function registerPwa() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' });
+    await reg.update().catch(() => {});
+  } catch (e) { console.warn('service worker', e); }
+}
+
+async function checkForUpdates(manual = false) {
+  const status = $('#c-update-status', dlgC);
+  if (status) status.textContent = 'Sprawdzam…';
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration('./');
+      if (reg) await reg.update();
     }
-  }catch(e){
-    if (status) status.textContent='Nie udało się sprawdzić aktualizacji.';
-    if (manual) toast('Nie udało się sprawdzić aktualizacji','err');
-    console.warn(e);
+    await fetch('./index.html?update=' + Date.now(), { cache: 'no-store' });
+    if (status) status.textContent = 'Najnowsza wersja jest dostępna.';
+    if (manual) setTimeout(() => location.reload(), 400);
+  } catch (e) {
+    if (status) status.textContent = 'Brak połączenia. Aplikacja nadal działa offline.';
+    if (manual) toast('Brak połączenia. Działa wersja offline.');
   }
 }
 
@@ -2749,7 +2766,8 @@ async function init() {
   ensureWindow();
   render();
   setTimeout(autoBackupEncrypted, 1200);
-  if (localStorage.getItem('psycal.update.auto') !== '0') setTimeout(()=>checkForUpdates(false), 1800);
+  setTimeout(registerPwa, 300);
+  setTimeout(() => checkForUpdates(false), 1800);
 }
 init();
 })();
