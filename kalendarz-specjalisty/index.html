@@ -2038,7 +2038,7 @@ function formWarn(msg) {
 function googleCalendarUrlFromF() {
   if (!DATE_RE.test(F.date) || !TIME_RE.test(F.start) || !TIME_RE.test(F.end)) return '';
   const compact = (d,t) => d.replaceAll('-','') + 'T' + t.replace(':','') + '00';
-  const T = TYPE[F.type] || TYPE.inne;
+  const T = TYPE[F.type] || TYPE.kons;
   const stu = F.studentId ? S.students.get(F.studentId) : null;
   const safeTitle = stu && stu.cls ? `${T.short} · ${stu.cls}` : T.short;
   const p = new URLSearchParams({
