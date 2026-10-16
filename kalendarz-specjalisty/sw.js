@@ -1,4 +1,4 @@
-const CACHE = 'ks-pwa-shell-v2';
+const CACHE = 'ks-pwa-shell-v3';
 const SHELL = ['./','./index.html','./manifest.webmanifest','./icon.svg','./pwa.js'];
 
 self.addEventListener('install', event => {
