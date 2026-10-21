@@ -761,6 +761,39 @@ const TYPES = [
   { k: 'rewal', label: 'Rewalidacje', short: 'Rewalidacja' },
   { k: 'terap', label: 'Zajęcia terapeutyczne', short: 'Terapia' },
 ];
+const INTERNSHIP_TOPICS = {
+  psycholog: [
+    'Budowanie kontaktu i poczucia bezpieczeństwa w indywidualnej pracy z uczniem',
+    'Rozpoznawanie potrzeb emocjonalnych ucznia w rozmowie indywidualnej',
+    'Techniki wspierania ucznia w sytuacji stresu i przeciążenia emocjonalnego',
+    'Rozmowa wspierająca z uczniem przeżywającym trudności szkolne',
+    'Rozwijanie umiejętności rozpoznawania i nazywania emocji',
+    'Trening strategii radzenia sobie ze stresem',
+    'Wzmacnianie poczucia własnej skuteczności i zasobów ucznia',
+    'Rozwijanie kompetencji społecznych i komunikacyjnych ucznia',
+    'Rewalidacja ucznia w spektrum autyzmu: rozwijanie kompetencji społecznych',
+    'Rewalidacja: rozwijanie elastyczności myślenia i radzenia sobie ze zmianą',
+    'Rewalidacja: rozpoznawanie emocji i perspektywy innych osób',
+    'Praca z uczniem nad organizacją nauki i funkcjami wykonawczymi'
+  ],
+  pedagog: [
+    'Diagnozowanie sytuacji szkolnej ucznia na podstawie rozmowy pedagogicznej',
+    'Wspieranie ucznia w trudnościach edukacyjnych i organizacyjnych',
+    'Motywowanie ucznia do systematycznej nauki i poprawy frekwencji',
+    'Rozwijanie odpowiedzialności ucznia za własne decyzje i zachowanie',
+    'Rozwiązywanie konfliktów rówieśniczych i mediacja szkolna',
+    'Praca z uczniem mającym trudności w przestrzeganiu zasad szkolnych',
+    'Rozpoznawanie przyczyn trudności szkolnych i planowanie form wsparcia',
+    'Kształtowanie umiejętności komunikacji i współpracy',
+    'Rewalidacja: rozwijanie samodzielności i umiejętności planowania działania',
+    'Rewalidacja: rozwijanie kompetencji społecznych w sytuacjach szkolnych',
+    'Rewalidacja: ćwiczenie rozumienia zasad społecznych i konsekwencji zachowania',
+    'Rewalidacja: rozwijanie umiejętności organizacji pracy i zarządzania czasem'
+  ]
+};
+const internshipRoleLabel = role => role === 'pedagog'
+  ? 'Prowadzi Vanessa (pedagog) · obserwuje psycholog'
+  : 'Prowadzi psycholog · obserwuje Vanessa';
 const TYPE = Object.fromEntries(TYPES.map(t => [t.k, t]));
 const LEGACY_TYPE_MAP = { kryz:'kons', diag:'kons', grupa:'warszt', zesp:'konf', inne:'kons' };
 const normalizeTypeKey = k => TYPE[k] ? k : (LEGACY_TYPE_MAP[k] || 'kons');
@@ -1846,7 +1879,7 @@ function openMeeting(o) {
     const m = S.meetings.get(o.id) || o.data;
     if (!m) return;
     const stu = m.studentId ? S.students.get(m.studentId) : null;
-    F = { id: o.id, orig: { ...m }, date: m.date, start: m.start, end: m.end, type: normalizeTypeKey(m.type), studentId: m.studentId || '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: m.title || '', status: STATUS_LABEL[m.status] ? m.status : 'plan', note: m.note || '', seriesId: m.seriesId || '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
+    F = { id: o.id, orig: { ...m }, date: m.date, start: m.start, end: m.end, type: normalizeTypeKey(m.type), studentId: m.studentId || '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: m.title || '', status: STATUS_LABEL[m.status] ? m.status : 'plan', note: m.note || '', internshipRole: m.internshipRole === 'pedagog' ? 'pedagog' : 'psycholog', internshipTopic: m.internshipTopic || ((INTERNSHIP_TOPICS.psycholog.includes(m.title || '') || INTERNSHIP_TOPICS.pedagog.includes(m.title || '')) ? (m.title || '') : ''), seriesId: m.seriesId || '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
   } else {
     const date = o.date || S.selected;
     let start = o.start, end = o.end;
@@ -1854,7 +1887,7 @@ function openMeeting(o) {
     if (!end) end = fromMin(Math.min(toMin(start) + st.defaultLen, 24 * 60 - 5));
     const stu = o.studentId ? S.students.get(o.studentId) : null;
     const past = date < today() || (date === today() && toMin(end) <= nowMin());
-    F = { id: null, orig: null, date, start, end, type: o.type || 'kons', studentId: stu ? o.studentId : '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: '', status: past ? 'done' : 'plan', note: '', seriesId: '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
+    F = { id: null, orig: null, date, start, end, type: o.type || 'kons', studentId: stu ? o.studentId : '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: '', status: past ? 'done' : 'plan', note: '', internshipRole: 'psycholog', internshipTopic: '', seriesId: '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
   }
   buildMeetingForm();
   dlgM.showModal();
@@ -1878,6 +1911,15 @@ function meetingFormHtml() {
     <div class="fld"><span class="lab" id="f-l-lab">Lekcja</span><div class="lessons" id="f-lessons" role="group" aria-labelledby="f-l-lab">${S.settings.bells.map(([a, b], i) => `<button type="button" data-l="${i}" title="Lekcja ${i + 1}: ${fmtTime(a)}–${fmtTime(b)}" aria-label="Lekcja ${i + 1}, ${fmtTime(a)}–${fmtTime(b)}">${i + 1}</button>`).join('')}</div></div>
     <div class="f-warn" id="f-warn" role="status" hidden></div>
     <fieldset class="fld"><legend>Rodzaj</legend><div class="types">${TYPES.map(T => `<label style="--tc:var(--t-${T.k})"><input type="radio" name="f-type" value="${T.k}"${F.type === T.k ? ' checked' : ''}><i class="sq"></i><span>${T.label}</span></label>`).join('')}</div></fieldset>
+    <fieldset class="fld" id="f-internship"${F.type === 'staz' ? '' : ' hidden'}>
+      <legend>Staże / obserwacja zajęć</legend>
+      <div class="seg seg-fill">
+        <label><input type="radio" name="f-internship-role" value="psycholog"${F.internshipRole !== 'pedagog' ? ' checked' : ''}><span>Ja prowadzę · Vanessa obserwuje</span></label>
+        <label><input type="radio" name="f-internship-role" value="pedagog"${F.internshipRole === 'pedagog' ? ' checked' : ''}><span>Vanessa prowadzi · ja obserwuję</span></label>
+      </div>
+      <label class="fld"><span>Temat zajęć</span><select id="f-internship-topic"></select></label>
+      <p class="hint" id="f-internship-info"></p>
+    </fieldset>
     <div class="fld combo"><label class="lab" for="f-student">Uczeń <small>— opcjonalnie</small></label>
       <div class="combo-box"><input type="text" id="f-student" autocomplete="off" spellcheck="false" placeholder="Imię i nazwisko, inicjały albo kod" value="${esc(F.studentText)}" role="combobox" aria-expanded="false" aria-controls="f-slist" aria-autocomplete="list"><span class="combo-cls" id="f-scls"></span></div>
       <ul class="combo-list" id="f-slist" role="listbox" hidden></ul>
@@ -1918,10 +1960,10 @@ function wireMeetingForm() {
     if (e.target.closest('#f-del')) confirmDelete();
     if (e.target.closest('#f-dup')) {
       const o = { date:F.date, start:F.start, end:F.end, type:F.type, studentId:F.studentId };
-      const title = F.title, note = F.note;
+      const title = F.title, note = F.note, internshipRole=F.internshipRole, internshipTopic=F.internshipTopic;
       dlgM.close();
       openMeeting(o);
-      F.title = title; F.note = note; F.status = 'plan';
+      F.title = title; F.note = note; F.internshipRole=internshipRole; F.internshipTopic=internshipTopic; F.status = 'plan';
       buildMeetingForm();
       return;
     }
@@ -1936,9 +1978,23 @@ function wireMeetingForm() {
     refreshMeetingForm();
   });
   $('#f-end', f).addEventListener('input', e => { if (TIME_RE.test(e.target.value)) { F.end = e.target.value; refreshMeetingForm(); } });
-  $$('input[name=f-type]', f).forEach(r => r.addEventListener('change', e => { F.type = e.target.value; }));
+  $$('input[name=f-type]', f).forEach(r => r.addEventListener('change', e => { F.type = e.target.value; refreshMeetingForm(); }));
   $$('input[name=f-status]', f).forEach(r => r.addEventListener('change', e => { F.status = e.target.value; }));
   $$('input[name=f-scope]', f).forEach(r => r.addEventListener('change', e => { F.scope = e.target.value; }));
+  $$('input[name=f-internship-role]', f).forEach(r => r.addEventListener('change', e => {
+    F.internshipRole = e.target.value === 'pedagog' ? 'pedagog' : 'psycholog';
+    F.internshipTopic = '';
+    refreshMeetingForm();
+  }));
+  const itopic=$('#f-internship-topic', f);
+  if(itopic) itopic.addEventListener('change', e => {
+    F.internshipTopic=e.target.value;
+    if(F.internshipTopic){
+      F.title=F.internshipTopic;
+      $('#f-title',f).value=F.title;
+    }
+    refreshMeetingForm();
+  });
   $('#f-title', f).addEventListener('input', e => { F.title = e.target.value; });
   $('#f-note', f).addEventListener('input', e => { F.note = e.target.value; });
   $('#f-newcls', f).addEventListener('input', e => { F.newCls = e.target.value; });
@@ -1988,6 +2044,18 @@ function refreshMeetingForm() {
       const { dates, skipped } = seriesDates();
       pv.textContent = `Powstanie ${dates.length} ${plural(dates.length, 'spotkanie', 'spotkania', 'spotkań')}: od ${fmtFull(dates[0])} do ${fmtFull(dates[dates.length - 1])}.` +
         (skipped.length ? ` Pominięte: ${skipped.slice(0, 4).map(fmtShort).join(', ')}${skipped.length > 4 ? ` i ${skipped.length - 4} ${plural(skipped.length - 4, 'inny dzień', 'inne dni', 'innych dni')}` : ''}.` : '');
+    }
+  }
+  const iw=$('#f-internship',f);
+  if(iw){
+    iw.hidden=F.type!=='staz';
+    if(F.type==='staz'){
+      const topics=INTERNSHIP_TOPICS[F.internshipRole] || INTERNSHIP_TOPICS.psycholog;
+      const sel=$('#f-internship-topic',f);
+      const current=F.internshipTopic && topics.includes(F.internshipTopic) ? F.internshipTopic : '';
+      sel.innerHTML='<option value="">— wybierz temat —</option>'+topics.map(x=>`<option value="${esc(x)}"${current===x?' selected':''}>${esc(x)}</option>`).join('');
+      const inf=$('#f-internship-info',f);
+      inf.textContent=internshipRoleLabel(F.internshipRole);
     }
   }
   const stu = F.studentId ? S.students.get(F.studentId) : null;
@@ -2085,12 +2153,13 @@ async function saveMeeting() {
   F.date = $('#f-date', f).value; F.start = $('#f-start', f).value; F.end = $('#f-end', f).value;
   if (!DATE_RE.test(F.date) || !TIME_RE.test(F.start) || !TIME_RE.test(F.end)) return formWarn('Uzupełnij datę oraz godzinę początku i końca.');
   if (toMin(F.end) <= toMin(F.start)) return formWarn('Koniec spotkania musi być później niż początek.');
+  if (F.type === 'staz' && !F.internshipTopic) return formWarn('Wybierz temat zajęć w ramach stażu.');
   const btn = $('#f-save', f), label = btn.textContent;
   btn.disabled = true;
   try {
     const studentId = await resolveStudent(f);
     const now = Date.now();
-    const base = { date: F.date, start: F.start, end: F.end, type: F.type, studentId, title: F.title.trim().slice(0, 200), status: F.status, note: F.note.trim().slice(0, 4000) };
+    const base = { date: F.date, start: F.start, end: F.end, type: F.type, studentId, title: F.title.trim().slice(0, 200), status: F.status, note: F.note.trim().slice(0, 4000), internshipRole: F.type === 'staz' ? F.internshipRole : '', internshipTopic: F.type === 'staz' ? F.internshipTopic : '' };
     if (!F.id) {
       if (F.rep !== 'none') {
         const { dates } = seriesDates(), sid = newId('r');
@@ -2106,7 +2175,7 @@ async function saveMeeting() {
       await store.updateMeeting(F.id, { ...base, updated: now });
       if (F.seriesId && F.scope === 'following') {
         const rest = (await store.queryMeetings('seriesId', F.seriesId)).filter(([id, m]) => id !== F.id && m && m.date > F.orig.date);
-        const patch = { start: F.start, end: F.end, type: F.type, studentId, title: base.title, updated: now };
+        const patch = { start: F.start, end: F.end, type: F.type, studentId, title: base.title, internshipRole: base.internshipRole, internshipTopic: base.internshipTopic, updated: now };
         await runLimited(rest.map(([id]) => () => store.updateMeeting(id, patch)), 4);
         toast(`Zapisano zmiany w ${rest.length + 1} ${plural(rest.length + 1, 'spotkaniu', 'spotkaniach', 'spotkaniach')}`);
       } else toast('Zapisano zmiany');
