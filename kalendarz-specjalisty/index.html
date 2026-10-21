@@ -231,6 +231,9 @@ span[data-i]{display:inline-grid;place-items:center}
 .wk-band{position:absolute;left:0;right:0;background:var(--band)}
 .wk-hour{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
 .wk-col{grid-row:1;position:relative;min-width:0;border-left:1px solid var(--line);cursor:copy}
+.work-window{position:absolute;left:3px;right:3px;z-index:0;border:1px dashed color-mix(in oklab,var(--accent) 42%,var(--line));border-radius:5px;background:color-mix(in oklab,var(--accent) 5%,transparent);pointer-events:none}
+.work-window span{position:absolute;right:4px;top:3px;padding:1px 4px;border-radius:3px;background:color-mix(in oklab,var(--surface) 84%,transparent);color:var(--accent);font:600 9.5px/1.2 var(--f-mono);white-space:nowrap}
+.wk-worktime{font:600 10px/1 var(--f-mono);color:var(--accent);white-space:nowrap}
 .wk-col.off{background-image:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 8px)}
 .wk-col.sel{background-color:color-mix(in oklab,var(--accent) 3.5%,transparent)}
 @media (max-width:640px){
@@ -808,7 +811,8 @@ const STATUSES = [
 const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
 const OLD_DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
 const DEFAULT_BELLS = ['07:30-08:15', '08:20-09:05', '09:15-10:00', '10:10-10:55', '11:15-12:00', '12:10-12:55', '13:00-13:45', '13:50-14:35', '14:40-15:25', '15:30-16:15'];
-const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:30', dayTo: '16:00', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
+const DEFAULT_WORK_HOURS = { 0:['07:00','13:00'], 1:['08:00','12:00'], 2:['08:00','14:00'], 3:['09:00','15:00'], 4:['08:00','11:00'] };
+const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:00', dayTo: '16:15', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
 
 // ── narzędzia UI ──
 const $ = (s, r = document) => r.querySelector(s);
@@ -880,6 +884,14 @@ function mergeSettings(d) {
   s.autoLock = [0,5,10,15,30,60].includes(+s.autoLock) ? +s.autoLock : 10;
   s.notify = !!s.notify;
   s.notifyBefore = [5,10,15,30,60].includes(+s.notifyBefore) ? +s.notifyBefore : 15;
+  const wh={};
+  const whSrc=s.workHours && typeof s.workHours==='object' && !Array.isArray(s.workHours) ? s.workHours : DEFAULT_WORK_HOURS;
+  for(let i=0;i<5;i++){
+    const x=whSrc[i]||whSrc[String(i)]||DEFAULT_WORK_HOURS[i];
+    if(Array.isArray(x)&&TIME_RE.test(x[0])&&TIME_RE.test(x[1])&&toMin(x[1])>toMin(x[0])) wh[i]=[x[0],x[1]];
+    else wh[i]=DEFAULT_WORK_HOURS[i].slice();
+  }
+  s.workHours=wh;
   const cm={}; if(s.closedMonths && typeof s.closedMonths==='object' && !Array.isArray(s.closedMonths)) for(const [k,v] of Object.entries(s.closedMonths)) if(/^\d{4}-\d{2}$/.test(k)) cm[k]=+v||Date.now();
   s.closedMonths=cm;
   const ay={}; if(s.archivedYears && typeof s.archivedYears==='object' && !Array.isArray(s.archivedYears)) for(const [k,v] of Object.entries(s.archivedYears)) if(/^\d{4}$/.test(k)) ay[k]=+v||Date.now();
@@ -888,7 +900,7 @@ function mergeSettings(d) {
   s.overtime={ studentId:/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(String(ot.studentId||'')) ? String(ot.studentId) : '', weeklyUnits:Math.max(1,Math.min(20,+ot.weeklyUnits||2)), endDate:DATE_RE.test(String(ot.endDate||'')) ? String(ot.endDate) : '', countAbsent:!!ot.countAbsent };
   return s;
 }
-const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
+const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, workHours:s.workHours||DEFAULT_WORK_HOURS, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
 
 const S = {
   view: ['month', 'week', 'day', 'list'].includes(uiPrefs.view) ? uiPrefs.view : (isNarrow() ? 'day' : 'week'),
@@ -904,6 +916,12 @@ const S = {
 let store = null, DL = null, BY = new Map();
 const pending = new Set();
 const info = s => dayInfo(s, S.settings);
+const workRangeForDate = d => {
+  const wd=dow(d);
+  if(wd<0||wd>4) return null;
+  const x=S.settings.workHours && (S.settings.workHours[wd]||S.settings.workHours[String(wd)]);
+  return Array.isArray(x)&&TIME_RE.test(x[0])&&TIME_RE.test(x[1])&&toMin(x[1])>toMin(x[0]) ? x : null;
+};
 
 // ── zapis: konto (db) albo ta przeglądarka ──
 async function retry(fn) {
@@ -1501,6 +1519,10 @@ function evBlock(m, top, hgt, L, detail) {
 function renderTimeGrid(days, detail) {
   const st = S.settings, t = today();
   let from = toMin(st.dayFrom), to = toMin(st.dayTo);
+  for (const d of days) {
+    const wr=workRangeForDate(d);
+    if(wr){ from=Math.min(from,toMin(wr[0])); to=Math.max(to,toMin(wr[1])); }
+  }
   for (const d of days) for (const m of (BY.get(d) || [])) {
     from = Math.min(from, Math.floor(toMin(m.start) / 60) * 60);
     to = Math.max(to, Math.ceil(toMin(m.end) / 60) * 60);
@@ -1511,7 +1533,8 @@ function renderTimeGrid(days, detail) {
   h += '<div class="wk-row wk-head"><div class="wk-corner"></div>';
   for (const d of days) {
     const di = info(d), wd = dow(d), dd = parse(d);
-    h += `<button type="button" class="wk-day${d === t ? ' today' : ''}${di.hol || wd === 6 ? ' red' : ''}${d === S.selected && !detail ? ' sel' : ''}" data-action="pickday" data-date="${d}" aria-label="${esc(cap(fmtLong(d)))}"><span class="wd">${DAYS_SHORT[wd]}</span><span class="dn">${dd.getDate()}</span>${detail ? `<span class="mn">${MONTHS_GEN[dd.getMonth()]}</span>` : ''}</button>`;
+    const wr=workRangeForDate(d);
+    h += `<button type="button" class="wk-day${d === t ? ' today' : ''}${di.hol || wd === 6 ? ' red' : ''}${d === S.selected && !detail ? ' sel' : ''}" data-action="pickday" data-date="${d}" aria-label="${esc(cap(fmtLong(d)))}"><span class="wd">${DAYS_SHORT[wd]}</span><span class="dn">${dd.getDate()}</span>${detail ? `<span class="mn">${MONTHS_GEN[dd.getMonth()]}</span>` : ''}${wr ? `<span class="wk-worktime">${fmtTime(wr[0])}–${fmtTime(wr[1])}</span>` : ''}</button>`;
   }
   h += '</div><div class="wk-row wk-all"><div class="wk-corner"><span>dzień</span></div>';
   for (const d of days) h += `<div class="wk-allcell">${dayTags(info(d)).map(tg => `<span class="tag ${tg.k}" title="${esc(tg.t)}">${esc(tg.t)}</span>`).join('')}</div>`;
@@ -1531,6 +1554,11 @@ function renderTimeGrid(days, detail) {
   days.forEach((d, ci) => {
     const di = info(d), off = !!(di.hol || di.brk || di.off != null);
     h += `<div class="wk-col${off ? ' off' : ''}${d === S.selected && !detail && days.length > 1 ? ' sel' : ''}" style="grid-column:${ci + 2}" data-date="${d}" title="Kliknij, aby dodać spotkanie">`;
+    const wr=workRangeForDate(d);
+    if(wr){
+      const A=Math.max(toMin(wr[0]),from), B=Math.min(toMin(wr[1]),to);
+      if(B>A) h += `<div class="work-window" style="top:${((A-from)*PX).toFixed(1)}px;height:${((B-A)*PX).toFixed(1)}px"><span>plan pracy</span></div>`;
+    }
     const evs = (BY.get(d) || []).map(m => ({ ...m, s: toMin(m.start), e: Math.max(toMin(m.end), toMin(m.start) + 10) }));
     const lay = layoutDay(evs);
     for (const m of evs) {
@@ -1662,7 +1690,7 @@ function renderSide() {
   const d = S.selected, di = info(d), evs = BY.get(d) || [], t = today();
   let h = `<section class="sp">
     <div class="sp-h"><h2 class="sp-title">${esc(cap(fmtLong(d)))}</h2>${d === t ? '<span class="today-badge">dziś</span>' : ''}</div>
-    <div class="sp-meta">${dayPills(d, di)}</div>`;
+    <div class="sp-meta">${dayPills(d, di)}${workRangeForDate(d) ? `<span class="pill school">Plan pracy: ${fmtTime(workRangeForDate(d)[0])}–${fmtTime(workRangeForDate(d)[1])}</span>` : ''}</div>`;
   if (!S.loaded.meetings) h += '<p class="empty">Wczytywanie…</p>';
   else if (evs.length) h += `<ul class="agenda">${evs.map(m => agRow(m, false)).join('')}</ul>`;
   else h += '<p class="empty">Brak spotkań tego dnia.</p>';
@@ -2485,6 +2513,16 @@ function settingsHtml() {
         <ul class="offlist" id="c-off">${offHtml()}</ul>
         <div class="off-add"><input type="date" id="c-offd" aria-label="Data dnia wolnego"><input type="text" id="c-offn" placeholder="Nazwa, np. dzień dyrektorski" aria-label="Nazwa dnia wolnego" maxlength="80"><button type="button" class="btn sm" data-oadd>Dodaj</button></div>
       </section>
+      <section class="cs"><h3>Plan pracy psychologa</h3>
+        <p class="hint">Godziny są zaznaczane delikatnym polem w widoku tygodnia i dnia. Możesz je zmienić później bez wpływu na zapisane spotkania.</p>
+        <div class="row2 stack-sm">
+          ${['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'].map((name,i)=>{
+            const x=CF.workHours[i]||DEFAULT_WORK_HOURS[i];
+            return `<div class="fld"><span>${name}</span><div class="row2"><input type="time" data-work-day="${i}" data-work-part="0" value="${x[0]}" aria-label="${name} od"><input type="time" data-work-day="${i}" data-work-part="1" value="${x[1]}" aria-label="${name} do"></div></div>`;
+          }).join('')}
+        </div>
+        <div class="row-btns"><button type="button" class="btn ghost sm" data-work-reset>Przywróć mój plan pracy</button></div>
+      </section>
       <section class="cs"><h3>Widok</h3>
         <div class="row3">
           <label class="fld"><span>Dzień od</span><input type="time" id="c-from" value="${CF.dayFrom}"></label>
@@ -2561,6 +2599,11 @@ dlgC.addEventListener('click', async e => {
     return;
   }
   if (t.closest('[data-breset]')) { CF.bells = DEFAULT_BELLS.map(b => b.split('-')); $('#c-bells', dlgC).innerHTML = bellsHtml(); return; }
+  if (t.closest('[data-work-reset]')) {
+    CF.workHours=Object.fromEntries(Object.entries(DEFAULT_WORK_HOURS).map(([k,v])=>[k,v.slice()]));
+    dlgC.innerHTML=settingsHtml();
+    return;
+  }
   const bd = t.closest('[data-bdel]');
   if (bd) { readBells(); CF.bells.splice(+bd.dataset.bdel, 1); $('#c-bells', dlgC).innerHTML = bellsHtml(); return; }
   if (t.closest('[data-oadd]')) {
@@ -2640,6 +2683,14 @@ dlgC.addEventListener('submit', async e => {
   if (!CF.bells.length) return fail('Dodaj co najmniej jedną lekcję.');
   const badBell = CF.bells.findIndex(([a, b]) => !TIME_RE.test(a) || !TIME_RE.test(b) || toMin(b) <= toMin(a));
   if (badBell >= 0) return fail(`Lekcja ${badBell + 1}: koniec musi być później niż początek.`);
+  const work={};
+  for(let i=0;i<5;i++){
+    const a=$(`[data-work-day="${i}"][data-work-part="0"]`,dlgC)?.value||'';
+    const b=$(`[data-work-day="${i}"][data-work-part="1"]`,dlgC)?.value||'';
+    if(!TIME_RE.test(a)||!TIME_RE.test(b)||toMin(b)<=toMin(a)) return fail(`Plan pracy: popraw godziny dla dnia ${i+1}.`);
+    work[i]=[a,b];
+  }
+  CF.workHours=work;
   CF.region = $('#c-region', dlgC).value;
   CF.exams = $('#c-exams', dlgC).value;
   CF.observances = $('#c-obs', dlgC).checked;
