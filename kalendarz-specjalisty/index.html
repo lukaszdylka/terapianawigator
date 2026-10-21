@@ -2817,7 +2817,7 @@ function overtimeTableHtml(scope) {
   if(!o.rows.length) return `<p class="hint">Brak rewalidacji ucznia <b>${esc(o.target.name)}</b> w wybranym okresie po pominięciu dni wolnych.</p>`;
   const body=o.rows.map(w=>`<tr><td>${fmtShort(w.from)}–${fmtShort(w.to)}</td><td class="num">${w.plan}</td><td class="num">${w.done}</td><td class="num">${w.absent}</td><td class="num">${w.cancel}</td><td class="num"><b>${w.toTable}</b></td><td class="num">${w.minutes}</td></tr>`).join('');
   const t=o.total;
-  return `<div class="ot-wrap"><table class="ot-table"><thead><tr><th>Tydzień</th><th class="num">Plan</th><th class="num">Odbyte</th><th class="num">NB</th><th class="num">Odwołane</th><th class="num">Do tabelki*</th><th class="num">Min. odbytych</th></tr></thead><tbody>${body}<tr class="sum"><td>Razem</td><td class="num">${t.plan}</td><td class="num">${t.done}</td><td class="num">${t.absent}</td><td class="num">${t.cancel}</td><td class="num">${t.toTable}</td><td class="num">${t.minutes}</td></tr></tbody></table></div><p class="ot-note">* Zasada „do tabelki”: ${o.cfg.countAbsent?'odbyte + nieobecności ucznia':'tylko odbyte'}. Dni bez zajęć są pomijane. ${o.cfg.endDate?`Rozliczanie kończy się ${fmtFull(o.cfg.endDate)}.`:''}</p>`;
+  return `<div class="ot-wrap"><table class="ot-table"><thead><tr><th>Tydzień</th><th class="num">Plan</th><th class="num">Odbyte</th><th class="num">NB</th><th class="num">Odwołane</th><th class="num">Do tabelki*</th><th class="num">Min. odbytych</th></tr></thead><tbody>${body}<tr class="sum"><td>Razem</td><td class="num">${t.plan}</td><td class="num">${t.done}</td><td class="num">${t.absent}</td><td class="num">${t.cancel}</td><td class="num">${t.toTable}</td><td class="num">${t.minutes}</td></tr></tbody></table></div><p class="ot-note">Ustawienie: <b>${o.cfg.weeklyUnits || 2}</b> zajęcia/godziny tygodniowo. * Zasada „do tabelki”: ${o.cfg.countAbsent?'odbyte + nieobecności ucznia':'tylko odbyte'}. Dni bez zajęć są pomijane. ${o.cfg.endDate?`Rozliczanie kończy się ${fmtFull(o.cfg.endDate)}.`:''}</p>`;
 }
 function overtimeClipboard(scope) {
   const o=overtimeRows(scope);
@@ -2916,8 +2916,9 @@ function printWeek(discreet=false) {
     }).join('')||'<p class="empty">Brak wpisów</p>';
     return `<section><h2>${esc(DAYS[dow(d)])}<br><span>${fmtFull(d)}</span></h2><p class="work">Plan pracy: ${wr?`${fmtTime(wr[0])}–${fmtTime(wr[1])}`:'—'}</p>${rows}</section>`;
   }).join('');
-  const w=window.open('','_blank','noopener,noreferrer');
+  const w=window.open('','_blank');
   if(!w) return toast('Brave zablokował okno wydruku. Zezwól na wyskakujące okna dla tej strony.','err');
+  try { w.opener=null; } catch {}
   w.document.write(`<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Plan tygodnia ${fmtFull(mon)}</title><style>@page{size:A4 landscape;margin:9mm}body{font:11px Arial,sans-serif;color:#000;margin:0}h1{font-size:17px;margin:0 0 8px}.grid{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid #000}.grid section{min-height:160mm;border-left:1px solid #000;padding:6px}.grid section:first-child{border-left:0}h2{font-size:13px;margin:0 0 4px;text-align:center;border-bottom:1px solid #000;padding-bottom:4px}h2 span{font-size:10px;font-weight:normal}.work{font-size:9px;text-align:center;margin:4px 0 7px}.e{border-top:1px solid #bbb;padding:5px 0;display:flex;flex-direction:column;gap:2px}.e b{font-size:10px}.e span{font-weight:bold}.e small{font-size:9px}.empty{color:#666;text-align:center}</style></head><body><h1>Plan tygodnia: ${fmtFull(mon)}–${fmtFull(addDays(mon,4))}${discreet?' · wersja dyskretna':''}</h1><div class="grid">${cols}</div><script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>`);
   w.document.close();
 }
