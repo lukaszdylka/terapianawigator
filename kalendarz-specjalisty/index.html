@@ -535,6 +535,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
     </div>
     <div class="tools">
       <button class="btn ghost" type="button" data-action="students" aria-label="Uczniowie"><span data-i="users"></span><span class="hide-sm">Uczniowie</span></button>
+      <button class="btn ghost" type="button" data-action="export" aria-label="Raporty i rozliczenia"><span data-i="download"></span><span class="hide-sm">Raporty</span></button>
       <button class="icon-btn" type="button" data-action="discreet" id="discreetBtn" aria-pressed="false" aria-label="Tryb dyskretny" title="Tryb dyskretny: inicjały zamiast nazwisk, bez tematów i notatek"></button>
       <button class="icon-btn" type="button" data-action="undo" id="undoBtn" aria-label="Cofnij ostatnią operację" title="Cofnij ostatnią operację" disabled data-i="undo"></button>
       <button class="icon-btn" type="button" data-action="settings" aria-label="Ustawienia" title="Ustawienia" data-i="sliders"></button>
@@ -807,7 +808,7 @@ const STATUSES = [
 const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
 const OLD_DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
 const DEFAULT_BELLS = ['07:30-08:15', '08:20-09:05', '09:15-10:00', '10:10-10:55', '11:15-12:00', '12:10-12:55', '13:00-13:45', '13:50-14:35', '14:40-15:25', '15:30-16:15'];
-const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:30', dayTo: '16:00', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {} };
+const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:30', dayTo: '16:00', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
 
 // ── narzędzia UI ──
 const $ = (s, r = document) => r.querySelector(s);
@@ -879,9 +880,15 @@ function mergeSettings(d) {
   s.autoLock = [0,5,10,15,30,60].includes(+s.autoLock) ? +s.autoLock : 10;
   s.notify = !!s.notify;
   s.notifyBefore = [5,10,15,30,60].includes(+s.notifyBefore) ? +s.notifyBefore : 15;
+  const cm={}; if(s.closedMonths && typeof s.closedMonths==='object' && !Array.isArray(s.closedMonths)) for(const [k,v] of Object.entries(s.closedMonths)) if(/^\d{4}-\d{2}$/.test(k)) cm[k]=+v||Date.now();
+  s.closedMonths=cm;
+  const ay={}; if(s.archivedYears && typeof s.archivedYears==='object' && !Array.isArray(s.archivedYears)) for(const [k,v] of Object.entries(s.archivedYears)) if(/^\d{4}$/.test(k)) ay[k]=+v||Date.now();
+  s.archivedYears=ay;
+  const ot=s.overtime && typeof s.overtime==='object' && !Array.isArray(s.overtime) ? s.overtime : {};
+  s.overtime={ studentId:ID_RE.test(String(ot.studentId||'')) ? String(ot.studentId) : '', weeklyUnits:Math.max(1,Math.min(20,+ot.weeklyUnits||2)), endDate:DATE_RE.test(String(ot.endDate||'')) ? String(ot.endDate) : '', countAbsent:!!ot.countAbsent };
   return s;
 }
-const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, updated: Date.now() });
+const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
 
 const S = {
   view: ['month', 'week', 'day', 'list'].includes(uiPrefs.view) ? uiPrefs.view : (isNarrow() ? 'day' : 'week'),
@@ -1879,7 +1886,7 @@ function openMeeting(o) {
     const m = S.meetings.get(o.id) || o.data;
     if (!m) return;
     const stu = m.studentId ? S.students.get(m.studentId) : null;
-    F = { id: o.id, orig: { ...m }, date: m.date, start: m.start, end: m.end, type: normalizeTypeKey(m.type), studentId: m.studentId || '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: m.title || '', status: STATUS_LABEL[m.status] ? m.status : 'plan', note: m.note || '', internshipRole: m.internshipRole === 'pedagog' ? 'pedagog' : 'psycholog', internshipTopic: m.internshipTopic || ((INTERNSHIP_TOPICS.psycholog.includes(m.title || '') || INTERNSHIP_TOPICS.pedagog.includes(m.title || '')) ? (m.title || '') : ''), seriesId: m.seriesId || '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
+    F = { id: o.id, orig: { ...m }, date: m.date, start: m.start, end: m.end, type: normalizeTypeKey(m.type), studentId: m.studentId || '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: m.title || '', status: STATUS_LABEL[m.status] ? m.status : 'plan', note: m.note || '', internshipRole: m.internshipRole === 'pedagog' ? 'pedagog' : 'psycholog', internshipTopic: m.internshipTopic || ((INTERNSHIP_TOPICS.psycholog.includes(m.title || '') || INTERNSHIP_TOPICS.pedagog.includes(m.title || '')) ? (m.title || '') : ''), internshipReflection: m.internshipReflection || '', seriesId: m.seriesId || '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
   } else {
     const date = o.date || S.selected;
     let start = o.start, end = o.end;
@@ -1887,7 +1894,7 @@ function openMeeting(o) {
     if (!end) end = fromMin(Math.min(toMin(start) + st.defaultLen, 24 * 60 - 5));
     const stu = o.studentId ? S.students.get(o.studentId) : null;
     const past = date < today() || (date === today() && toMin(end) <= nowMin());
-    F = { id: null, orig: null, date, start, end, type: o.type || 'kons', studentId: stu ? o.studentId : '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: '', status: past ? 'done' : 'plan', note: '', internshipRole: 'psycholog', internshipTopic: '', seriesId: '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
+    F = { id: null, orig: null, date, start, end, type: o.type || 'kons', studentId: stu ? o.studentId : '', studentText: stu ? stu.name : '', newStudent: false, newCls: '', title: '', status: past ? 'done' : 'plan', note: '', internshipRole: 'psycholog', internshipTopic: '', internshipReflection: '', seriesId: '', rep: 'none', repWeeks: 3, count: 10, skip: true, scope: 'one' };
   }
   buildMeetingForm();
   dlgM.showModal();
@@ -1918,6 +1925,7 @@ function meetingFormHtml() {
         <label><input type="radio" name="f-internship-role" value="pedagog"${F.internshipRole === 'pedagog' ? ' checked' : ''}><span>Vanessa prowadzi · ja obserwuję</span></label>
       </div>
       <label class="fld"><span>Temat zajęć</span><select id="f-internship-topic"></select></label>
+      <label class="fld"><span>Wnioski po zajęciach <small>— opcjonalnie</small></span><textarea id="f-internship-reflection" rows="2" maxlength="2000" placeholder="Krótki wniosek z obserwacji / omówienia">${esc(F.internshipReflection || '')}</textarea></label>
       <p class="hint" id="f-internship-info"></p>
     </fieldset>
     <div class="fld combo"><label class="lab" for="f-student">Uczeń <small>— opcjonalnie</small></label>
@@ -1960,10 +1968,10 @@ function wireMeetingForm() {
     if (e.target.closest('#f-del')) confirmDelete();
     if (e.target.closest('#f-dup')) {
       const o = { date:F.date, start:F.start, end:F.end, type:F.type, studentId:F.studentId };
-      const title = F.title, note = F.note, internshipRole=F.internshipRole, internshipTopic=F.internshipTopic;
+      const title = F.title, note = F.note, internshipRole=F.internshipRole, internshipTopic=F.internshipTopic, internshipReflection=F.internshipReflection;
       dlgM.close();
       openMeeting(o);
-      F.title = title; F.note = note; F.internshipRole=internshipRole; F.internshipTopic=internshipTopic; F.status = 'plan';
+      F.title = title; F.note = note; F.internshipRole=internshipRole; F.internshipTopic=internshipTopic; F.internshipReflection=internshipReflection; F.status = 'plan';
       buildMeetingForm();
       return;
     }
@@ -1995,6 +2003,8 @@ function wireMeetingForm() {
     }
     refreshMeetingForm();
   });
+  const iref=$('#f-internship-reflection',f);
+  if(iref) iref.addEventListener('input',e=>{ F.internshipReflection=e.target.value; });
   $('#f-title', f).addEventListener('input', e => { F.title = e.target.value; });
   $('#f-note', f).addEventListener('input', e => { F.note = e.target.value; });
   $('#f-newcls', f).addEventListener('input', e => { F.newCls = e.target.value; });
@@ -2159,7 +2169,7 @@ async function saveMeeting() {
   try {
     const studentId = await resolveStudent(f);
     const now = Date.now();
-    const base = { date: F.date, start: F.start, end: F.end, type: F.type, studentId, title: F.title.trim().slice(0, 200), status: F.status, note: F.note.trim().slice(0, 4000), internshipRole: F.type === 'staz' ? F.internshipRole : '', internshipTopic: F.type === 'staz' ? F.internshipTopic : '' };
+    const base = { date: F.date, start: F.start, end: F.end, type: F.type, studentId, title: F.title.trim().slice(0, 200), status: F.status, note: F.note.trim().slice(0, 4000), internshipRole: F.type === 'staz' ? F.internshipRole : '', internshipTopic: F.type === 'staz' ? F.internshipTopic : '', internshipReflection: F.type === 'staz' ? String(F.internshipReflection||'').trim().slice(0,2000) : '' };
     if (!F.id) {
       if (F.rep !== 'none') {
         const { dates } = seriesDates(), sid = newId('r');
@@ -2819,11 +2829,11 @@ function buildCsv(scope, withNotes) {
   if (scope === 'year') { const Y = schoolYearOf(S.cursor); from = `${Y}-09-01`; to = `${Y + 1}-08-31`; }
   else { const c = parse(S.cursor); from = iso(new Date(c.getFullYear(), c.getMonth(), 1, 12)); to = iso(new Date(c.getFullYear(), c.getMonth() + 1, 0, 12)); }
   const items = allItems().filter(m => m.date >= from && m.date <= to).sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
-  const head = ['Data', 'Dzień', 'Od', 'Do', 'Lekcja', 'Rodzaj', 'Uczeń', 'Klasa', 'Temat', 'Status', 'Minuty'];
+  const head = ['Data', 'Dzień', 'Od', 'Do', 'Lekcja', 'Rodzaj', 'Uczeń', 'Klasa', 'Temat', 'Status', 'Minuty', 'Staż – prowadzi/obserwuje', 'Staż – wnioski'];
   if (withNotes) head.push('Notatka');
   const rows = items.map(m => {
     const st = studentOf(m), l = lessonNo(m);
-    const r = [m.date, DAYS[dow(m.date)], m.start, m.end, l || '', TYPE_OF(m).label, st ? st.name : '', st ? st.cls || '' : '', m.title || '', STATUS_LABEL[m.status], Math.max(0, toMin(m.end) - toMin(m.start))];
+    const r = [m.date, DAYS[dow(m.date)], m.start, m.end, l || '', TYPE_OF(m).label, st ? st.name : '', st ? st.cls || '' : '', m.title || '', STATUS_LABEL[m.status], Math.max(0, toMin(m.end) - toMin(m.start)), normalizeTypeKey(m.type)==='staz' ? internshipRoleLabel(m.internshipRole) : '', normalizeTypeKey(m.type)==='staz' ? (m.internshipReflection||'') : ''];
     if (withNotes) r.push(m.note || '');
     return r.map(csvCell).join(';');
   });
@@ -2980,7 +2990,7 @@ async function runImport(btn) {
     for (const [id, s] of d.students) tasks.push(() => store.setStudent(ID_RE.test(id) ? id : newId('s'), { name: cleanStr(s.name, 120), cls: cleanStr(s.cls, 20), note: cleanStr(s.note, 4000), archived: !!s.archived, created: +s.created || now, updated: now }));
     for (const [id, m] of d.meetings) tasks.push(() => store.setMeeting(ID_RE.test(id) ? id : newId('m'), {
       date: m.date, start: m.start, end: m.end, type: normalizeTypeKey(m.type), studentId: ID_RE.test(m.studentId || '') ? m.studentId : '',
-      title: cleanStr(m.title, 200), status: STATUS_LABEL[m.status] ? m.status : 'plan', note: cleanStr(m.note, 4000), seriesId: ID_RE.test(m.seriesId || '') ? m.seriesId : '', created: +m.created || now, updated: now }));
+      title: cleanStr(m.title, 200), status: STATUS_LABEL[m.status] ? m.status : 'plan', note: cleanStr(m.note, 4000), internshipRole: m.internshipRole === 'pedagog' ? 'pedagog' : (m.internshipRole === 'psycholog' ? 'psycholog' : ''), internshipTopic: cleanStr(m.internshipTopic, 300), internshipReflection: cleanStr(m.internshipReflection, 2000), seriesId: ID_RE.test(m.seriesId || '') ? m.seriesId : '', created: +m.created || now, updated: now }));
     let done = 0;
     await runLimited(tasks.map(t => () => t().then(() => { done++; btn.textContent = `Wczytywanie ${done}/${tasks.length}`; })), 4);
     if (d.settings) { S.settings = mergeSettings(d.settings); await saveSettings(S.settings); }
