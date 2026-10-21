@@ -35,6 +35,7 @@
   --t-inst:#8246C8;
   --t-warszt:#3F8F3A;
   --t-konf:#5E6E80;
+  --t-staz:#9A6B2F;
   --t-rewal:#147D92;
   --t-terap:#C05A86;
   --t-kryz:#D0362C;
@@ -56,7 +57,7 @@
     --pen:#FF7D6E;--pen-soft:#3A2321;--on-pen:#2A0D0A;--warn:#F2B04E;--warn-soft:#3A2D16;--ok:#7FD39B;--ok-soft:#1C3527;
     --hatch:rgba(227,234,231,.065);--shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.45);
     --tint:20%;--tint-line:44%;--tint-ink:82%;
-    --t-kons:#8EA2FF;--t-naucz:#F0B357;--t-rodz:#4FD1C2;--t-inst:#C49BFF;--t-warszt:#84CF7E;--t-konf:#A3B1C2;--t-rewal:#62C7DA;--t-terap:#F19AC2;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
+    --t-kons:#8EA2FF;--t-naucz:#F0B357;--t-rodz:#4FD1C2;--t-inst:#C49BFF;--t-warszt:#84CF7E;--t-konf:#A3B1C2;--t-staz:#D8B06A;--t-rewal:#62C7DA;--t-terap:#F19AC2;--t-kryz:#FF8A7E;--t-diag:#C49BFF;--t-grupa:#84CF7E;--t-zesp:#A3B1C2;--t-inne:#D19E78;
     color-scheme:dark;
   }
 }
@@ -748,6 +749,7 @@ const TYPES = [
   { k: 'inst', label: 'Spotkanie w instytucji', short: 'Instytucja' },
   { k: 'warszt', label: 'Warsztaty / szkolenia', short: 'Warsztaty' },
   { k: 'konf', label: 'Konferencja', short: 'Konferencja' },
+  { k: 'staz', label: 'Zajęcia w ramach stażu', short: 'Staż / mentoring' },
   { k: 'rewal', label: 'Rewalidacje', short: 'Rewalidacja' },
   { k: 'terap', label: 'Zajęcia terapeutyczne', short: 'Terapia' },
 ];
@@ -2756,6 +2758,7 @@ function mapOldType(v) {
   if (x.includes('instyt')) return 'inst';
   if (x.includes('warszt')||x.includes('szkolen')||x.includes('grup')) return 'warszt';
   if (x.includes('konfer')||x.includes('zesp')||x.includes('rada')) return 'konf';
+  if (x.includes('staz')||x.includes('mentor')) return 'staz';
   return 'kons';
 }
 function mapOldStatus(v) {
