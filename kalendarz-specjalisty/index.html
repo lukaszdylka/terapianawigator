@@ -2906,6 +2906,89 @@ async function promoteStudentClasses() {
   if(changed.length) pushUndo('podniesienie klas',()=>runLimited(changed.map(([id,st])=>()=>store.setStudent(id,st)),4));
   toast(changed.length?`Zaktualizowano ${changed.length} uczniów`:'Nie znaleziono klas do zmiany');
 }
+function printOvertimeSchoolForm() {
+  const target=overtimeTargetStudent(), cfg=S.settings.overtime||DEFAULTS.overtime;
+  if(!target) return toast('Najpierw wybierz ucznia do rozliczania nadgodzin.','err');
+
+  const c=parse(S.cursor), y=c.getFullYear(), mo=c.getMonth();
+  const first=iso(new Date(y,mo,1,12)), last=iso(new Date(y,mo+1,0,12));
+  const monthLabel=`${MONTHS[mo]} ${y}`;
+  const firstMon=mondayOf(first);
+  const weeks=[];
+  for(let mon=firstMon; mon<=last; mon=addDays(mon,7)){
+    const fri=addDays(mon,4);
+    if(fri<first) continue;
+    const days=Array.from({length:5},(_,i)=>addDays(mon,i));
+    const cells=days.map(d=>{
+      if(d<first||d>last) return {date:d,out:true,free:false,plan:'',real:''};
+      const di=info(d), free=!di.school;
+      if(free) return {date:d,out:false,free:true,plan:'',real:''};
+      const items=allItems().filter(m=>m.studentId===target.id&&normalizeTypeKey(m.type)==='rewal'&&m.date===d);
+      const plan=items.filter(m=>m.status!=='cancel').length;
+      const real=items.filter(m=>m.status==='done'||(cfg.countAbsent&&m.status==='absent')).length;
+      return {date:d,out:false,free:false,plan:plan||'',real:real||''};
+    });
+    const realTotal=cells.reduce((a,x)=>a+(+x.real||0),0);
+    const validDays=days.filter(d=>d>=first&&d<=last);
+    weeks.push({
+      label: validDays.length ? `${parse(validDays[0]).getDate()}–${parse(validDays[validDays.length-1]).getDate()}.${pad(mo+1)}` : '',
+      cells, total:realTotal, overtime:realTotal
+    });
+  }
+  while(weeks.length<5) weeks.push({label:'',cells:Array.from({length:5},()=>({plan:'',real:'',free:false,out:true})),total:'',overtime:''});
+
+  const total=weeks.reduce((a,w)=>a+(+w.total||0),0);
+  const body=weeks.slice(0,5).map(w=>`<tr>
+    <td class="week">${esc(w.label)}</td>
+    ${w.cells.map(x=>`<td class="sub ${x.free?'free':''}">${x.free?'—':x.plan}</td><td class="sub ${x.free?'free':''}">${x.free?'—':x.real}</td>`).join('')}
+    <td class="sum">${w.total}</td><td class="sum">${w.overtime}</td>
+  </tr>`).join('');
+
+  const w=window.open('','_blank');
+  if(!w) return toast('Brave zablokował okno wydruku. Zezwól na wyskakujące okna dla tej strony.','err');
+  try{w.opener=null;}catch{}
+  w.document.write(`<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Rozliczenie godzin — ${monthLabel}</title>
+  <style>
+  @page{size:A4 landscape;margin:10mm}
+  *{box-sizing:border-box} body{margin:0;color:#000;font:12px Arial,sans-serif}
+  .top{display:grid;grid-template-columns:1fr 1fr;gap:120px;margin:0 55px 10px}
+  .field{text-align:center}.line{height:22px;border-bottom:1px dotted #000;font-weight:700;padding-top:3px}.cap{font-size:11px;margin-top:2px}
+  h1{text-align:center;font:700 20px Georgia,serif;letter-spacing:2px;margin:7px 0 6px}
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  th,td{border:1px solid #000;text-align:center;vertical-align:middle}
+  thead tr:first-child th{height:38px;font-size:11px;font-weight:normal}
+  thead tr:nth-child(2) th{height:42px;font:700 12px Georgia,serif}
+  .weekhead{width:13%}.totalhead{width:8%}.overtimehead{width:11%}
+  tbody td{height:48px}.week{font-size:11px;font-weight:700}.sub{width:6.8%;font-size:13px}
+  .sub:nth-child(even){border-right-width:1.5px}
+  .free{background:repeating-linear-gradient(135deg,#fff 0,#fff 4px,#ddd 4px,#ddd 5px);font-size:11px}
+  .sum{font-weight:700;font-size:13px}
+  tfoot td{height:34px;font-weight:700}
+  .legend{font-size:10px;margin:5px 0 0}.signs{display:grid;grid-template-columns:1fr 1fr;gap:140px;margin:34px 70px 0}
+  .sig{text-align:center}.sig .dots{height:22px;border-bottom:1px dotted #000}.sig span{font-size:11px}
+  .meta{margin-top:7px;font-size:10px;color:#222}
+  @media print{.meta{color:#000}}
+  </style></head><body>
+    <div class="top">
+      <div class="field"><div class="line"></div><div class="cap">(imię i nazwisko)</div></div>
+      <div class="field"><div class="line">${esc(monthLabel)}</div><div class="cap">(miesiąc)</div></div>
+    </div>
+    <h1>ROZLICZENIE GODZIN</h1>
+    <table>
+      <thead>
+        <tr><th rowspan="2" class="weekhead">Rozliczenie<br>tygodniowe</th><th colspan="10">Ilość planowanych i zrealizowanych godzin / ilość zastępstw</th><th rowspan="2" class="totalhead">Ilość<br>godzin<br>razem</th><th rowspan="2" class="overtimehead">Ilość godzin<br>nadliczbowych</th></tr>
+        <tr><th colspan="2">poniedziałek</th><th colspan="2">wtorek</th><th colspan="2">środa</th><th colspan="2">czwartek</th><th colspan="2">piątek</th></tr>
+      </thead>
+      <tbody>${body}</tbody>
+      <tfoot><tr><td colspan="11"></td><td>${total}</td><td>${total}</td></tr></tfoot>
+    </table>
+    <div class="legend">W każdej parze pól dnia: <b>planowane | zrealizowane</b>. „—” oznacza dzień bez zajęć szkolnych. Rozliczenie dotyczy: ${esc(target.name)}${target.cls?' · '+esc(target.cls):''}.${cfg.endDate?' Rozliczanie do '+esc(fmtFull(cfg.endDate))+'.':''}</div>
+    <div class="signs"><div class="sig"><div class="dots"></div><span>(podpis nauczyciela)</span></div><div class="sig"><div class="dots"></div><span>(podpis dyrektora)</span></div></div>
+    <div class="meta">Wygenerowano z Kalendarza Specjalisty. Kolumna „nadliczbowe” przy tym wydruku odpowiada liczbie zrealizowanych godzin rozliczanego ucznia.</div>
+    <script>window.onload=()=>setTimeout(()=>window.print(),180)<\/script>
+  </body></html>`);
+  w.document.close();
+}
 function printWeek(discreet=false) {
   const mon=mondayOf(S.selected||S.cursor), days=Array.from({length:5},(_,i)=>addDays(mon,i));
   const cols=days.map(d=>{
@@ -2959,7 +3042,7 @@ function openExport() {
         <label class="check"><input type="checkbox" id="e-ot-absent"${(S.settings.overtime||DEFAULTS.overtime).countAbsent?' checked':''}><span>Wliczaj nieobecność ucznia do kolumny „Do tabelki”</span></label>
         <div class="row-btns"><button type="button" class="btn ghost sm" data-eot-save>Zapisz ustawienia rozliczania</button></div>
         <div id="e-overtime">${overtimeTableHtml('month')}</div>
-        <div class="row-btns"><button type="button" class="btn" data-eot-copy>${ic('copy')}Kopiuj tabelę tygodniową</button></div>
+        <div class="row-btns"><button type="button" class="btn" data-eot-copy>${ic('copy')}Kopiuj tabelę tygodniową</button><button type="button" class="btn primary" data-eot-print>Drukuj szkolny wzór</button></div>
       </section>
       <section class="cs"><h3>Rok szkolny / archiwizacja</h3>
         <div id="e-year-archive">${archiveYearHtml()}</div>
@@ -3232,6 +3315,7 @@ dlgE.addEventListener('click', async e => {
     $('#e-year-archive',dlgE).innerHTML=archiveYearHtml(); toast('Rok szkolny otwarty ponownie'); return;
   }
   if (t.closest('[data-year-promote]')) { await promoteStudentClasses(); return; }
+  if (t.closest('[data-eot-print]')) { printOvertimeSchoolForm(); return; }
   if (t.closest('[data-eot-copy]')) {
     const scope = ($('input[name=e-scope]:checked', dlgE) || {}).value || 'month';
     const text=overtimeClipboard(scope);
