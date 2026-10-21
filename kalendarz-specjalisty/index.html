@@ -420,6 +420,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 .cs:last-child{padding-bottom:0;border-bottom:0}
 .cs h3{margin:0;font:700 12px/1.2 var(--f-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2)}
 .row-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ot-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.ot-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:620px}
+.ot-table th,.ot-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.ot-table th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);background:var(--sunken)}
+.ot-table td.num,.ot-table th.num{text-align:center}
+.ot-table tbody tr:last-child td{border-bottom:0}
+.ot-table .sum td{font-weight:700;background:var(--sunken)}
+.ot-note{font-size:12px;color:var(--ink-3);line-height:1.45}
 .bells{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}
 .bells li{display:grid;grid-template-columns:22px minmax(0,1fr) 10px minmax(0,1fr) 32px;align-items:center;gap:6px}
 .bells .bn{font:600 16px/1 var(--f-display);color:var(--accent);text-align:right}
@@ -2634,6 +2642,53 @@ async function verifyBackupFile(file) {
   const students=Object.keys((dec.data&&dec.data.students)||{}).length;
   return {meetings,students};
 }
+function overtimeTargetStudent() {
+  const exact=[...S.students.entries()].find(([,st])=>norm(st && st.name)==='pawel bury');
+  if (exact) return {id:exact[0],...exact[1]};
+  const loose=[...S.students.entries()].find(([,st])=>norm(st && st.name).includes('pawel') && norm(st && st.name).includes('bury'));
+  return loose ? {id:loose[0],...loose[1]} : null;
+}
+function overtimeRows(scope) {
+  const target=overtimeTargetStudent();
+  if(!target) return {target:null,rows:[],total:null};
+  const r=reportRange(scope);
+  const list=allItems().filter(m =>
+    m.studentId===target.id &&
+    normalizeTypeKey(m.type)==='rewal' &&
+    m.date>=r.from && m.date<=r.to &&
+    info(m.date).school
+  );
+  const weeks=new Map();
+  for(const m of list){
+    const mon=mondayOf(m.date);
+    if(!weeks.has(mon)) weeks.set(mon,{mon,from:mon,to:addDays(mon,4),plan:0,done:0,absent:0,cancel:0,minutes:0});
+    const w=weeks.get(mon);
+    w[m.status]=(w[m.status]||0)+1;
+    if(m.status==='done') w.minutes+=Math.max(0,toMin(m.end)-toMin(m.start));
+  }
+  const rows=[...weeks.values()].sort((a,b)=>a.mon.localeCompare(b.mon));
+  const total=rows.reduce((a,w)=>({
+    plan:a.plan+w.plan,done:a.done+w.done,absent:a.absent+w.absent,cancel:a.cancel+w.cancel,minutes:a.minutes+w.minutes
+  }),{plan:0,done:0,absent:0,cancel:0,minutes:0});
+  return {target,rows,total};
+}
+function overtimeTableHtml(scope) {
+  const o=overtimeRows(scope);
+  if(!o.target) return '<p class="hint">Nie znaleziono ucznia „Paweł Bury” na liście uczniów. Dodaj go lub popraw nazwę, a zestawienie pojawi się automatycznie.</p>';
+  if(!o.rows.length) return `<p class="hint">Brak rewalidacji ucznia <b>${esc(o.target.name)}</b> w wybranym okresie po pominięciu dni wolnych.</p>`;
+  const body=o.rows.map(w=>`<tr><td>${fmtShort(w.from)}–${fmtShort(w.to)}</td><td class="num">${w.plan}</td><td class="num">${w.done}</td><td class="num">${w.absent}</td><td class="num">${w.cancel}</td><td class="num"><b>${w.done}</b></td><td class="num">${w.minutes}</td></tr>`).join('');
+  const t=o.total;
+  return `<div class="ot-wrap"><table class="ot-table"><thead><tr><th>Tydzień</th><th class="num">Plan</th><th class="num">Odbyte</th><th class="num">NB</th><th class="num">Odwołane</th><th class="num">Do tabelki*</th><th class="num">Min. odbytych</th></tr></thead><tbody>${body}<tr class="sum"><td>Razem</td><td class="num">${t.plan}</td><td class="num">${t.done}</td><td class="num">${t.absent}</td><td class="num">${t.cancel}</td><td class="num">${t.done}</td><td class="num">${t.minutes}</td></tr></tbody></table></div><p class="ot-note">* „Do tabelki” = liczba zajęć oznaczonych jako <b>Odbyte</b>. Nieobecności i odwołania są pokazane osobno, bo sposób ich rozliczania może zależeć od zasad przyjętych w szkole. Dni wolne, święta, ferie, przerwy świąteczne i ręcznie oznaczone dni wolne są pomijane.</p>`;
+}
+function overtimeClipboard(scope) {
+  const o=overtimeRows(scope);
+  if(!o.target || !o.rows.length) return '';
+  const lines=['Tydzień\tPlan\tOdbyte\tNB\tOdwołane\tDo tabelki\tMinuty odbytych'];
+  for(const w of o.rows) lines.push(`${fmtShort(w.from)}–${fmtShort(w.to)}\t${w.plan}\t${w.done}\t${w.absent}\t${w.cancel}\t${w.done}\t${w.minutes}`);
+  const t=o.total;
+  lines.push(`Razem\t${t.plan}\t${t.done}\t${t.absent}\t${t.cancel}\t${t.done}\t${t.minutes}`);
+  return lines.join('\n');
+}
 function openExport() {
   const c = parse(S.cursor), Y = schoolYearOf(S.cursor);
   importData = null;
@@ -2650,6 +2705,11 @@ function openExport() {
         <p class="hint">Tworzy tekst z liczbą spotkań, statusami, czasem pracy i podziałem na rodzaje zajęć. Zakres bierze z wyboru powyżej: miesiąc albo rok szkolny.</p>
         <div class="row-btns"><button type="button" class="btn" data-ereport>${ic('copy')}Kopiuj podsumowanie</button></div>
       </section>
+      <section class="cs"><h3>Rewalidacje / nadgodziny — Paweł Bury</h3>
+        <p class="hint">Tygodniowe zestawienie na podstawie wpisów typu „Rewalidacje” przypisanych do Pawła Burego. Zakres: wybrany wyżej miesiąc albo rok szkolny.</p>
+        <div id="e-overtime">${overtimeTableHtml('month')}</div>
+        <div class="row-btns"><button type="button" class="btn" data-eot-copy>${ic('copy')}Kopiuj tabelę tygodniową</button></div>
+      </section>
       <section class="cs"><h3>Kopia zapasowa</h3>
         <p class="hint">Wszystkie spotkania, uczniowie i ustawienia w jednym zaszyfrowanym pliku. Do odczytu potrzebne jest Twoje hasło.</p>
         <p class="hint" id="e-backup-status">${backupStatusHtml()}</p>
@@ -2665,6 +2725,10 @@ function openExport() {
       </section>
       <section class="cs" id="e-fallback" hidden></section>
     </div></div>`;
+  $$('input[name=e-scope]',dlgE).forEach(r=>r.addEventListener('change',()=>{
+    const scope=($('input[name=e-scope]:checked',dlgE)||{}).value||'month';
+    const box=$('#e-overtime',dlgE); if(box) box.innerHTML=overtimeTableHtml(scope);
+  }));
   $('#e-file', dlgE).addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if (file) readImport(file); e.target.value = ''; });
   $('#e-verify', dlgE).addEventListener('change', async e => {
     const file=e.target.files && e.target.files[0], out=$('#e-verify-result',dlgE);
@@ -2865,6 +2929,14 @@ dlgE.addEventListener('click', async e => {
     const { name, text, n } = buildCsv(scope, $('#e-notes', dlgE).checked);
     if (!n) return toast('W wybranym okresie nie ma spotkań.', 'err');
     return offerFile(name, text);
+  }
+  if (t.closest('[data-eot-copy]')) {
+    const scope = ($('input[name=e-scope]:checked', dlgE) || {}).value || 'month';
+    const text=overtimeClipboard(scope);
+    if(!text) return toast('Brak rewalidacji Pawła Burego w wybranym okresie.','err');
+    try { await navigator.clipboard.writeText(text); toast('Skopiowano tabelę tygodniową'); }
+    catch { await offerFile(`rewalidacje_Pawel_Bury_${today()}.txt`,text); }
+    return;
   }
   if (t.closest('[data-ereport]')) {
     const scope = ($('input[name=e-scope]:checked', dlgE) || {}).value || 'month';
