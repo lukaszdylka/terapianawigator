@@ -885,7 +885,7 @@ function mergeSettings(d) {
   const ay={}; if(s.archivedYears && typeof s.archivedYears==='object' && !Array.isArray(s.archivedYears)) for(const [k,v] of Object.entries(s.archivedYears)) if(/^\d{4}$/.test(k)) ay[k]=+v||Date.now();
   s.archivedYears=ay;
   const ot=s.overtime && typeof s.overtime==='object' && !Array.isArray(s.overtime) ? s.overtime : {};
-  s.overtime={ studentId:ID_RE.test(String(ot.studentId||'')) ? String(ot.studentId) : '', weeklyUnits:Math.max(1,Math.min(20,+ot.weeklyUnits||2)), endDate:DATE_RE.test(String(ot.endDate||'')) ? String(ot.endDate) : '', countAbsent:!!ot.countAbsent };
+  s.overtime={ studentId:/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(String(ot.studentId||'')) ? String(ot.studentId) : '', weeklyUnits:Math.max(1,Math.min(20,+ot.weeklyUnits||2)), endDate:DATE_RE.test(String(ot.endDate||'')) ? String(ot.endDate) : '', countAbsent:!!ot.countAbsent };
   return s;
 }
 const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
