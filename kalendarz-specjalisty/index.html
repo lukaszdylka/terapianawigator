@@ -1344,6 +1344,15 @@ function renderHeader() {
   $('#syLabel').textContent = `rok szkolny ${syLabel(schoolYearOf(S.cursor))}`;
 }
 
+function markBackupDownloadedNow() {
+  const now=Date.now();
+  localStorage.setItem('psycal.last.manual.backup',String(now));
+  localStorage.setItem('psycal.backup.first.seen',String(now));
+  const n=$('#notice');
+  if(n) n.hidden=true;
+  const st=$('#e-backup-status',dlgE);
+  if(st) st.innerHTML=backupStatusHtml();
+}
 function renderNotice() {
   const n = $('#notice');
   if (!store) { n.hidden = true; return; }
@@ -2869,7 +2878,11 @@ dlgE.addEventListener('click', async e => {
   if (t.closest('[data-eauto]')) {
     const k=latestAutoBackupKey(), raw=k && localStorage.getItem(k);
     if(!raw) return toast('Brak automatycznej kopii','err');
-    return offerFile(`kalendarz-specjalisty_auto_${k.replace('psycal.auto.backup.','')}.ksbackup`,raw);
+    markBackupDownloadedNow();
+    await offerFile(`kalendarz-specjalisty_auto_${k.replace('psycal.auto.backup.','')}.ksbackup`,raw);
+    renderNotice();
+    toast('Kopia pobrana. Przypomnę ponownie za 7 dni.');
+    return;
   }
   if (t.closest('[data-ejson]')) {
     const b = t.closest('[data-ejson]');
@@ -2877,10 +2890,10 @@ dlgE.addEventListener('click', async e => {
     try {
       const text = localStorage.getItem(VAULT_KEY);
       if (!text) throw new Error('Brak sejfu');
+      markBackupDownloadedNow();
       await offerFile(`kalendarz-specjalisty_kopia_${today()}.ksbackup`, text);
-      localStorage.setItem('psycal.last.manual.backup',String(Date.now()));
-      const st=$('#e-backup-status',dlgE); if(st) st.innerHTML=backupStatusHtml();
       renderNotice();
+      toast('Kopia pobrana. Przypomnę ponownie za 7 dni.');
     } catch (err) { handleWriteError(err); }
     b.disabled = false;
     return;
