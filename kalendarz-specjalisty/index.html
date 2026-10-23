@@ -825,9 +825,7 @@ const STATUSES = [
 ];
 const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
 const DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
-const TME_BELLS = ['07:30-08:15', '08:20-09:05', '09:15-10:00', '10:10-10:55', '11:15-12:00', '12:10-12:55', '13:00-13:45', '13:50-14:35', '14:40-15:25', '15:30-16:15'];
 const DEFAULT_WORK_HOURS = { 0:['08:00','15:00'], 1:['08:00','15:00'], 2:['08:00','15:00'], 3:['08:00','15:00'], 4:['08:00','15:00'] };
-const TME_WORK_HOURS = { 0:['07:00','13:00'], 1:['08:00','12:00'], 2:['08:00','14:00'], 3:['09:00','15:00'], 4:['08:00','11:00'] };
 const DEFAULT_PROFILE = { name:'Mój profil', specialistRole:'psycholog', mentorName:'', mentorRole:'pedagog' };
 const DEFAULTS = { v: 2, profile: DEFAULT_PROFILE, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '08:00', dayTo: '15:30', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
 
@@ -883,7 +881,7 @@ function mergeSettings(d) {
   const src = d && typeof d === 'object' && !Array.isArray(d) ? d : null;
   const legacy = !!(src && !src.profile);
   const s = { ...DEFAULTS, ...(src || {}) };
-  if (legacy) s.profile = { name:'TME Tesla', specialistRole:'psycholog', mentorName:'Vanessa', mentorRole:'pedagog' };
+  if (legacy) s.profile = { name:'Dotychczasowy profil', specialistRole:'psycholog', mentorName:'', mentorRole:'pedagog' };
   const p = s.profile && typeof s.profile === 'object' && !Array.isArray(s.profile) ? s.profile : {};
   s.profile = {
     name:String(p.name || DEFAULT_PROFILE.name).trim().slice(0,80) || DEFAULT_PROFILE.name,
