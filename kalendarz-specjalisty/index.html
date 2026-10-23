@@ -795,9 +795,24 @@ const INTERNSHIP_TOPICS = {
     'Rewalidacja: rozwijanie umiejętności organizacji pracy i zarządzania czasem'
   ]
 };
+const roleLabel = r => String(r || 'specjalista').trim() || 'specjalista';
+const mentorDisplayName = () => {
+  const p = S && S.settings && S.settings.profile ? S.settings.profile : DEFAULT_PROFILE;
+  const name = String(p.mentorName || '').trim();
+  const role = roleLabel(p.mentorRole);
+  return name ? `${name} (${role})` : `drugi specjalista (${role})`;
+};
+const mentorShortName = () => {
+  const p = S && S.settings && S.settings.profile ? S.settings.profile : DEFAULT_PROFILE;
+  return String(p.mentorName || '').trim() || 'Drugi specjalista';
+};
+const selfRoleName = () => {
+  const p = S && S.settings && S.settings.profile ? S.settings.profile : DEFAULT_PROFILE;
+  return roleLabel(p.specialistRole);
+};
 const internshipRoleLabel = role => role === 'pedagog'
-  ? 'Prowadzi Vanessa (pedagog) · obserwuje psycholog'
-  : 'Prowadzi psycholog · obserwuje Vanessa';
+  ? `Prowadzi ${mentorDisplayName()} · obserwuje ${selfRoleName()}`
+  : `Prowadzi ${selfRoleName()} · obserwuje ${mentorDisplayName()}`;
 const TYPE = Object.fromEntries(TYPES.map(t => [t.k, t]));
 const LEGACY_TYPE_MAP = { kryz:'kons', diag:'kons', grupa:'warszt', zesp:'konf', inne:'kons' };
 const normalizeTypeKey = k => TYPE[k] ? k : (LEGACY_TYPE_MAP[k] || 'kons');
@@ -809,10 +824,12 @@ const STATUSES = [
   { k: 'cancel', label: 'Odwołane' },
 ];
 const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
-const OLD_DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
-const DEFAULT_BELLS = ['07:30-08:15', '08:20-09:05', '09:15-10:00', '10:10-10:55', '11:15-12:00', '12:10-12:55', '13:00-13:45', '13:50-14:35', '14:40-15:25', '15:30-16:15'];
-const DEFAULT_WORK_HOURS = { 0:['07:00','13:00'], 1:['08:00','12:00'], 2:['08:00','14:00'], 3:['09:00','15:00'], 4:['08:00','11:00'] };
-const DEFAULTS = { v: 1, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '07:00', dayTo: '16:15', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
+const DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
+const TME_BELLS = ['07:30-08:15', '08:20-09:05', '09:15-10:00', '10:10-10:55', '11:15-12:00', '12:10-12:55', '13:00-13:45', '13:50-14:35', '14:40-15:25', '15:30-16:15'];
+const DEFAULT_WORK_HOURS = { 0:['08:00','15:00'], 1:['08:00','15:00'], 2:['08:00','15:00'], 3:['08:00','15:00'], 4:['08:00','15:00'] };
+const TME_WORK_HOURS = { 0:['07:00','13:00'], 1:['08:00','12:00'], 2:['08:00','14:00'], 3:['09:00','15:00'], 4:['08:00','11:00'] };
+const DEFAULT_PROFILE = { name:'Mój profil', specialistRole:'psycholog', mentorName:'', mentorRole:'pedagog' };
+const DEFAULTS = { v: 2, profile: DEFAULT_PROFILE, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '08:00', dayTo: '15:30', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
 
 // ── narzędzia UI ──
 const $ = (s, r = document) => r.querySelector(s);
@@ -863,7 +880,17 @@ const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ view:
 const isNarrow = () => window.matchMedia('(max-width: 760px)').matches;
 
 function mergeSettings(d) {
-  const s = { ...DEFAULTS, ...(d && typeof d === 'object' && !Array.isArray(d) ? d : {}) };
+  const src = d && typeof d === 'object' && !Array.isArray(d) ? d : null;
+  const legacy = !!(src && !src.profile);
+  const s = { ...DEFAULTS, ...(src || {}) };
+  if (legacy) s.profile = { name:'TME Tesla', specialistRole:'psycholog', mentorName:'Vanessa', mentorRole:'pedagog' };
+  const p = s.profile && typeof s.profile === 'object' && !Array.isArray(s.profile) ? s.profile : {};
+  s.profile = {
+    name:String(p.name || DEFAULT_PROFILE.name).trim().slice(0,80) || DEFAULT_PROFILE.name,
+    specialistRole:String(p.specialistRole || DEFAULT_PROFILE.specialistRole).trim().slice(0,60) || DEFAULT_PROFILE.specialistRole,
+    mentorName:String(p.mentorName || '').trim().slice(0,100),
+    mentorRole:String(p.mentorRole || DEFAULT_PROFILE.mentorRole).trim().slice(0,60) || DEFAULT_PROFILE.mentorRole
+  };
   const parseBell = b => {
     if (Array.isArray(b) && TIME_RE.test(b[0]) && TIME_RE.test(b[1])) return [b[0], b[1]];
     const m = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/.exec(String(b));
@@ -900,7 +927,7 @@ function mergeSettings(d) {
   s.overtime={ studentId:/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(String(ot.studentId||'')) ? String(ot.studentId) : '', weeklyUnits:Math.max(1,Math.min(20,+ot.weeklyUnits||2)), endDate:DATE_RE.test(String(ot.endDate||'')) ? String(ot.endDate) : '', countAbsent:!!ot.countAbsent };
   return s;
 }
-const serializeSettings = s => ({ v: 1, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, workHours:s.workHours||DEFAULT_WORK_HOURS, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
+const serializeSettings = s => ({ v: 2, profile:s.profile||DEFAULT_PROFILE, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, workHours:s.workHours||DEFAULT_WORK_HOURS, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
 
 const S = {
   view: ['month', 'week', 'day', 'list'].includes(uiPrefs.view) ? uiPrefs.view : (isNarrow() ? 'day' : 'week'),
