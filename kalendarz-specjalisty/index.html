@@ -1983,8 +1983,8 @@ function meetingFormHtml() {
     <fieldset class="fld" id="f-internship"${F.type === 'staz' ? '' : ' hidden'}>
       <legend>Staże / obserwacja zajęć</legend>
       <div class="seg seg-fill">
-        <label><input type="radio" name="f-internship-role" value="psycholog"${F.internshipRole !== 'pedagog' ? ' checked' : ''}><span>Ja prowadzę · Vanessa obserwuje</span></label>
-        <label><input type="radio" name="f-internship-role" value="pedagog"${F.internshipRole === 'pedagog' ? ' checked' : ''}><span>Vanessa prowadzi · ja obserwuję</span></label>
+        <label><input type="radio" name="f-internship-role" value="psycholog"${F.internshipRole !== 'pedagog' ? ' checked' : ''}><span>Ja prowadzę · ${esc(mentorShortName())} obserwuje</span></label>
+        <label><input type="radio" name="f-internship-role" value="pedagog"${F.internshipRole === 'pedagog' ? ' checked' : ''}><span>${esc(mentorShortName())} prowadzi · ja obserwuję</span></label>
       </div>
       <label class="fld"><span>Temat zajęć</span><select id="f-internship-topic"></select></label>
       <label class="fld"><span>Wnioski po zajęciach <small>— opcjonalnie</small></span><textarea id="f-internship-reflection" rows="2" maxlength="2000" placeholder="Krótki wniosek z obserwacji / omówienia">${esc(F.internshipReflection || '')}</textarea></label>
@@ -2529,8 +2529,17 @@ function settingsHtml() {
   return `<form class="dlg" id="cf" novalidate>
     <header class="dlg-h"><h2>Ustawienia</h2><button type="button" class="icon-btn" data-cclose aria-label="Zamknij">${ic('x')}</button></header>
     <div class="dlg-b">
+      <section class="cs"><h3>Profil pracy</h3>
+        <p class="hint">Te dane opisują lokalną konfigurację kalendarza. Nie są publikowane ani wysyłane na serwer.</p>
+        <div class="row2 stack-sm">
+          <label class="fld"><span>Nazwa profilu</span><input type="text" id="c-profile-name" maxlength="80" value="${esc((CF.profile||DEFAULT_PROFILE).name)}" placeholder="np. Szkoła, Gabinet"></label>
+          <label class="fld"><span>Twoja rola</span><input type="text" id="c-profile-role" maxlength="60" value="${esc((CF.profile||DEFAULT_PROFILE).specialistRole)}" placeholder="np. psycholog"></label>
+          <label class="fld"><span>Osoba w stażu / mentoringu</span><input type="text" id="c-mentor-name" maxlength="100" value="${esc((CF.profile||DEFAULT_PROFILE).mentorName)}" placeholder="opcjonalnie"></label>
+          <label class="fld"><span>Jej rola</span><input type="text" id="c-mentor-role" maxlength="60" value="${esc((CF.profile||DEFAULT_PROFILE).mentorRole)}" placeholder="np. pedagog"></label>
+        </div>
+      </section>
       <section class="cs"><h3>Dzwonki</h3>
-        <p class="hint">Godziny lekcji w Twojej szkole. Domyślnie ustawiono plan TME: 10 lekcji od 7:30 do 16:15. Z nich powstają pasy lekcji w widoku tygodnia i szybki wybór lekcji w formularzu.</p>
+        <p class="hint">Godziny lekcji w Twojej szkole. Z nich powstają pasy lekcji w widoku tygodnia i szybki wybór lekcji w formularzu.</p>
         <ol class="bells" id="c-bells">${bellsHtml()}</ol>
         <div class="row-btns"><button type="button" class="btn sm" data-badd>${ic('plus')}Dodaj lekcję</button><button type="button" class="btn ghost sm" data-breset>Przywróć typowe dzwonki</button></div>
       </section>
@@ -2547,7 +2556,7 @@ function settingsHtml() {
         <ul class="offlist" id="c-off">${offHtml()}</ul>
         <div class="off-add"><input type="date" id="c-offd" aria-label="Data dnia wolnego"><input type="text" id="c-offn" placeholder="Nazwa, np. dzień dyrektorski" aria-label="Nazwa dnia wolnego" maxlength="80"><button type="button" class="btn sm" data-oadd>Dodaj</button></div>
       </section>
-      <section class="cs"><h3>Plan pracy psychologa</h3>
+      <section class="cs"><h3>Plan pracy specjalisty</h3>
         <p class="hint">Godziny są zaznaczane delikatnym polem w widoku tygodnia i dnia. Możesz je zmienić później bez wpływu na zapisane spotkania.</p>
         <div class="row2 stack-sm">
           ${['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'].map((name,i)=>{
@@ -2555,7 +2564,7 @@ function settingsHtml() {
             return `<div class="fld"><span>${name}</span><div class="row2"><input type="time" data-work-day="${i}" data-work-part="0" value="${x[0]}" aria-label="${name} od"><input type="time" data-work-day="${i}" data-work-part="1" value="${x[1]}" aria-label="${name} do"></div></div>`;
           }).join('')}
         </div>
-        <div class="row-btns"><button type="button" class="btn ghost sm" data-work-reset>Przywróć mój plan pracy</button></div>
+        <div class="row-btns"><button type="button" class="btn ghost sm" data-work-reset>Przywróć domyślny plan</button></div>
       </section>
       <section class="cs"><h3>Widok</h3>
         <div class="row3">
@@ -2725,6 +2734,12 @@ dlgC.addEventListener('submit', async e => {
     work[i]=[a,b];
   }
   CF.workHours=work;
+  CF.profile = {
+    name:($('#c-profile-name',dlgC)?.value||DEFAULT_PROFILE.name).trim().slice(0,80) || DEFAULT_PROFILE.name,
+    specialistRole:($('#c-profile-role',dlgC)?.value||DEFAULT_PROFILE.specialistRole).trim().slice(0,60) || DEFAULT_PROFILE.specialistRole,
+    mentorName:($('#c-mentor-name',dlgC)?.value||'').trim().slice(0,100),
+    mentorRole:($('#c-mentor-role',dlgC)?.value||DEFAULT_PROFILE.mentorRole).trim().slice(0,60) || DEFAULT_PROFILE.mentorRole
+  };
   CF.region = $('#c-region', dlgC).value;
   CF.exams = $('#c-exams', dlgC).value;
   CF.observances = $('#c-obs', dlgC).checked;
@@ -2767,7 +2782,7 @@ function buildReportText(scope) {
   }
   const active=items.length-byStatus.cancel;
   const lines=[
-    `Podsumowanie pracy psychologa szkolnego — ${r.label}`,
+    `Podsumowanie pracy specjalisty szkolnego — ${r.label}`,
     `Łącznie spotkań (bez odwołanych): ${active}`,
     `Odbyte: ${byStatus.done}`,
     `Nieobecności: ${byStatus.absent}`,
@@ -2809,10 +2824,7 @@ async function verifyBackupFile(file) {
 function overtimeTargetStudent() {
   const cfg=S.settings.overtime||DEFAULTS.overtime;
   if(cfg.studentId && S.students.has(cfg.studentId)) return {id:cfg.studentId,...S.students.get(cfg.studentId)};
-  const exact=[...S.students.entries()].find(([,st])=>norm(st && st.name)==='pawel bury');
-  if (exact) return {id:exact[0],...exact[1]};
-  const loose=[...S.students.entries()].find(([,st])=>norm(st && st.name).includes('pawel') && norm(st && st.name).includes('bury'));
-  return loose ? {id:loose[0],...loose[1]} : null;
+  return null;
 }
 function overtimeRows(scope) {
   const target=overtimeTargetStudent(), cfg=S.settings.overtime||DEFAULTS.overtime;
@@ -2879,7 +2891,7 @@ function mentoringItems(scope='year') {
 function mentoringHtml(scope='year') {
   const list=mentoringItems(scope), mine=list.filter(m=>m.internshipRole!=='pedagog').length, van=list.length-mine;
   const done=list.filter(m=>m.status==='done').length;
-  return `<div class="kpis"><div><span>Razem</span><b>${list.length}</b></div><div><span>Ty prowadzisz</span><b>${mine}</b></div><div><span>Vanessa prowadzi</span><b>${van}</b></div><div><span>Odbyte</span><b>${done}</b></div></div>${list.length?'<p class="hint">Tematy są zapisywane przy każdym spotkaniu. Wnioski po zajęciach są opcjonalne i trafiają do zestawienia.</p>':'<p class="hint">Brak wpisów „Zajęcia w ramach stażu” w wybranym okresie.</p>'}`;
+  return `<div class="kpis"><div><span>Razem</span><b>${list.length}</b></div><div><span>Ty prowadzisz</span><b>${mine}</b></div><div><span>${esc(mentorShortName())} prowadzi</span><b>${van}</b></div><div><span>Odbyte</span><b>${done}</b></div></div>${list.length?'<p class="hint">Tematy są zapisywane przy każdym spotkaniu. Wnioski po zajęciach są opcjonalne i trafiają do zestawienia.</p>':'<p class="hint">Brak wpisów „Zajęcia w ramach stażu” w wybranym okresie.</p>'}`;
 }
 function mentoringReportText(scope='year') {
   const r=reportRange(scope), list=mentoringItems(scope);
@@ -2890,7 +2902,7 @@ function mentoringReportText(scope='year') {
     if(m.internshipReflection) lines.push(`Wnioski: ${m.internshipReflection}`);
     lines.push(`Status: ${STATUS_LABEL[m.status]||m.status}`,'');
   }
-  lines.push(`Razem: ${list.length}; odbyte: ${list.filter(m=>m.status==='done').length}; Ty prowadzisz: ${list.filter(m=>m.internshipRole!=='pedagog').length}; Vanessa prowadzi: ${list.filter(m=>m.internshipRole==='pedagog').length}`);
+  lines.push(`Razem: ${list.length}; odbyte: ${list.filter(m=>m.status==='done').length}; Ty prowadzisz: ${list.filter(m=>m.internshipRole!=='pedagog').length}; ${mentorShortName()} prowadzi: ${list.filter(m=>m.internshipRole==='pedagog').length}`);
   return lines.join('\n');
 }
 function buildAnonCsv(scope) {
@@ -3060,9 +3072,9 @@ function openExport() {
         <div class="row-btns"><button type="button" class="btn" data-print-week>Drukuj plan tygodnia</button><button type="button" class="btn ghost" data-print-week-discreet>Drukuj wersję dyskretną</button></div>
       </section>
       <section class="cs"><h3>Rewalidacje / nadgodziny</h3>
-        <p class="hint">Wybierz ucznia, którego zajęcia mają trafiać do tygodniowej tabelki. Domyślnie aplikacja rozpoznaje Pawła Burego.</p>
+        <p class="hint">Wybierz ucznia, którego zajęcia mają trafiać do tygodniowej tabelki.</p>
         <div class="row3">
-          <label class="fld"><span>Uczeń</span><select id="e-ot-student"><option value="">— automatycznie: Paweł Bury —</option>${studentOptions((S.settings.overtime||{}).studentId||'')}</select></label>
+          <label class="fld"><span>Uczeń</span><select id="e-ot-student"><option value="">— wybierz ucznia —</option>${studentOptions((S.settings.overtime||{}).studentId||'')}</select></label>
           <label class="fld"><span>Godziny / zajęcia tygodniowo</span><input type="number" id="e-ot-weekly" min="1" max="20" value="${(S.settings.overtime||DEFAULTS.overtime).weeklyUnits||2}"></label>
           <label class="fld"><span>Rozliczaj do</span><input type="date" id="e-ot-end" value="${(S.settings.overtime||DEFAULTS.overtime).endDate||''}"></label>
         </div>
