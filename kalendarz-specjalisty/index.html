@@ -559,6 +559,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 <dialog id="dlgSettings" aria-label="Ustawienia"></dialog>
 <dialog id="dlgExport" aria-label="Eksport i kopia zapasowa"></dialog>
 <dialog id="dlgToday" aria-label="Plan na dziś"></dialog>
+<dialog id="dlgOnboarding" aria-label="Pierwsza konfiguracja"></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -2444,6 +2445,79 @@ dlgS.addEventListener('click', async e => {
   }
 });
 
+// ── pierwsze uruchomienie ──
+const dlgO = $('#dlgOnboarding');
+function onboardingHtml(){
+  const roles=['psycholog','pedagog','pedagog specjalny','terapeuta pedagogiczny','inny specjalista'];
+  return `<form class="dlg" id="of" novalidate>
+    <header class="dlg-h"><h2>Skonfiguruj swój kalendarz</h2></header>
+    <div class="dlg-b">
+      <section class="cs"><h3>1. Profil pracy</h3>
+        <p class="hint">To ustawienia lokalne. Dane uczniów nie są wysyłane podczas konfiguracji.</p>
+        <div class="row2 stack-sm">
+          <label class="fld"><span>Nazwa profilu</span><input id="o-name" maxlength="80" value="Szkoła" placeholder="np. Szkoła"></label>
+          <label class="fld"><span>Rola</span><select id="o-role">${roles.map(r=>`<option value="${r}">${r}</option>`).join('')}</select></label>
+        </div>
+      </section>
+      <section class="cs"><h3>2. Kalendarz szkolny</h3>
+        <div class="row2 stack-sm">
+          <label class="fld"><span>Województwo</span><select id="o-region">${REGIONS.map(([k,n])=>`<option value="${k}"${k==='slaskie'?' selected':''}>${n}</option>`).join('')}</select></label>
+          <label class="fld"><span>Egzaminy</span><select id="o-exams"><option value="e8">Egzamin ósmoklasisty</option><option value="matura">Matura</option><option value="none">Nie pokazuj</option></select></label>
+        </div>
+      </section>
+      <section class="cs"><h3>3. Dzwonki i plan pracy</h3>
+        <label class="fld"><span>Układ dzwonków</span><select id="o-bells">
+          <option value="8">Typowy: 8 lekcji od 8:00</option>
+          <option value="10">Rozszerzony: 10 lekcji od 7:30</option>
+        </select></label>
+        <p class="hint">Po uruchomieniu wszystkie godziny możesz dokładnie zmienić w Ustawieniach.</p>
+        <div class="row2 stack-sm">
+          ${['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'].map((d,i)=>`<div class="fld"><span>${d}</span><div class="row2"><input type="time" data-o-work="${i}" data-p="0" value="08:00"><input type="time" data-o-work="${i}" data-p="1" value="15:00"></div></div>`).join('')}
+        </div>
+      </section>
+      <div class="f-warn" id="o-warn" hidden></div>
+    </div>
+    <footer class="dlg-f"><span class="hint">Ustawienia można później zmienić.</span><span class="grow"></span><button class="btn primary" type="submit">Rozpocznij</button></footer>
+  </form>`;
+}
+async function openOnboarding(){
+  dlgO.innerHTML=onboardingHtml();
+  dlgO.showModal();
+  const form=$('#of',dlgO);
+  form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const warn=$('#o-warn',dlgO);
+    const fail=msg=>{warn.hidden=false;warn.innerHTML=`<p>${ic('alert')}<span>${esc(msg)}</span></p>`;};
+    const work={};
+    for(let i=0;i<5;i++){
+      const a=$(`[data-o-work="${i}"][data-p="0"]`,dlgO).value;
+      const b=$(`[data-o-work="${i}"][data-p="1"]`,dlgO).value;
+      if(!TIME_RE.test(a)||!TIME_RE.test(b)||toMin(b)<=toMin(a)) return fail('Popraw godziny planu pracy.');
+      work[i]=[a,b];
+    }
+    const expanded=['07:30-08:15','08:20-09:05','09:15-10:00','10:10-10:55','11:15-12:00','12:10-12:55','13:00-13:45','13:50-14:35','14:40-15:25','15:30-16:15'];
+    const bells=$('#o-bells',dlgO).value==='10'?expanded:DEFAULT_BELLS;
+    const next=mergeSettings({
+      ...DEFAULTS,
+      profile:{name:($('#o-name',dlgO).value||'Szkoła').trim().slice(0,80)||'Szkoła',specialistRole:$('#o-role',dlgO).value,mentorName:'',mentorRole:'pedagog'},
+      region:$('#o-region',dlgO).value,
+      exams:$('#o-exams',dlgO).value,
+      bells,
+      workHours:work,
+      dayFrom:work[0][0]<'08:00'?work[0][0]:'08:00',
+      dayTo:'16:15'
+    });
+    S.settings=next;
+    try{
+      await saveSettings(next);
+      dlgO.close();
+      render();
+      toast('Kalendarz jest gotowy');
+      setTimeout(()=>{if(!document.querySelector('dialog[open]')) openTodayDashboard();},250);
+    }catch(err){handleWriteError(err);}
+  });
+}
+
 // ── ustawienia ──
 const dlgC = $('#dlgSettings');
 let CF = null;
@@ -3656,6 +3730,7 @@ async function init() {
   render();
   startTicker();
   const data = await unlockOrCreateVault();
+  const needsOnboarding = !data.settings;
   store = makeLocalStore(data);
   S.mode = 'local';
   store.watchSettings(d => { S.settings = mergeSettings(d); S.loaded.settings = true; render(); }, onDbError);
@@ -3666,7 +3741,8 @@ async function init() {
   setTimeout(registerPwa, 300);
   setTimeout(() => checkForUpdates(false), 1800);
   setTimeout(checkMeetingNotifications, 2400);
-  setTimeout(() => { if (!document.querySelector('dialog[open]')) openTodayDashboard(); }, 700);
+  if (needsOnboarding) setTimeout(openOnboarding, 250);
+  else setTimeout(() => { if (!document.querySelector('dialog[open]')) openTodayDashboard(); }, 700);
 }
 init();
 })();
