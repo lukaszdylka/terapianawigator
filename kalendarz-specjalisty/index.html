@@ -151,6 +151,10 @@ span[data-i]{display:inline-grid;place-items:center}
 }
 
 .notice{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:10px 14px;border-radius:var(--r);background:var(--warn-soft);border:1px solid var(--line);font-size:13.5px;line-height:1.5}
+.plan-badge{display:inline-flex;align-items:center;min-height:20px;padding:2px 7px;border-radius:999px;font:700 10px/1 var(--f-ui);letter-spacing:.05em;text-transform:uppercase;background:var(--sunken);color:var(--ink-2);vertical-align:middle}
+.plan-badge.pro{background:var(--accent-soft);color:var(--accent)}
+.pro-lock{border:1px dashed var(--line-strong);border-radius:var(--r);padding:12px;background:var(--sunken)}
+.pro-lock h4{margin:0 0 4px;font-size:13px}.pro-lock p{margin:0;color:var(--ink-2);font-size:12.5px}.pro-lock .row-btns{margin-top:9px}
 .notice .ic{color:var(--warn);margin-top:1px}
 
 /* ---------- układ główny ---------- */
@@ -519,7 +523,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 <div class="app" id="app">
   <header class="top">
     <div class="brand">
-      <span class="brand-name">Kalendarz psychologa</span>
+      <span class="brand-name">Kalendarz Specjalisty <span id="planBadge"></span></span>
       <span class="brand-year" id="syLabel">rok szkolny</span>
     </div>
     <div class="nav">
@@ -828,7 +832,8 @@ const STATUS_LABEL = Object.fromEntries(STATUSES.map(s => [s.k, s.label]));
 const DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30', '11:50-12:35', '12:45-13:30', '13:40-14:25', '14:35-15:20'];
 const DEFAULT_WORK_HOURS = { 0:['08:00','15:00'], 1:['08:00','15:00'], 2:['08:00','15:00'], 3:['08:00','15:00'], 4:['08:00','15:00'] };
 const DEFAULT_PROFILE = { name:'Mój profil', specialistRole:'psycholog', mentorName:'', mentorRole:'pedagog' };
-const DEFAULTS = { v: 2, profile: DEFAULT_PROFILE, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '08:00', dayTo: '15:30', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
+const DEFAULT_ENTITLEMENT = { plan:'free', source:'local', validUntil:'' };
+const DEFAULTS = { v: 3, profile: DEFAULT_PROFILE, entitlement: DEFAULT_ENTITLEMENT, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '08:00', dayTo: '15:30', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
 
 // ── narzędzia UI ──
 const $ = (s, r = document) => r.querySelector(s);
@@ -883,6 +888,13 @@ function mergeSettings(d) {
   const legacy = !!(src && !src.profile);
   const s = { ...DEFAULTS, ...(src || {}) };
   if (legacy) s.profile = { name:'Dotychczasowy profil', specialistRole:'psycholog', mentorName:'', mentorRole:'pedagog' };
+  if (src && !src.entitlement) s.entitlement = { plan:'pro', source:'legacy-preview', validUntil:'' };
+  const ent = s.entitlement && typeof s.entitlement==='object' && !Array.isArray(s.entitlement) ? s.entitlement : {};
+  s.entitlement = {
+    plan:ent.plan==='pro'?'pro':'free',
+    source:String(ent.source||'local').slice(0,40),
+    validUntil:DATE_RE.test(String(ent.validUntil||'')) ? String(ent.validUntil) : ''
+  };
   const p = s.profile && typeof s.profile === 'object' && !Array.isArray(s.profile) ? s.profile : {};
   s.profile = {
     name:String(p.name || DEFAULT_PROFILE.name).trim().slice(0,80) || DEFAULT_PROFILE.name,
@@ -926,7 +938,7 @@ function mergeSettings(d) {
   s.overtime={ studentId:/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(String(ot.studentId||'')) ? String(ot.studentId) : '', weeklyUnits:Math.max(1,Math.min(20,+ot.weeklyUnits||2)), endDate:DATE_RE.test(String(ot.endDate||'')) ? String(ot.endDate) : '', countAbsent:!!ot.countAbsent };
   return s;
 }
-const serializeSettings = s => ({ v: 2, profile:s.profile||DEFAULT_PROFILE, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, workHours:s.workHours||DEFAULT_WORK_HOURS, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
+const serializeSettings = s => ({ v: 3, profile:s.profile||DEFAULT_PROFILE, entitlement:s.entitlement||DEFAULT_ENTITLEMENT, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, workHours:s.workHours||DEFAULT_WORK_HOURS, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
 
 const S = {
   view: ['month', 'week', 'day', 'list'].includes(uiPrefs.view) ? uiPrefs.view : (isNarrow() ? 'day' : 'week'),
@@ -948,6 +960,9 @@ const workRangeForDate = d => {
   const x=S.settings.workHours && (S.settings.workHours[wd]||S.settings.workHours[String(wd)]);
   return Array.isArray(x)&&TIME_RE.test(x[0])&&TIME_RE.test(x[1])&&toMin(x[1])>toMin(x[0]) ? x : null;
 };
+const isPro = () => !!(S.settings.entitlement && S.settings.entitlement.plan==='pro');
+const planBadgeHtml = () => `<span class="plan-badge ${isPro()?'pro':''}">${isPro()?'Pro':'Free'}</span>`;
+const proLockHtml = feature => `<div class="pro-lock"><h4>${esc(feature)} <span class="plan-badge pro">Pro</span></h4><p>Ta funkcja należy do planu Pro. Płatności i aktywacja licencji zostaną podłączone w kolejnym etapie.</p><div class="row-btns"><button type="button" class="btn sm" data-pro-info>Poznaj Pro</button></div></div>`;
 
 // ── zapis: konto (db) albo ta przeglądarka ──
 async function retry(fn) {
@@ -1434,6 +1449,7 @@ function renderHeader() {
   db.setAttribute('aria-pressed', String(S.discreet));
   db.innerHTML = ic(S.discreet ? 'eyeOff' : 'eye');
   $('#syLabel').textContent = `rok szkolny ${syLabel(schoolYearOf(S.cursor))}`;
+  const pb=$('#planBadge'); if(pb) pb.innerHTML=planBadgeHtml();
 }
 
 function markBackupDownloadedNow() {
@@ -2499,6 +2515,7 @@ async function openOnboarding(){
     const bells=$('#o-bells',dlgO).value==='10'?expanded:DEFAULT_BELLS;
     const next=mergeSettings({
       ...DEFAULTS,
+      entitlement:{plan:'free',source:'local',validUntil:''},
       profile:{name:($('#o-name',dlgO).value||'Szkoła').trim().slice(0,80)||'Szkoła',specialistRole:$('#o-role',dlgO).value,mentorName:'',mentorRole:'pedagog'},
       region:$('#o-region',dlgO).value,
       exams:$('#o-exams',dlgO).value,
@@ -2601,6 +2618,10 @@ function settingsHtml() {
   return `<form class="dlg" id="cf" novalidate>
     <header class="dlg-h"><h2>Ustawienia</h2><button type="button" class="icon-btn" data-cclose aria-label="Zamknij">${ic('x')}</button></header>
     <div class="dlg-b">
+      <section class="cs"><h3>Plan aplikacji</h3>
+        <p class="hint">Aktualny plan: ${planBadgeHtml()} ${isPro()?'Masz dostęp do wszystkich obecnie przygotowanych funkcji Pro.':'Podstawowy kalendarz, uczniowie i lokalny zaszyfrowany backup pozostają bezpłatne.'}</p>
+        <div class="row-btns">${isPro()?'':'<button type="button" class="btn sm" data-pro-info>Poznaj Pro</button>'}</div>
+      </section>
       <section class="cs"><h3>Profil pracy</h3>
         <p class="hint">Te dane opisują lokalną konfigurację kalendarza. Nie są publikowane ani wysyłane na serwer.</p>
         <div class="row2 stack-sm">
@@ -3128,22 +3149,23 @@ function openExport() {
         <label class="check"><input type="checkbox" id="e-notes"><span>Dołącz notatki</span></label>
         <div class="row-btns"><button type="button" class="btn primary" data-ecsv>${ic('download')}Pobierz CSV</button></div>
       </section>
-      <section class="cs"><h3>Podsumowanie do sprawozdania</h3>
-        <p class="hint">Tworzy zestawienie bez nazwisk: liczba spotkań, statusy, czas pracy i podział na rodzaje zajęć.</p>
-        <div class="row-btns"><button type="button" class="btn" data-ereport>${ic('copy')}Kopiuj podsumowanie</button><button type="button" class="btn ghost" data-eanon>${ic('download')}CSV bez danych uczniów</button></div>
+      <section class="cs"><h3>Podsumowanie do sprawozdania <span class="plan-badge pro">Pro</span></h3>
+        ${isPro()?`<p class="hint">Tworzy zestawienie bez nazwisk: liczba spotkań, statusy, czas pracy i podział na rodzaje zajęć.</p>
+        <div class="row-btns"><button type="button" class="btn" data-ereport>${ic('copy')}Kopiuj podsumowanie</button><button type="button" class="btn ghost" data-eanon>${ic('download')}CSV bez danych uczniów</button></div>`:proLockHtml('Raporty i zestawienia')}
       </section>
-      <section class="cs"><h3>Zamknięcie miesiąca</h3>
-        <div id="e-month-close">${monthCloseHtml()}</div>
+      <section class="cs"><h3>Zamknięcie miesiąca <span class="plan-badge pro">Pro</span></h3>
+        ${isPro()?`<div id="e-month-close">${monthCloseHtml()}</div>`:proLockHtml('Zamknięcie miesiąca')}
       </section>
-      <section class="cs"><h3>Staż / mentoring</h3>
-        <div id="e-mentoring">${mentoringHtml('month')}</div>
-        <div class="row-btns"><button type="button" class="btn" data-ementor-copy>${ic('copy')}Kopiuj zestawienie stażu</button></div>
+      <section class="cs"><h3>Staż / mentoring <span class="plan-badge pro">Pro</span></h3>
+        ${isPro()?`<div id="e-mentoring">${mentoringHtml('month')}</div>
+        <div class="row-btns"><button type="button" class="btn" data-ementor-copy>${ic('copy')}Kopiuj zestawienie stażu</button></div>`:proLockHtml('Raport stażu / mentoringu')}
       </section>
-      <section class="cs"><h3>Plan tygodnia do wydruku</h3>
-        <p class="hint">A4 poziomo dla tygodnia zawierającego aktualnie wybrany dzień. Wersja dyskretna używa inicjałów i nie drukuje tematów.</p>
-        <div class="row-btns"><button type="button" class="btn" data-print-week>Drukuj plan tygodnia</button><button type="button" class="btn ghost" data-print-week-discreet>Drukuj wersję dyskretną</button></div>
+      <section class="cs"><h3>Plan tygodnia do wydruku <span class="plan-badge pro">Pro</span></h3>
+        ${isPro()?`<p class="hint">A4 poziomo dla tygodnia zawierającego aktualnie wybrany dzień. Wersja dyskretna używa inicjałów i nie drukuje tematów.</p>
+        <div class="row-btns"><button type="button" class="btn" data-print-week>Drukuj plan tygodnia</button><button type="button" class="btn ghost" data-print-week-discreet>Drukuj wersję dyskretną</button></div>`:proLockHtml('Druk planu tygodnia')}
       </section>
-      <section class="cs"><h3>Rewalidacje / nadgodziny</h3>
+      <section class="cs"><h3>Rewalidacje / nadgodziny <span class="plan-badge pro">Pro</span></h3>
+        ${isPro()?`
         <p class="hint">Wybierz ucznia, którego zajęcia mają trafiać do tygodniowej tabelki.</p>
         <div class="row3">
           <label class="fld"><span>Uczeń</span><select id="e-ot-student"><option value="">— wybierz ucznia —</option>${studentOptions((S.settings.overtime||{}).studentId||'')}</select></label>
@@ -3154,9 +3176,10 @@ function openExport() {
         <div class="row-btns"><button type="button" class="btn ghost sm" data-eot-save>Zapisz ustawienia rozliczania</button></div>
         <div id="e-overtime">${overtimeTableHtml('month')}</div>
         <div class="row-btns"><button type="button" class="btn" data-eot-copy>${ic('copy')}Kopiuj tabelę tygodniową</button><button type="button" class="btn primary" data-eot-print>Drukuj szkolny wzór</button></div>
+        `:proLockHtml('Rewalidacje i nadgodziny')}
       </section>
-      <section class="cs"><h3>Rok szkolny / archiwizacja</h3>
-        <div id="e-year-archive">${archiveYearHtml()}</div>
+      <section class="cs"><h3>Rok szkolny / archiwizacja <span class="plan-badge pro">Pro</span></h3>
+        ${isPro()?`<div id="e-year-archive">${archiveYearHtml()}</div>`:proLockHtml('Archiwizacja roku')}
       </section>
       <section class="cs"><h3>Kopia zapasowa</h3>
         <p class="hint">Wszystkie spotkania, uczniowie i ustawienia w jednym zaszyfrowanym pliku. Do odczytu potrzebne jest Twoje hasło.</p>
@@ -3563,6 +3586,8 @@ function toast(msg, kind) {
 
 // ── zdarzenia globalne ──
 document.addEventListener('click', e => {
+  const pro=e.target.closest('[data-pro-info]');
+  if(pro){ toast('Plan Pro obejmuje raporty, rozliczenia, mentoring, wydruki i archiwizację. Aktywację licencji podłączymy w kolejnym etapie.'); return; }
   if (e.target.closest('dialog')) return;
   const a = e.target.closest('[data-action]');
   if (a) {
