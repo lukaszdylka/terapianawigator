@@ -960,9 +960,113 @@ const workRangeForDate = d => {
   const x=S.settings.workHours && (S.settings.workHours[wd]||S.settings.workHours[String(wd)]);
   return Array.isArray(x)&&TIME_RE.test(x[0])&&TIME_RE.test(x[1])&&toMin(x[1])>toMin(x[0]) ? x : null;
 };
-const isPro = () => !!(S.settings.entitlement && S.settings.entitlement.plan==='pro');
+const isPro = () => {
+  const e=S.settings.entitlement||DEFAULT_ENTITLEMENT;
+  return e.plan==='pro' && (!e.validUntil || e.validUntil>=today());
+};
 const planBadgeHtml = () => `<span class="plan-badge ${isPro()?'pro':''}">${isPro()?'Pro':'Free'}</span>`;
-const proLockHtml = feature => `<div class="pro-lock"><h4>${esc(feature)} <span class="plan-badge pro">Pro</span></h4><p>Ta funkcja należy do planu Pro. Płatności i aktywacja licencji zostaną podłączone w kolejnym etapie.</p><div class="row-btns"><button type="button" class="btn sm" data-pro-info>Poznaj Pro</button></div></div>`;
+const proLockHtml = feature => `<div class="pro-lock"><h4>${esc(feature)} <span class="plan-badge pro">Pro</span></h4><p>Ta funkcja należy do planu Pro.</p><div class="row-btns"><button type="button" class="btn sm" data-pro-info>Poznaj Pro</button></div></div>`;
+
+const KS_SUPABASE_URL='https://xyivrakegwybwhmmcawq.supabase.co';
+const KS_SUPABASE_KEY='sb_publishable_kMJZJydBcA2uDb8Gc9BzMg_lv2rkkAp';
+const KS_SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1/+esm';
+const KS_APP_ID='kalendarz_specjalisty';
+const ksCloud={client:null,user:null,account:null,loading:false,error:''};
+
+async function ksClient(){
+  if(ksCloud.client) return ksCloud.client;
+  const mod=await import(KS_SUPABASE_JS);
+  ksCloud.client=mod.createClient(KS_SUPABASE_URL,KS_SUPABASE_KEY,{
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  });
+  return ksCloud.client;
+}
+function ksAccountHtml(){
+  if(ksCloud.loading) return '<p class="hint">Sprawdzam konto…</p>';
+  if(ksCloud.user){
+    const email=esc(ksCloud.user.email||'konto użytkownika');
+    const a=ksCloud.account;
+    const until=a&&a.valid_until ? ` · ważny do ${esc(fmtFull(a.valid_until))}` : '';
+    return `<p class="hint">Zalogowano jako <b>${email}</b>. Plan z serwera: ${planBadgeHtml()}${until}.</p>
+      <div class="row-btns"><button type="button" class="btn sm" data-account-refresh>Odśwież licencję</button><button type="button" class="btn ghost sm" data-account-signout>Wyloguj konto</button></div>
+      ${ksCloud.error?`<p class="hint">${esc(ksCloud.error)}</p>`:''}`;
+  }
+  return `<p class="hint">Konto jest potrzebne do aktywacji Pro i późniejszej szyfrowanej synchronizacji. Dane uczniów nadal pozostają lokalnie.</p>
+    <div class="row2 stack-sm"><label class="fld"><span>E-mail</span><input type="email" id="c-account-email" autocomplete="email" placeholder="adres@e-mail.pl"></label></div>
+    <div class="row-btns"><button type="button" class="btn sm" data-account-login>Wyślij link logowania</button></div>
+    ${ksCloud.error?`<p class="hint">${esc(ksCloud.error)}</p>`:''}`;
+}
+async function syncKsEntitlement(row){
+  if(!row) return;
+  const plan=row.plan==='pro' && (!row.valid_until || row.valid_until>=today()) ? 'pro' : 'free';
+  const next={...S.settings,entitlement:{plan,source:'supabase',validUntil:row.valid_until||''}};
+  const changed=JSON.stringify(next.entitlement)!==JSON.stringify(S.settings.entitlement);
+  S.settings=next;
+  if(CF) CF.entitlement={...next.entitlement};
+  if(changed && store) await saveSettings(next);
+  render();
+}
+async function ensureKsAccount(client,user){
+  let {data,error}=await client.from('ks_accounts').select('id,plan,valid_until,source').eq('id',user.id).maybeSingle();
+  if(error) throw error;
+  if(!data){
+    const ins=await client.from('ks_accounts').insert({id:user.id,plan:'free',source:'signup'}).select('id,plan,valid_until,source').single();
+    if(ins.error) throw ins.error;
+    data=ins.data;
+  }
+  return data;
+}
+async function refreshKsAccount(silent=false){
+  if(ksCloud.loading) return;
+  ksCloud.loading=true; ksCloud.error='';
+  try{
+    const client=await ksClient();
+    const {data,error}=await client.auth.getSession();
+    if(error) throw error;
+    const user=data&&data.session&&data.session.user;
+    if(!user || user.is_anonymous){
+      ksCloud.user=null; ksCloud.account=null;
+      return;
+    }
+    ksCloud.user=user;
+    ksCloud.account=await ensureKsAccount(client,user);
+    await syncKsEntitlement(ksCloud.account);
+  }catch(err){
+    console.warn('ks account',err);
+    ksCloud.error=silent?'':(err&&err.message?err.message:'Nie udało się połączyć z kontem.');
+  }finally{
+    ksCloud.loading=false;
+    const box=$('#c-account',dlgC); if(box) box.innerHTML=ksAccountHtml();
+  }
+}
+async function sendKsMagicLink(){
+  const email=String($('#c-account-email',dlgC)?.value||'').trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Wpisz poprawny adres e-mail.','err');
+  ksCloud.loading=true; ksCloud.error=''; const box=$('#c-account',dlgC); if(box) box.innerHTML=ksAccountHtml();
+  try{
+    const client=await ksClient();
+    const redirectTo=location.origin+location.pathname;
+    const {error}=await client.auth.signInWithOtp({
+      email,
+      options:{emailRedirectTo:redirectTo,shouldCreateUser:true,data:{app:KS_APP_ID}}
+    });
+    if(error) throw error;
+    toast('Wysłano link logowania. Sprawdź pocztę.');
+    ksCloud.error='Link logowania został wysłany. Po kliknięciu wrócisz do Kalendarza.';
+  }catch(err){
+    console.warn(err);
+    ksCloud.error=err&&err.message?err.message:'Nie udało się wysłać linku logowania.';
+    toast('Nie udało się wysłać linku.','err');
+  }finally{
+    ksCloud.loading=false; if(box) box.innerHTML=ksAccountHtml();
+  }
+}
+async function signOutKsAccount(){
+  try{const client=await ksClient();await client.auth.signOut();}catch(err){console.warn(err);}
+  ksCloud.user=null;ksCloud.account=null;ksCloud.error='';
+  const box=$('#c-account',dlgC);if(box)box.innerHTML=ksAccountHtml();
+  toast('Wylogowano konto');
+}
 
 // ── zapis: konto (db) albo ta przeglądarka ──
 async function retry(fn) {
@@ -2542,6 +2646,7 @@ function openSettings() {
   CF = JSON.parse(JSON.stringify(S.settings));
   dlgC.innerHTML = settingsHtml();
   dlgC.showModal();
+  refreshKsAccount(true);
 }
 function bellsHtml() {
   return CF.bells.map(([a, b], i) => `<li><span class="bn">${i + 1}</span><input type="time" id="c-b${i}a" data-b="${i}" data-k="0" value="${a}" aria-label="Lekcja ${i + 1} — początek"><span class="dash">–</span><input type="time" id="c-b${i}b" data-b="${i}" data-k="1" value="${b}" aria-label="Lekcja ${i + 1} — koniec"><button type="button" class="icon-btn" data-bdel="${i}" aria-label="Usuń lekcję ${i + 1}">${ic('x')}</button></li>`).join('');
@@ -2619,8 +2724,11 @@ function settingsHtml() {
     <header class="dlg-h"><h2>Ustawienia</h2><button type="button" class="icon-btn" data-cclose aria-label="Zamknij">${ic('x')}</button></header>
     <div class="dlg-b">
       <section class="cs"><h3>Plan aplikacji</h3>
-        <p class="hint">Aktualny plan: ${planBadgeHtml()} ${isPro()?'Masz dostęp do wszystkich obecnie przygotowanych funkcji Pro.':'Podstawowy kalendarz, uczniowie i lokalny zaszyfrowany backup pozostają bezpłatne.'}</p>
+        <p class="hint">Aktualny plan: ${planBadgeHtml()} ${isPro()?'Masz dostęp do funkcji Pro.':'Podstawowy kalendarz, uczniowie i lokalny zaszyfrowany backup pozostają bezpłatne.'}</p>
         <div class="row-btns">${isPro()?'':'<button type="button" class="btn sm" data-pro-info>Poznaj Pro</button>'}</div>
+      </section>
+      <section class="cs"><h3>Konto i licencja</h3>
+        <div id="c-account">${ksAccountHtml()}</div>
       </section>
       <section class="cs"><h3>Profil pracy</h3>
         <p class="hint">Te dane opisują lokalną konfigurację kalendarza. Nie są publikowane ani wysyłane na serwer.</p>
@@ -2726,6 +2834,9 @@ dlgC.addEventListener('click', async e => {
   if (e.target === dlgC) return dlgC.close();
   const t = e.target;
   if (t.closest('[data-cclose]')) return dlgC.close();
+  if (t.closest('[data-account-login]')) { await sendKsMagicLink(); return; }
+  if (t.closest('[data-account-refresh]')) { await refreshKsAccount(false); toast('Odświeżono licencję'); return; }
+  if (t.closest('[data-account-signout]')) { await signOutKsAccount(); return; }
   if (t.closest('[data-badd]')) {
     readBells();
     const last = CF.bells[CF.bells.length - 1];
@@ -3766,6 +3877,7 @@ async function init() {
   setTimeout(registerPwa, 300);
   setTimeout(() => checkForUpdates(false), 1800);
   setTimeout(checkMeetingNotifications, 2400);
+  setTimeout(()=>refreshKsAccount(true),3000);
   if (needsOnboarding) setTimeout(openOnboarding, 250);
   else setTimeout(() => { if (!document.querySelector('dialog[open]')) openTodayDashboard(); }, 700);
 }
