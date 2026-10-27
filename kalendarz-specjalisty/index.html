@@ -833,7 +833,8 @@ const DEFAULT_BELLS = ['08:00-08:45', '08:55-09:40', '09:50-10:35', '10:45-11:30
 const DEFAULT_WORK_HOURS = { 0:['08:00','15:00'], 1:['08:00','15:00'], 2:['08:00','15:00'], 3:['08:00','15:00'], 4:['08:00','15:00'] };
 const DEFAULT_PROFILE = { name:'Mój profil', specialistRole:'psycholog', mentorName:'', mentorRole:'pedagog' };
 const DEFAULT_ENTITLEMENT = { plan:'free', source:'local', validUntil:'' };
-const DEFAULTS = { v: 3, profile: DEFAULT_PROFILE, entitlement: DEFAULT_ENTITLEMENT, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '08:00', dayTo: '15:30', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
+const DEFAULT_MANAGED_PROFILE = { slug:'', version:'', aliases:{} };
+const DEFAULTS = { v: 4, profile: DEFAULT_PROFILE, entitlement: DEFAULT_ENTITLEMENT, managedProfile: DEFAULT_MANAGED_PROFILE, bells: DEFAULT_BELLS, region: 'slaskie', exams: 'e8', observances: true, dayFrom: '08:00', dayTo: '15:30', defaultLen: 45, weekend: false, autoLock: 10, notify: false, notifyBefore: 15, offDays: {}, workHours: DEFAULT_WORK_HOURS, closedMonths: {}, archivedYears: {}, overtime: { studentId:'', weeklyUnits:2, endDate:'', countAbsent:false } };
 
 // ── narzędzia UI ──
 const $ = (s, r = document) => r.querySelector(s);
@@ -895,6 +896,9 @@ function mergeSettings(d) {
     source:String(ent.source||'local').slice(0,40),
     validUntil:DATE_RE.test(String(ent.validUntil||'')) ? String(ent.validUntil) : ''
   };
+  const mp=s.managedProfile && typeof s.managedProfile==='object' && !Array.isArray(s.managedProfile) ? s.managedProfile : {};
+  const aliases=mp.aliases && typeof mp.aliases==='object' && !Array.isArray(mp.aliases) ? mp.aliases : {};
+  s.managedProfile={slug:String(mp.slug||'').replace(/[^a-z0-9_-]/gi,'').slice(0,40),version:String(mp.version||'').slice(0,80),aliases:{...aliases}};
   const p = s.profile && typeof s.profile === 'object' && !Array.isArray(s.profile) ? s.profile : {};
   s.profile = {
     name:String(p.name || DEFAULT_PROFILE.name).trim().slice(0,80) || DEFAULT_PROFILE.name,
@@ -938,7 +942,7 @@ function mergeSettings(d) {
   s.overtime={ studentId:/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(String(ot.studentId||'')) ? String(ot.studentId) : '', weeklyUnits:Math.max(1,Math.min(20,+ot.weeklyUnits||2)), endDate:DATE_RE.test(String(ot.endDate||'')) ? String(ot.endDate) : '', countAbsent:!!ot.countAbsent };
   return s;
 }
-const serializeSettings = s => ({ v: 3, profile:s.profile||DEFAULT_PROFILE, entitlement:s.entitlement||DEFAULT_ENTITLEMENT, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, workHours:s.workHours||DEFAULT_WORK_HOURS, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
+const serializeSettings = s => ({ v: 4, profile:s.profile||DEFAULT_PROFILE, entitlement:s.entitlement||DEFAULT_ENTITLEMENT, managedProfile:s.managedProfile||DEFAULT_MANAGED_PROFILE, bells: s.bells.map(([a, b]) => `${a}-${b}`), region: s.region, exams: s.exams, observances: s.observances, dayFrom: s.dayFrom, dayTo: s.dayTo, defaultLen: s.defaultLen, weekend: s.weekend, autoLock: s.autoLock, notify: s.notify, notifyBefore: s.notifyBefore, offDays: s.offDays, workHours:s.workHours||DEFAULT_WORK_HOURS, closedMonths:s.closedMonths||{}, archivedYears:s.archivedYears||{}, overtime:s.overtime||DEFAULTS.overtime, updated: Date.now() });
 
 const S = {
   view: ['month', 'week', 'day', 'list'].includes(uiPrefs.view) ? uiPrefs.view : (isNarrow() ? 'day' : 'week'),
@@ -966,6 +970,91 @@ const isPro = () => {
 };
 const planBadgeHtml = () => `<span class="plan-badge ${isPro()?'pro':''}">${isPro()?'Pro':'Free'}</span>`;
 const proLockHtml = feature => `<div class="pro-lock"><h4>${esc(feature)} <span class="plan-badge pro">Pro</span></h4><p>Ta funkcja należy do planu Pro.</p><div class="row-btns"><button type="button" class="btn sm" data-pro-info>Poznaj Pro</button></div></div>`;
+
+const managedProfile={slug:'',config:null,error:''};
+function managedProfileSlug(){
+  const q=new URLSearchParams(location.search).get('profile');
+  if(q && /^[a-z0-9_-]{1,40}$/i.test(q)) return q.toLowerCase();
+  const m=location.pathname.match(/\/kalendarz-specjalisty\/([a-z0-9_-]+)\/?$/i);
+  return m?m[1].toLowerCase():'';
+}
+async function loadManagedProfile(){
+  const slug=managedProfileSlug();
+  if(!slug) return null;
+  try{
+    const r=await fetch(`./profiles/${encodeURIComponent(slug)}.json?v=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const cfg=await r.json();
+    if(!cfg || cfg.slug!==slug || !Array.isArray(cfg.managedSlots)) throw new Error('Nieprawidłowy profil');
+    managedProfile.slug=slug; managedProfile.config=cfg; managedProfile.error='';
+    return cfg;
+  }catch(e){
+    console.warn('managed profile',e); managedProfile.error='Nie udało się pobrać profilu '+slug; return null;
+  }
+}
+function managedAliasOptions(alias){
+  const sel=(S.settings.managedProfile&&S.settings.managedProfile.aliases||{})[alias]||'';
+  return '<option value="">— wybierz ucznia —</option>'+[...S.students.entries()].filter(([,st])=>st&&!st.archived).sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||'','pl')).map(([id,st])=>`<option value="${esc(id)}"${id===sel?' selected':''}>${esc(st.name)}${st.cls?' · '+esc(st.cls):''}</option>`).join('');
+}
+function managedProfileSettingsHtml(){
+  const cfg=managedProfile.config;
+  if(!cfg) return '';
+  const aliases=[...new Set(cfg.managedSlots.map(x=>x.alias).filter(Boolean))];
+  return `<section class="cs"><h3>Profil zarządzany: ${esc(cfg.name||cfg.slug)}</h3>
+    <p class="hint">Plan pracy i przyszłe stałe zajęcia mogą być aktualizowane zdalnie przez zmianę profilu. Nazwiska uczniów pozostają wyłącznie w Twoim zaszyfrowanym sejfie.</p>
+    ${aliases.map((a,i)=>{
+      const slots=cfg.managedSlots.filter(x=>x.alias===a).map(x=>`${['pon.','wt.','śr.','czw.','pt.'][x.weekday]||'?'} ${x.start}–${x.end}`).join(', ');
+      return `<label class="fld"><span>Uczeń ${i+1} · ${esc(slots)}</span><select data-managed-alias="${esc(a)}">${managedAliasOptions(a)}</select></label>`;
+    }).join('')}
+    <div class="row-btns"><button type="button" class="btn sm" data-managed-sync>Zastosuj profil teraz</button></div>
+    <p class="hint">Wersja profilu: ${esc(cfg.version||'—')}</p>
+  </section>`;
+}
+function managedMeetingId(slug,alias,date,start){
+  return 'pm_'+[slug,alias,date,start].join('_').replace(/[^a-zA-Z0-9_-]/g,'');
+}
+async function syncManagedProfile(force=false){
+  const cfg=managedProfile.config;
+  if(!cfg || !store) return;
+  const mp=S.settings.managedProfile||DEFAULT_MANAGED_PROFILE;
+  const aliases={...(mp.aliases||{})};
+  if(cfg.workHours) {
+    S.settings={...S.settings,workHours:{...S.settings.workHours,...cfg.workHours}};
+  }
+  const allMapped=[...new Set(cfg.managedSlots.map(x=>x.alias))].every(a=>aliases[a]&&S.students.has(aliases[a]));
+  const versionChanged=mp.slug!==cfg.slug || mp.version!==cfg.version;
+  S.settings.managedProfile={slug:cfg.slug,version:allMapped?cfg.version:mp.version||'',aliases};
+  await saveSettings(S.settings);
+  if(!allMapped) { render(); return; }
+  if(!force && !versionChanged) { render(); return; }
+
+  const all=await store.allMeetings();
+  const t=today();
+  const futureManaged=all.filter(([,m])=>m&&m.profileManaged===cfg.slug&&m.date>=t&&m.status==='plan');
+  await runLimited(futureManaged.map(([id])=>()=>store.deleteMeeting(id)),4);
+
+  const Y=schoolYearOf(t), end=`${Y+1}-08-31`, now=Date.now();
+  const tasks=[];
+  for(let d=t; d<=end; d=addDays(d,1)){
+    const wd=dow(d);
+    if(wd<0||wd>4||!info(d).school) continue;
+    for(const slot of cfg.managedSlots.filter(x=>x.weekday===wd)){
+      const sid=aliases[slot.alias]; if(!sid) continue;
+      const id=managedMeetingId(cfg.slug,slot.alias,d,slot.start);
+      tasks.push(()=>store.setMeeting(id,{
+        date:d,start:slot.start,end:slot.end,type:slot.type||'rewal',studentId:sid,
+        title:slot.title||'Zajęcia rewalidacyjne',status:'plan',note:'',seriesId:'',
+        internshipRole:'',internshipTopic:'',internshipReflection:'',
+        profileManaged:cfg.slug,profileAlias:slot.alias,created:now,updated:now
+      }));
+    }
+  }
+  await runLimited(tasks,4);
+  S.settings.managedProfile={slug:cfg.slug,version:cfg.version,aliases};
+  await saveSettings(S.settings);
+  toast('Zaktualizowano profil '+(cfg.name||cfg.slug));
+  render();
+}
 
 const KS_SUPABASE_URL='https://xyivrakegwybwhmmcawq.supabase.co';
 const KS_SUPABASE_KEY='sb_publishable_kMJZJydBcA2uDb8Gc9BzMg_lv2rkkAp';
@@ -2730,6 +2819,7 @@ function settingsHtml() {
       <section class="cs"><h3>Konto i licencja</h3>
         <div id="c-account">${ksAccountHtml()}</div>
       </section>
+      ${managedProfileSettingsHtml()}
       <section class="cs"><h3>Profil pracy</h3>
         <p class="hint">Te dane opisują lokalną konfigurację kalendarza. Nie są publikowane ani wysyłane na serwer.</p>
         <div class="row2 stack-sm">
@@ -2837,6 +2927,16 @@ dlgC.addEventListener('click', async e => {
   if (t.closest('[data-account-login]')) { await sendKsMagicLink(); return; }
   if (t.closest('[data-account-refresh]')) { await refreshKsAccount(false); toast('Odświeżono licencję'); return; }
   if (t.closest('[data-account-signout]')) { await signOutKsAccount(); return; }
+  if (t.closest('[data-managed-sync]')) {
+    const aliases={...((S.settings.managedProfile||DEFAULT_MANAGED_PROFILE).aliases||{})};
+    $('[data-managed-alias]',dlgC).forEach(el=>{aliases[el.dataset.managedAlias]=el.value||'';});
+    S.settings.managedProfile={...S.settings.managedProfile,slug:managedProfile.slug,aliases};
+    CF.managedProfile={...S.settings.managedProfile};
+    await saveSettings(S.settings);
+    await syncManagedProfile(true);
+    dlgC.innerHTML=settingsHtml();
+    return;
+  }
   if (t.closest('[data-badd]')) {
     readBells();
     const last = CF.bells[CF.bells.length - 1];
@@ -3867,6 +3967,7 @@ async function init() {
   startTicker();
   const data = await unlockOrCreateVault();
   const needsOnboarding = !data.settings;
+  await loadManagedProfile();
   store = makeLocalStore(data);
   S.mode = 'local';
   store.watchSettings(d => { S.settings = mergeSettings(d); S.loaded.settings = true; render(); }, onDbError);
@@ -3878,6 +3979,7 @@ async function init() {
   setTimeout(() => checkForUpdates(false), 1800);
   setTimeout(checkMeetingNotifications, 2400);
   setTimeout(()=>refreshKsAccount(true),3000);
+  setTimeout(()=>syncManagedProfile(false),1800);
   if (needsOnboarding) setTimeout(openOnboarding, 250);
   else setTimeout(() => { if (!document.querySelector('dialog[open]')) openTodayDashboard(); }, 700);
 }
